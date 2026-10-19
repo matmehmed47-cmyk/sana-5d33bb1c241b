@@ -166,7 +166,7 @@ function buzDokusu() {
   return t;
 }
 const zeminMat = BUZ
-  ? new THREE.MeshPhongMaterial({ color: 0x46586a, map: buzDokusu(), specular: 0x000000, shininess: 5 })
+  ? new THREE.MeshPhongMaterial({ color: 0x36475a, map: buzDokusu(), specular: 0x000000, shininess: 5 })
   : new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6, color: 0x1d1723 });
 kutu(ODA_X * 2, 0.1, odaUzun, zeminMat, 0, -0.05, odaOrta);
 // yansıma parıltıları için ortak yumuşak ışık dokusu
@@ -923,7 +923,7 @@ let ikiliKalp = null;
   govde.add(ikiliKalp);
   // harelerle parlama
   [[-0.36, 0.3, 0.95], [0.36, 0.28, 1.15], [0, 0.33, 0.55]].forEach(h => {
-    const p = parilti(h[2], 0.55); p.position.set(h[0], h[1], 0); govde.add(p); halolar.push(p);
+    const p = parilti(h[2] * 0.7, 0.12); p.position.set(h[0], h[1], 0); govde.add(p); halolar.push(p);
   });
   // buz patenleri: İ'nin altında 1, M'nin iki bacağında 2
   const matBot = new THREE.MeshPhongMaterial({ color: 0xf1ece0, specular: 0xffffff, shininess: 40, emissive: 0x2b2820 });
@@ -1361,7 +1361,7 @@ function kare(simdi) {
   ikili.position.set(kon.x, 0, kon.z);
   ikili.rotation.y = ikiliYon;
   ikiliKalp.position.y = 0.33 + Math.sin(simdi / 450) * 0.025;
-  halolar.forEach((h, k) => { h.material.opacity = 0.5 + 0.15 * Math.sin(simdi / 600 + k * 2); });
+  halolar.forEach((h, k) => { h.material.opacity = 0.1 + 0.04 * Math.sin(simdi / 600 + k * 2); });
   if (basladi) zerreGuncelle(dt, kon.x, kon.z, ikiliYon, yurume > 0.15);
 
   patenGuncelle(simdi);
