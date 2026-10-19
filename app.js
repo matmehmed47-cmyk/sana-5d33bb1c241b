@@ -924,6 +924,7 @@ let sonrakiKapiIsik = null;
 
 // ---------- Müzik ----------
 let muzik = null, muzikHedef = 0, muzikVar = true;
+let muzik2 = null, muzik2Hedef = 0;
 function muzikKur() {
   muzik = new Audio(ODA1.sarki);
   muzik.loop = true;
@@ -931,6 +932,10 @@ function muzikKur() {
   muzik.addEventListener('error', () => { muzikVar = false; });
   const p = muzik.play();
   if (p && p.catch) p.catch(() => {});
+  muzik2 = new Audio('muzik/iki-cocuk.mp3');
+  muzik2.loop = true; muzik2.volume = 0;
+  const p2 = muzik2.play();
+  if (p2 && p2.catch) p2.catch(() => {});
 }
 
 // ---------- Karakter: ışıklı İ ve M, aralarında ışık teli ----------
@@ -1453,6 +1458,10 @@ function kare(simdi) {
     if (m.isik) m.isik.intensity = m.guc * n;
   });
 
+  // ikinci odanın şarkısı
+  muzik2Hedef = (kapi2.acik && kon.x > ODA_X + 1.0) ? 0.85 : 0;
+  if (muzik2) { const v2 = muzik2.volume; muzik2.volume = sinir(v2 + (muzik2Hedef - v2) * Math.min(1, dt * 0.7), 0, 1); }
+
   // müzik yumuşak geçiş
   if (muzik && muzikVar) {
     const v = muzik.volume;
@@ -1512,6 +1521,6 @@ document.getElementById('basla').addEventListener('click', () => {
 
 document.addEventListener('visibilitychange', () => {
   if (!muzik) return;
-  if (document.hidden) muzik.pause();
-  else if (basladi) { const p = muzik.play(); if (p && p.catch) p.catch(() => {}); }
+  if (document.hidden) { muzik.pause(); if (muzik2) muzik2.pause(); }
+  else if (basladi) { const p = muzik.play(); if (p && p.catch) p.catch(() => {}); if (muzik2) { const q = muzik2.play(); if (q && q.catch) q.catch(() => {}); } }
 });
