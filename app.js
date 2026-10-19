@@ -1304,7 +1304,7 @@ patenBtn.addEventListener('click', () => {
   patenSesi();
 });
 function patenCikarGuncelle(simdi) {
-  const gor = patenTakili && !cikisUcus && kapi2.acik && kon.x > HOL_SON - 0.6;
+  const gor = patenTakili && !cikisUcus && kapi2.acik && kon.x > ODA_X + 0.8;
   if (gor !== patenKartAcik) { patenKartAcik = gor; patenKart.classList.toggle('acik', gor); }
   if (!cikisUcus || cikisUcus.bitti) return;
   let biten = 0;
@@ -1321,7 +1321,7 @@ function patenCikarGuncelle(simdi) {
   if (biten === yerPaten.length) {
     patenTakili = false;
     cikisUcus = { ...cikisUcus, bitti: true };
-    ogrYaz('Patenlerini çıkardın. İçeri girebilirsin.', null);
+    ogrYaz('Patenlerini kenara koydun. İçeri girebilirsin.', null);
     setTimeout(() => ogrKutu.classList.remove('acik'), 2600);
   }
 }
@@ -1425,7 +1425,7 @@ function kare(simdi) {
       // kapının ötesi: hol ve ikinci oda
       if (kon.x < HOL_SON + 0.2) kon.z = sinir(kon.z, HOL_Z - 0.45, HOL_Z + 0.45);
       else { kon.z = sinir(kon.z, ODA2_Z0 + 0.7, ODA2_Z1 - 0.7); kon.x = Math.min(kon.x, ODA2_X1 - 0.7); }
-      if (patenTakili) kon.x = Math.min(kon.x, HOL_SON + 0.7);   // patenle odaya giremez
+      if (patenTakili) kon.x = Math.min(kon.x, HOL_SON - 0.4);   // patenle odaya giremez
     } else if (kon.z > KAPI_Z + 0.4) {
       kon.x = sinir(kon.x, -KOR_X + 0.5, KOR_X - 0.5);
       kon.z = Math.min(kon.z, KOR_BAS - 0.3);
