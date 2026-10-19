@@ -154,25 +154,70 @@ mumYap(1.8, ODA_SON + 0.6, 0, 0);
   grup.instanceColor.needsUpdate = true;
   sahne.add(grup);
 
-  // yerde yatan güller: gövde + katmanlı baş
-  const matSap = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x2f5a2a });
-  const matGul = [0xa3142a, 0xb81d35, 0x8a0f1f].map(c => new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: c }));
+  // yerde yatan güller: spiral dizilmiş kıvrık taç yapraklı
+  function yaprakGeo(W, H, kıvrık) {
+    const nu = 7, nv = 9, pos = [], idx = [];
+    for (let a = 0; a <= nu; a++) {
+      const u = a / nu;
+      const f = Math.pow(u, 0.4) * Math.sqrt(Math.max(0, 1 - Math.pow(u, 4)));
+      for (let b = 0; b <= nv; b++) {
+        const v = (b / nv) * 2 - 1;
+        const x = v * W * f;
+        pos.push(x, u * H, -x * x * 7 + H * 0.35 * u * u * kıvrık);
+      }
+    }
+    for (let a = 0; a < nu; a++) for (let b = 0; b < nv; b++) {
+      const p = a * (nv + 1) + b;
+      idx.push(p, p + 1, p + nv + 1, p + 1, p + nv + 2, p + nv + 1);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }
+  function gulYap(tonlar) {
+    const g = new THREE.Group();
+    const matlar = tonlar.map(c => new THREE.MeshPhongMaterial({ color: c, specular: 0x220a0a, shininess: 18, side: THREE.DoubleSide }));
+    const N = 20;
+    for (let k = 0; k < N; k++) {
+      const t = k / (N - 1);
+      const W = 0.026 + 0.034 * t, H = 0.06 + 0.04 * t;
+      const p = new THREE.Mesh(yaprakGeo(W, H, t), matlar[Math.min(matlar.length - 1, Math.floor(t * matlar.length))]);
+      const yer = new THREE.Group();
+      p.position.z = 0.008 + 0.04 * t;
+      p.rotation.x = 0.04 + 1.0 * t * t + 0.1 * t;
+      yer.add(p);
+      yer.rotation.y = k * 2.39996;
+      yer.position.y = 0.02 * (1 - t);
+      g.add(yer);
+    }
+    const sap = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.012, 0.5, 6),
+      new THREE.MeshPhongMaterial({ color: 0x2f5a2a, specular: 0x000000 }));
+    sap.position.y = -0.25;
+    g.add(sap);
+    const yaprak = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6),
+      new THREE.MeshPhongMaterial({ color: 0x356b30, specular: 0x000000 }));
+    yaprak.scale.set(1, 0.12, 0.45); yaprak.position.set(0.04, -0.2, 0); yaprak.rotation.z = 0.4;
+    g.add(yaprak);
+    return g;
+  }
+  const gulTipleri = [
+    gulYap([0x4d0610, 0x6e0b18, 0x8a0f1f, 0xa3142a]),
+    gulYap([0x5a0814, 0x7a0f20, 0x9b1328, 0xb81d35]),
+    gulYap([0x430510, 0x620a17, 0x80101f, 0x9a1426])
+  ];
   const konumlar = [[-1.1, 2.4], [1.15, 0.6], [-1.2, -2.8], [1.05, -5.0], [-1.0, -7.2],
     [1.2, -9.4], [-1.15, -11.6], [1.0, -13.4], [-0.9, -14.9], [0.7, -15.2]];
   konumlar.forEach((k, i) => {
-    const g = new THREE.Group();
-    const sap = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.01, 0.5, 6), matSap);
-    sap.rotation.z = Math.PI / 2; sap.position.set(0.25, 0.02, 0);
-    g.add(sap);
-    [[0.1, 0.045, 0], [0.075, 0.085, 0], [0.05, 0.125, 0]].forEach((r, li) => {
-      const h = new THREE.Mesh(new THREE.SphereGeometry(r[0], 10, 8), matGul[(i + li) % matGul.length]);
-      h.scale.set(1, 0.8, 1);
-      h.position.set(0, r[1], r[2]);
-      g.add(h);
-    });
-    g.position.set(k[0], 0, k[1]);
-    g.rotation.y = rast(0, Math.PI * 2);
-    sahne.add(g);
+    const g = gulTipleri[i % gulTipleri.length].clone();
+    const kok = new THREE.Group();
+    g.rotation.z = -1.2;
+    g.position.y = 0.17;
+    kok.add(g);
+    kok.position.set(k[0], 0, k[1]);
+    kok.rotation.y = rast(0, Math.PI * 2);
+    sahne.add(kok);
   });
 })();
 
