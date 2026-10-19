@@ -640,6 +640,10 @@ function yonergeGuncelle(icerde, dt, fotoUz) {
     yonYazilan = asama; yonZaman = simdi;
     yonKutu.textContent = ASAMA_YAZI[asama];
     yonKutu.classList.add('acik');
+    if (asama === 1) { otoBak(videolar[0].x, videolar[0].z); elGoster('bak-sol'); }
+    else if (asama === 2) { otoBak(videolar[1].x, videolar[1].z); elGoster('bak-sag'); }
+    else if (asama === 3) { otoBak(KAPI2_X, KAPI2_Z); elGoster('yuru'); }
+    else elGoster(null);
   }
   // yazı bir süre kalır, izlerken ekranda hiçbir şey yazmaz
   let gizle = false;
@@ -648,6 +652,9 @@ function yonergeGuncelle(icerde, dt, fotoUz) {
   if (asama === 3 && soruGorunur) gizle = true;
   if (asama === 4 && simdi - yonZaman > 5000) gizle = true;
   yonKutu.classList.toggle('acik', !gizle);
+  if (gizle && (asama === 1 || asama === 2)) elGoster(null);
+  // yazı uzun süre ekranda kalıp bakma olmadıysa küçük el hatırlatması
+  if (!gizle && ogr >= 2 && simdi - yonZaman > 12000 && sonBakZaman < yonZaman) elGoster('bak');
 }
 
 // ---------- Kapıdan her tabloya giden, zeminde silik yanıp sönen oklar ----------
@@ -897,15 +904,42 @@ function zerreGuncelle(dt, x, z, yon, hareketli) {
   zerGeo.attributes.color.needsUpdate = true;
 }
 
+// ---------- Öğretici: el simgesi, yürüme ve bakma ----------
+const elKutu = document.getElementById('el'), ogrKutu = document.getElementById('ogretici');
+const DOKUNMATIK = !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
+function elGoster(tur) { elKutu.className = (tur && DOKUNMATIK) ? 'el ' + tur : 'el'; }
+let ogr = -1, ogrBas = null, ogrBakBas = 0;
+function ogrYaz(t, el) {
+  ogrKutu.textContent = t; ogrKutu.classList.add('acik'); elGoster(el);
+}
+function ogrBasla() {
+  ogr = 0; ogrBas = { x: kon.x, z: kon.z };
+  ogrYaz(DOKUNMATIK ? 'Yürümek için sol baş parmağınla düğmeyi kaydır.' : 'Yürümek için W A S D ya da ok tuşlarını kullan.', 'yuru');
+}
+function ogrGuncelle() {
+  if (ogr === 0 && Math.hypot(kon.x - ogrBas.x, kon.z - ogrBas.z) > 2.2) {
+    ogr = 1; ogrBakBas = kon.bakToplam;
+    ogrYaz(DOKUNMATIK ? 'Etrafına bakmak için ekranı parmağınla sürükle.' : 'Etrafına bakmak için fareyi basılı tutup sürükle.', 'bak');
+  } else if (ogr === 1 && kon.bakToplam - ogrBakBas > 350) {
+    ogr = 2; ogrYaz('Harika! Şimdi kapıya doğru ilerle.', null);
+    setTimeout(() => ogrKutu.classList.remove('acik'), 2600);
+  }
+}
+// kamera kendiliğinden bir noktaya yumuşakça dönsün (kullanıcı dokunursa vazgeçer)
+function otoBak(hx, hz) {
+  const dx = hx - kon.x, dz = hz - kon.z;
+  kon.oto = { yaw: Math.atan2(-dx, -dz), pitch: -0.1 };
+}
+
 // ---------- Kontrol ----------
-const kon = { yaw: 0, pitch: -0.22, x: 0, z: 1.2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
+const kon = { oto: null, bakToplam: 0, yaw: 0, pitch: -0.22, x: 0, z: 1.2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
 let basladi = false;
 
 window.addEventListener('keydown', e => { kon.tus[e.key.toLowerCase()] = true; });
 window.addEventListener('keyup', e => { kon.tus[e.key.toLowerCase()] = false; });
 
 const joy = document.getElementById('joy'), joyTop = document.getElementById('joyTop');
-let joyId = null, bakId = null, sonX = 0, sonY = 0;
+let joyId = null, bakId = null, sonX = 0, sonY = 0, sonBakZaman = 0;
 
 joy.addEventListener('pointerdown', e => {
   joyId = e.pointerId; joy.setPointerCapture(e.pointerId); joyGuncelle(e); e.preventDefault();
@@ -928,11 +962,12 @@ function joyGuncelle(e) {
 
 canvas.addEventListener('pointerdown', e => {
   if (bakId !== null) return;
-  bakId = e.pointerId; sonX = e.clientX; sonY = e.clientY; canvas.setPointerCapture(e.pointerId);
+  bakId = e.pointerId; sonX = e.clientX; sonY = e.clientY; canvas.setPointerCapture(e.pointerId); kon.oto = null;
   document.getElementById('ipucu').classList.add('gizli');
 });
 canvas.addEventListener('pointermove', e => {
   if (e.pointerId !== bakId) return;
+  kon.bakToplam += Math.abs(e.clientX - sonX) + Math.abs(e.clientY - sonY); sonBakZaman = performance.now();
   kon.yaw -= (e.clientX - sonX) * 0.005;
   kon.pitch -= (e.clientY - sonY) * 0.004;
   kon.pitch = Math.max(-0.85, Math.min(0.45, kon.pitch));
@@ -962,8 +997,8 @@ function kare(simdi) {
     if (t['s'] || t['arrowdown']) ileri -= 1;
     if (t['d']) yan += 1;
     if (t['a']) yan -= 1;
-    if (t['arrowleft']) kon.yaw += 1.6 * dt;
-    if (t['arrowright']) kon.yaw -= 1.6 * dt;
+    if (t['arrowleft']) { kon.yaw += 1.6 * dt; kon.bakToplam += 500 * dt; sonBakZaman = performance.now(); }
+    if (t['arrowright']) { kon.yaw -= 1.6 * dt; kon.bakToplam += 500 * dt; sonBakZaman = performance.now(); }
     const hiz = 2.2;
     const sy = Math.sin(kon.yaw), cy = Math.cos(kon.yaw);
     let mx = -sy * ileri + cy * yan, mz = -cy * ileri - sy * yan;
@@ -1019,6 +1054,7 @@ function kare(simdi) {
     videoGuncelle(icerde, dt);
     soruGuncelle(icerde);
     yonergeGuncelle(icerde, dt, fotoUz);
+    ogrGuncelle();
     const yaziGerek = icerde && fotoUz < 4.6;
     if (yaziGerek !== yaziAcik) {
       yaziAcik = yaziGerek;
@@ -1058,6 +1094,14 @@ function kare(simdi) {
     muzik.volume = sinir(v + (muzikHedef - v) * Math.min(1, dt * 0.7), 0, 1);
   }
 
+  // otomatik bakma
+  if (kon.oto && bakId === null) {
+    const f = Math.atan2(Math.sin(kon.oto.yaw - kon.yaw), Math.cos(kon.oto.yaw - kon.yaw));
+    kon.yaw += f * Math.min(1, dt * 2.4);
+    kon.pitch += (kon.oto.pitch - kon.pitch) * Math.min(1, dt * 2.4);
+    if (Math.abs(f) < 0.02) kon.oto = null;
+  }
+
   // karakter animasyonu
   yurumeFaz += dt * 7 * yurume;
   egim += ((-0.12 * yurume) - egim) * Math.min(1, dt * 6);
@@ -1088,6 +1132,7 @@ requestAnimationFrame(kare);
 document.getElementById('basla').addEventListener('click', () => {
   basladi = true;
   muzikKur();
+  ogrBasla();
   try { sesBagl = new (window.AudioContext || window.webkitAudioContext)(); if (sesBagl.resume) sesBagl.resume(); } catch (e) { sesBagl = null; }
   document.getElementById('giris').classList.add('gizli');
   setTimeout(() => document.getElementById('ipucu').classList.add('gizli'), 7000);
