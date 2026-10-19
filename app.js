@@ -330,13 +330,17 @@ sahne.add(kapiOku);
   });
 })();
 
-// fotoğrafın iki yanında, yan duvardaki videolara yönlendiren yanıp sönen oklar
-const matYanOk = new THREE.MeshBasicMaterial({ color: 0xe8b25f, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+// fotoğrafın iki yanında, yan duvardaki videolara yönlendiren, dışa doğru akan oklar
+const yanOklar = [];
 [-1, 1].forEach(yon => {
-  const ok = new THREE.Mesh(okGeo, matYanOk);
-  ok.scale.set(yon * 0.85, 0.85, 1);
-  ok.position.set(yon * 2.05, 1.9, ODA_SON + 0.04);
-  sahne.add(ok);
+  [1.95, 2.55, 3.15, 3.75, 4.35].forEach((x, k) => {
+    const mat = new THREE.MeshBasicMaterial({ color: 0xe8b25f, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+    const ok = new THREE.Mesh(okGeo, mat);
+    ok.scale.set(yon * 0.7, 0.7, 1);
+    ok.position.set(yon * x, 1.9, ODA_SON + 0.04);
+    sahne.add(ok);
+    yanOklar.push({ mat, k });
+  });
 });
 
 // ---------- Fotoğraf ----------
@@ -671,7 +675,7 @@ function kare(simdi) {
   }
 
   // fotoğraf yanı oklar: odadayken yumuşakça yanıp söner
-  matYanOk.opacity = odadaMi ? (0.12 + 0.5 * (0.5 + 0.5 * Math.sin(simdi / 650))) : 0;
+  yanOklar.forEach(o => { o.mat.opacity = odadaMi ? 0.06 + 0.6 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 380 - o.k * 0.9), 2) : 0; });
 
   // okların nabzı
   const nabiz = 0.7 + 0.3 * Math.sin(simdi / 350);
