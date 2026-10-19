@@ -30,7 +30,7 @@ boyutla();
 // ---------- Düzen ----------
 const KOR_X = 1.5, KOR_BAS = 4, KAPI_Z = -16, ODA_SON = -27, ODA_X = 5.5, YUKSEK = 3, ODA_Y = 4;
 
-sahne.add(new THREE.AmbientLight(0x45354c, 0.62));
+sahne.add(new THREE.AmbientLight(0x45354c, 0.5));
 
 const matZemin = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x2b1d17 });
 const matDuvar = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x5a4636 });
@@ -165,7 +165,7 @@ function buzDokusu() {
   return t;
 }
 const zeminMat = BUZ
-  ? new THREE.MeshPhongMaterial({ color: 0x7c9db8, map: buzDokusu(), specular: 0xffffff, shininess: 110 })
+  ? new THREE.MeshPhongMaterial({ color: 0x46586a, map: buzDokusu(), specular: 0xffffff, shininess: 110 })
   : new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6, color: 0x1d1723 });
 kutu(ODA_X * 2, 0.1, odaUzun, zeminMat, 0, -0.05, odaOrta);
 // yansıma parıltıları için ortak yumuşak ışık dokusu
@@ -250,7 +250,7 @@ function duvarMum(x, y, z, rotY, isikGuc, menzil, yansima) {
   }
   if (BUZ && yansima) {
     const ref = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 1.1),
-      new THREE.MeshBasicMaterial({ map: sicakDoku, transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+      new THREE.MeshBasicMaterial({ map: sicakDoku, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     ref.rotation.x = -Math.PI / 2; ref.position.set(0, -y + 0.022, 0.65);
     g.add(ref);
   }
@@ -530,7 +530,7 @@ new THREE.TextureLoader().load(ODA1.foto, tex => {
     rg.addColorStop(0, 'rgba(0,0,0,.9)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
     rx.fillStyle = rg; rx.fillRect(0, 0, rc.width, rc.height);
     const yansima = new THREE.Mesh(new THREE.PlaneGeometry(gen, 1.8),
-      new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(rc), transparent: true, opacity: 0.4, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+      new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(rc), transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide, fog: false }));
     yansima.rotation.x = -Math.PI / 2; yansima.scale.y = -1;
     yansima.position.set(0, 0.026, FOTO_Z + 0.9);
     sahne.add(yansima);
@@ -756,21 +756,29 @@ function zeminYolu(bx, bz, sx, sz, adet) {
 
 // ---------- Kapı gıcırtısı (sentezlenmiş, dosyasız) ----------
 function gicirti(d) {
+  // yumuşak ahşap kapı sesi: alçak bir "tok", hafif hava ve çok kısık küçük bir gıcırtı
   try {
     if (!sesBagl) return;
     d = d || 1.3;
     const c = sesBagl, t = c.currentTime;
-    const o = c.createOscillator(); o.type = 'sawtooth';
-    o.frequency.setValueAtTime(95, t); o.frequency.linearRampToValueAtTime(190, t + d * 0.45); o.frequency.linearRampToValueAtTime(120, t + d);
-    const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 11; lg.gain.value = 9;
-    lfo.connect(lg); lg.connect(o.frequency);
-    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 6;
-    f.frequency.setValueAtTime(700, t); f.frequency.linearRampToValueAtTime(1400, t + d * 0.5); f.frequency.linearRampToValueAtTime(900, t + d);
-    const g = c.createGain();
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22, t + 0.15);
-    g.gain.setValueAtTime(0.22, t + d * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-    o.connect(f); f.connect(g); g.connect(c.destination);
-    o.start(t); lfo.start(t); o.stop(t + d + 0.05); lfo.stop(t + d + 0.05);
+    // 1) alçak, yumuşak vuruş
+    const o1 = c.createOscillator(), g1 = c.createGain();
+    o1.type = 'sine'; o1.frequency.setValueAtTime(95, t); o1.frequency.exponentialRampToValueAtTime(55, t + 0.3);
+    g1.gain.setValueAtTime(0.0001, t); g1.gain.exponentialRampToValueAtTime(0.22, t + 0.02); g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    o1.connect(g1); g1.connect(c.destination); o1.start(t); o1.stop(t + 0.45);
+    // 2) hafif hava / sürtünme
+    const uz = Math.floor(c.sampleRate * d), buf = c.createBuffer(1, uz, c.sampleRate), veri = buf.getChannelData(0);
+    for (let i = 0; i < uz; i++) veri[i] = Math.random() * 2 - 1;
+    const kay = c.createBufferSource(); kay.buffer = buf;
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420;
+    const g2 = c.createGain();
+    g2.gain.setValueAtTime(0.0001, t); g2.gain.linearRampToValueAtTime(0.07, t + d * 0.35); g2.gain.linearRampToValueAtTime(0.0001, t + d);
+    kay.connect(lp); lp.connect(g2); g2.connect(c.destination); kay.start(t);
+    // 3) çok kısık, kısa, yumuşak gıcırtı
+    const o3 = c.createOscillator(), g3 = c.createGain();
+    o3.type = 'sine'; o3.frequency.setValueAtTime(520, t + d * 0.2); o3.frequency.linearRampToValueAtTime(680, t + d * 0.55);
+    g3.gain.setValueAtTime(0.0001, t + d * 0.2); g3.gain.linearRampToValueAtTime(0.025, t + d * 0.35); g3.gain.linearRampToValueAtTime(0.0001, t + d * 0.6);
+    o3.connect(g3); g3.connect(c.destination); o3.start(t + d * 0.2); o3.stop(t + d * 0.65);
   } catch (e) {}
 }
 
@@ -1286,7 +1294,7 @@ function kare(simdi) {
     if (icerde !== odadaMi) { odadaMi = icerde; muzikHedef = icerde ? 0.85 : 0; }
     const fotoUz = Math.hypot(kon.x, kon.z - FOTO_Z);
     const yakin = icerde ? yumusak(10, 3.2, fotoUz) : 0;
-    odaIsik.intensity = 0.55 + 1.4 * yakin;
+    odaIsik.intensity = 0.3 + 1.4 * yakin;
     if (fotoNet) {
       const parlak = 0.12 + 0.88 * yakin;
       fotoNet.material.color.setRGB(parlak, parlak, parlak);
