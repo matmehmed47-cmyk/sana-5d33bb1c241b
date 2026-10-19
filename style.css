@@ -15,3 +15,16 @@ html,body{margin:0;height:100%;background:var(--zemin);color:var(--yazi);font-fa
 #joy{position:fixed;left:22px;bottom:26px;width:120px;height:120px;border-radius:50%;border:1px solid rgba(243,233,220,.35);background:rgba(243,233,220,.06);display:none;z-index:5}
 #joyTop{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(243,233,220,.4)}
 @media (pointer:coarse){#joy{display:block}}
+
+#soru{position:fixed;left:50%;top:14%;transform:translate(-50%,-12px);width:min(92vw,420px);padding:16px 18px;border-radius:16px;background:rgba(14,10,12,.82);border:1px solid rgba(232,168,107,.5);text-align:center;opacity:0;pointer-events:none;transition:opacity .6s,transform .6s;z-index:6;backdrop-filter:blur(4px)}
+#soru.acik{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#soruBaslik{font-size:20px;margin-bottom:12px}
+#soruSec{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#soruSec button{font:inherit;font-size:20px;min-width:64px;padding:10px 18px;border-radius:12px;border:1px solid var(--vurgu);background:transparent;color:var(--vurgu);cursor:pointer}
+#soruSec button:active{background:var(--vurgu);color:var(--zemin)}
+#soruSec button.sal{animation:sal .4s}
+@keyframes sal{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+#soruMesaj{min-height:22px;margin-top:12px;font-size:17px;opacity:.9}
+#soruMesaj.dogru{color:#f7c8d2;font-size:19px}
+.ucankalp{position:fixed;bottom:-40px;color:#e0556f;pointer-events:none;z-index:9;animation:uc 3.4s ease-out forwards}
+@keyframes uc{0%{transform:translateY(0);opacity:0}15%{opacity:.9}100%{transform:translateY(-95vh);opacity:0}}

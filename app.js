@@ -524,6 +524,107 @@ function videoGuncelle(icerde, dt) {
   });
 }
 
+// ---------- Soru tahtası: "Mehmetnur kaç kere kayıp düştü?" ----------
+const SORU = {
+  metin: 'Mehmetnur kaç kere kayıp düştü?',
+  secenekler: ['4', '5', '6', 'Çok'],
+  dogru: 'Çok',
+  yanlis: {
+    '4': 'Yok canım, daha fazla. Bir daha dene 😄',
+    '5': 'Hayır hayır, saymayı bırakmıştım...',
+    '6': 'Yaklaşmadı bile. Buz biliyor 🙈'
+  },
+  dogruMesaj: 'Bildin! Çok! Buz da, o çocuk da şahit.'
+};
+const SORU_X = -3.2, SORU_Z = -16.16, SORU_Y = 1.85;
+let soruCozuldu = false;
+const soruCan = document.createElement('canvas');
+soruCan.width = 1024; soruCan.height = 768;
+const soruDoku = new THREE.CanvasTexture(soruCan);
+soruDoku.anisotropy = 4;
+function soruCiz() {
+  const x = soruCan.getContext('2d'), W = 1024, H = 768;
+  x.clearRect(0, 0, W, H);
+  x.fillStyle = '#1b1517'; x.fillRect(0, 0, W, H);
+  const altin = x.createLinearGradient(0, 0, W, H);
+  altin.addColorStop(0, '#fff3cf'); altin.addColorStop(0.5, '#d9a94f'); altin.addColorStop(1, '#f7e2a6');
+  x.strokeStyle = altin; x.lineWidth = 8; x.strokeRect(24, 24, W - 48, H - 48);
+  x.lineWidth = 3; x.strokeRect(46, 46, W - 92, H - 92);
+  x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = altin;
+  const font = (b) => b + 'px "Great Vibes", "Snell Roundhand", "Brush Script MT", cursive';
+  const sar = (t, y, b, en) => { x.font = font(b); while (x.measureText(t).width > en && b > 30) { b -= 4; x.font = font(b); } x.fillText(t, W / 2, y); };
+  if (!soruCozuldu) {
+    sar('Bir soru', 150, 120, 700);
+    sar('Mehmetnur', 330, 150, 760);
+    sar('kaç kere', 470, 130, 760);
+    sar('kayıp düştü?', 610, 130, 760);
+    x.font = 'italic 34px Georgia, serif'; x.fillStyle = 'rgba(243,233,220,.7)';
+    x.fillText('cevap için yaklaş', W / 2, 700);
+  } else {
+    sar('Cevap', 170, 130, 700);
+    sar('Çok!', 400, 260, 760);
+    x.fillStyle = '#e0556f'; x.font = '80px Georgia, serif';
+    x.fillText('♥', W / 2, 640);
+  }
+  soruDoku.needsUpdate = true;
+}
+soruCiz();
+if (document.fonts && document.fonts.load) document.fonts.load('100px "Great Vibes"', 'Bir soru Mehmetnur kaç kere kayıp düştü? Cevap Çok').then(soruCiz).catch(() => {});
+const soruCerceve = new THREE.Mesh(new THREE.BoxGeometry(1.52, 1.17, 0.04),
+  new THREE.MeshPhongMaterial({ color: 0x3a2a14, specular: 0x000000 }));
+soruCerceve.position.set(SORU_X, SORU_Y, SORU_Z + 0.03);
+sahne.add(soruCerceve);
+const soruTahta = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.05),
+  new THREE.MeshBasicMaterial({ map: soruDoku, color: 0x9a9a9a, fog: false }));
+soruTahta.position.set(SORU_X, SORU_Y, SORU_Z - 0.0);
+soruTahta.rotation.y = Math.PI;
+sahne.add(soruTahta);
+
+const soruKart = document.getElementById('soru'), soruBaslik = document.getElementById('soruBaslik'),
+  soruSec = document.getElementById('soruSec'), soruMesaj = document.getElementById('soruMesaj');
+let soruGorunur = false, soruBitisZ = 0;
+soruBaslik.textContent = SORU.metin;
+SORU.secenekler.forEach(sc => {
+  const b = document.createElement('button');
+  b.textContent = sc;
+  b.addEventListener('click', () => {
+    if (soruCozuldu) return;
+    if (sc === SORU.dogru) {
+      soruCozuldu = true;
+      soruMesaj.textContent = SORU.dogruMesaj;
+      soruMesaj.className = 'dogru';
+      soruSec.style.display = 'none';
+      soruCiz();
+      kalpPatlat();
+      soruBitisZ = performance.now() + 6000;
+    } else {
+      soruMesaj.textContent = SORU.yanlis[sc] || 'Bir daha dene.';
+      soruMesaj.className = 'yanlis';
+      b.classList.add('sal');
+      setTimeout(() => b.classList.remove('sal'), 400);
+    }
+  });
+  soruSec.appendChild(b);
+});
+function kalpPatlat() {
+  for (let k = 0; k < 18; k++) {
+    const h = document.createElement('span');
+    h.className = 'ucankalp'; h.textContent = '♥';
+    h.style.left = (10 + Math.random() * 80) + '%';
+    h.style.animationDelay = (Math.random() * 0.8) + 's';
+    h.style.fontSize = (22 + Math.random() * 30) + 'px';
+    document.body.appendChild(h);
+    setTimeout(() => h.remove(), 4000);
+  }
+}
+function soruGuncelle(icerde) {
+  const dx = SORU_X - kon.x, dz = SORU_Z - kon.z, uz = Math.hypot(dx, dz);
+  const bak = (-Math.sin(kon.yaw) * dx - Math.cos(kon.yaw) * dz) / (uz || 1);
+  let goster = icerde && uz < 4.8 && bak > (soruGorunur ? 0.2 : 0.45);
+  if (soruCozuldu && performance.now() > soruBitisZ) goster = false;
+  if (goster !== soruGorunur) { soruGorunur = goster; soruKart.classList.toggle('acik', goster); }
+}
+
 // ---------- Müzik ----------
 let muzik = null, muzikHedef = 0, muzikVar = true;
 function muzikKur() {
@@ -769,6 +870,7 @@ function kare(simdi) {
       fotoBulanik.material.opacity = 1 - yumusak(7, 3.6, fotoUz);
     }
     videoGuncelle(icerde, dt);
+    soruGuncelle(icerde);
     const yaziGerek = icerde && fotoUz < 4.6;
     if (yaziGerek !== yaziAcik) {
       yaziAcik = yaziGerek;
