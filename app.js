@@ -1313,7 +1313,7 @@ function kare(simdi) {
   }
 
   // fotoğraf yanı oklar: odadayken yumuşakça yanıp söner
-  yanOklar.forEach(o => { const gor = ((asama === 1 && o.yon < 0) || (asama === 2 && o.yon > 0)) && (performance.now() - yonZaman < 9000); o.mat.opacity = (odadaMi && gor) ? 0.06 + 0.6 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 380 - o.k * 0.9), 2) : 0; });
+  yanOklar.forEach(o => { const dalga = Math.pow(0.5 + 0.5 * Math.sin(simdi / 380 - o.k * 0.9), 2); const gor = ((asama === 1 && o.yon < 0) || (asama === 2 && o.yon > 0)) && (performance.now() - yonZaman < 9000); o.mat.opacity = odadaMi ? (gor ? 0.06 + 0.6 * dalga : 0.03 + 0.12 * dalga) : 0; });
 
   // zemin okları: kapı açılınca silik silik yanıp söner
   zeminOklar.forEach(o => { o.mat.opacity = kapiAcik ? 0.03 + 0.3 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 430 - o.k * 0.9), 2) : 0; });
