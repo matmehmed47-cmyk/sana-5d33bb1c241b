@@ -1221,7 +1221,9 @@ function ogrAdimGoster() {
   ogrAdimZ = performance.now(); ogrS = 0;
   ogrDX0 = kon.dragX; ogrDY0 = kon.dragY;
 }
+const ALISTIRMA = false;   // true yapılırsa koridordaki 6 adımlı alıştırma yeniden açılır
 function ogrBasla() {
+  if (!ALISTIRMA) { ogr = OGR_BITTI; ogrBaslaZ = 0; return; }   // askıda: alıştırma atlanır, kapı hemen açılır
   ogr = 0; ogrBaslaZ = performance.now();
   ogrListe.classList.add('acik');
   ogrAdimGoster();
