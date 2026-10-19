@@ -1920,6 +1920,52 @@ motorFotoEkle('foto/motor-c.jpg', R3.x1, -5.8, 'doga');    // sol duvar (içeri 
 motorFotoEkle('foto/motor-d.jpg', R3.x0, -5.8, 'bati');    // sağ duvar
 function motorGuncelle(dt) { motor.platlar.forEach(p => { p.g.rotation.y += dt * p.hiz; }); }
 
+// ---------- Dolabın üstünde gül başlı dönen rüzgâr gülü ----------
+const ruzgarGulu = { bas: null };
+(function ruzgarGuluKur() {
+  const g = new THREE.Group();
+  g.position.set(9.65, 0.93, -23.34);   // dolabın üst yüzeyi
+  sahne.add(g);
+  const sap = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.4, 8), new THREE.MeshPhongMaterial({ color: 0x2f6a35, specular: 0x000000 }));
+  sap.position.y = 0.2; g.add(sap);
+  const yaprak = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), new THREE.MeshPhongMaterial({ color: 0x3a7d40, specular: 0x000000 }));
+  yaprak.scale.set(1.3, 0.12, 0.55); yaprak.position.set(0.045, 0.14, 0); yaprak.rotation.z = 0.5; g.add(yaprak);
+  const taban = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.012, 14), new THREE.MeshPhongMaterial({ color: 0xd4af37, specular: 0xffffff, shininess: 60 }));
+  taban.position.y = 0.006; g.add(taban);
+  const bas = new THREE.Group(); bas.position.set(0, 0.42, 0.012); g.add(bas);   // yüzü odaya (+z) bakar
+  function petal(L, W, renk) {
+    const sh = new THREE.Shape();
+    sh.moveTo(0, 0); sh.bezierCurveTo(W * 1.1, L * 0.15, W * 1.15, L * 0.85, 0, L); sh.bezierCurveTo(-W * 1.15, L * 0.85, -W * 1.1, L * 0.15, 0, 0);
+    return new THREE.Mesh(new THREE.ShapeGeometry(sh, 10), new THREE.MeshPhongMaterial({ color: renk, specular: 0xffffff, shininess: 40, side: THREE.DoubleSide }));
+  }
+  // dış katman: 6 koyu kırmızı yaprak, rüzgâr gülü gibi bükülü
+  const dis = ['#b3122c', '#c8102e', '#a60d26', '#c8102e', '#b3122c', '#d92b45'];
+  for (let i = 0; i < 6; i++) {
+    const p = petal(0.15, 0.055, new THREE.Color(dis[i]));
+    const kol = new THREE.Group(); kol.rotation.z = i * Math.PI / 3;
+    p.rotation.y = 0.55;              // bükülme
+    kol.add(p); bas.add(kol);
+  }
+  // iç katman: 5 daha açık yaprak, ters yöne bükülü
+  for (let i = 0; i < 5; i++) {
+    const p = petal(0.095, 0.04, new THREE.Color(i % 2 ? '#e64a5f' : '#d92b45'));
+    p.position.z = 0.012;
+    const kol = new THREE.Group(); kol.rotation.z = i * 2 * Math.PI / 5 + 0.3;
+    p.rotation.y = -0.5;
+    kol.add(p); bas.add(kol);
+  }
+  // orta düğme
+  const orta = new THREE.Mesh(new THREE.SphereGeometry(0.024, 12, 10), new THREE.MeshPhongMaterial({ color: 0xf2c94c, specular: 0xffffff, shininess: 70, emissive: 0x3a2a05 }));
+  orta.position.z = 0.025; bas.add(orta);
+  ruzgarGulu.bas = bas;
+})();
+function ruzgarGuluGuncelle(dt, t) {
+  if (!ruzgarGulu.bas) return;
+  const hiz = 3.2 + 1.6 * Math.sin(t * 0.5);   // vantilatörün esintisiyle hız değişir
+  ruzgarGulu.bas.rotation.z -= dt * hiz;
+}
+// duvar fotoğrafı gibi: yalnızca ikinci odadayken çalışır
+
 // ---------- Kontrol ----------
 const kon = { donuk: 0, vx: 0, vz: 0, oto: null, bakToplam: 0, dragX: 0, dragY: 0, yaw: 0, pitch: -0.22, x: 0, z: 1.2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
 let basladi = false;
@@ -2092,7 +2138,7 @@ function kare(simdi) {
 
   if (basladi && kon.z < KAPI_Z + 6) yaprakDok(dt, simdi / 1000);
   if (K3.acik && kon.z > ODA2_Z1 && kon.x > 2.5) { cocukFotoGuncelle(); motorGuncelle(dt); }
-  if (kon.x > ODA_X) { k3Guncelle(simdi); vantilatorGuncelle(simdi / 1000); sahisOklar.forEach(o => { o.mat.opacity = 0.04 + 0.2 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 420 - o.k * 0.8), 2); }); ampulGuncelle(simdi / 1000); cocukFotoGuncelle(); if (kon.x > ODA_X + 1.5) balonGuncelle(dt, simdi / 1000); }
+  if (kon.x > ODA_X) { ruzgarGuluGuncelle(dt, simdi / 1000); k3Guncelle(simdi); vantilatorGuncelle(simdi / 1000); sahisOklar.forEach(o => { o.mat.opacity = 0.04 + 0.2 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 420 - o.k * 0.8), 2); }); ampulGuncelle(simdi / 1000); cocukFotoGuncelle(); if (kon.x > ODA_X + 1.5) balonGuncelle(dt, simdi / 1000); }
 
   // mum titremesi
   const zaman = simdi / 1000;
