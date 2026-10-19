@@ -2261,7 +2261,7 @@ function parkAc() {
 function parkKapat() {
   if (!park.aktif) return;
   gecisKutu.classList.add('acik');
-  surusKutu.classList.remove('acik'); yukariBtn.classList.remove('acik'); park.gaz = false; park.fren = false; motorSesiDur();
+  surusKutu.classList.remove('acik'); yukariBtn.classList.remove('acik'); park.gaz = false; park.fren = false; surus.gaz = false; surus.fren = false; motorSesiDur();
   setTimeout(() => {
     park.aktif = false;
     park.kapali.forEach(o => { o.visible = true; });
@@ -2285,7 +2285,7 @@ function parkGuncelle(dt, simdi) {
   const t = kon.tus, moto = park.moto, gecis = moto.userData;
   let dir = kon.joyX + ((t['d'] || t['arrowright']) ? 1 : 0) - ((t['a'] || t['arrowleft']) ? 1 : 0);
   dir = Math.max(-1, Math.min(1, dir));
-  const gaz = park.gaz || t['w'] || t['arrowup'] || t[' '], fren = park.fren || t['s'] || t['arrowdown'];
+  const gaz = park.gaz || surus.gaz || t['w'] || t['arrowup'] || t[' '], fren = park.fren || surus.fren || t['s'] || t['arrowdown'];   // ekrandaki GAZ/FREN düğmeleri surus.gaz / surus.fren'i ayarlar
   const toprakta = parkYuzey(park.x, park.z), havada = park.y > 0.05;
   const vmax = toprakta ? 16 : 8, ivme = toprakta ? 5.2 : 3.2;
   if (!havada) {
