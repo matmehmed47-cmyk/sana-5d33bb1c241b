@@ -219,7 +219,7 @@ function duvarMum(x, y, z, rotY, isikGuc, menzil) {
 // oda: fotoğraf duvarı
 duvarMum(-1.6, 1.15, ODA_SON, 0, 1.5, 10);
 duvarMum(1.6, 1.15, ODA_SON, 0, 1.5, 10);
-[-3.0, 3.0, -4.6, 4.6].forEach(x => duvarMum(x, 1.15, ODA_SON, 0, 0, 0));
+[-3.0, 3.0, -4.6].forEach(x => duvarMum(x, 1.15, ODA_SON, 0, 0, 0));
 // oda: yan duvarlar (videoların iki yanında)
 [-17.6, -18.9, -24.6, -25.7].forEach(z => {
   duvarMum(-ODA_X, 1.2, z, Math.PI / 2, 0, 0);
@@ -376,6 +376,7 @@ sahne.add(kapiOku);
 const yanOklar = [];
 [-1, 1].forEach(yon => {
   [1.95, 2.55, 3.15, 3.75, 4.35].forEach((x, k) => {
+    if (yon > 0 && x > 3.5) return; // sağ köşede sonraki oda kapısı var
     const mat = new THREE.MeshBasicMaterial({ color: 0xe8b25f, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
     const ok = new THREE.Mesh(okGeo, mat);
     ok.scale.set(yon * 0.7, 0.7, 1);
@@ -391,7 +392,7 @@ const yanOklar = [];
     ok.position.set(yon * (ODA_X - 0.01), 1.9, z);
     ok.rotation.y = -yon * Math.PI / 2;
     sahne.add(ok);
-    yanOklar.push({ mat, k: 5 + n });
+    yanOklar.push({ mat, k: (yon > 0 ? 3 : 5) + n });
   });
 });
 
@@ -663,6 +664,45 @@ function kapiSesi() {
   } catch (e) {}
 }
 
+let sonrakiKapiIsik = null;
+// ---------- Sonraki odaya kapı (sağ arka köşe) ----------
+(function sonrakiKapi() {
+  const KX = 4.35, KZ = ODA_SON + 0.04, GEN = 1.3, YUK = 2.35;
+  const kasaMat = new THREE.MeshPhongMaterial({ color: 0xb08a4f, specular: 0xfff0c0, shininess: 40, emissive: 0x2a1c06 });
+  [[-GEN / 2 - 0.05, YUK / 2, 0.08, YUK + 0.1], [GEN / 2 + 0.05, YUK / 2, 0.08, YUK + 0.1]].forEach(p => {
+    const k = new THREE.Mesh(new THREE.BoxGeometry(p[2], p[3], 0.1), kasaMat); k.position.set(KX + p[0], p[1], KZ); sahne.add(k);
+  });
+  const ust = new THREE.Mesh(new THREE.BoxGeometry(GEN + 0.18, 0.1, 0.1), kasaMat); ust.position.set(KX, YUK + 0.05, KZ); sahne.add(ust);
+  const c = document.createElement('canvas'); c.width = 512; c.height = 1024;
+  const x = c.getContext('2d');
+  const doku = new THREE.CanvasTexture(c);
+  function ciz() {
+    x.fillStyle = '#3a2314'; x.fillRect(0, 0, 512, 1024);
+    x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 6;
+    x.strokeRect(40, 60, 432, 380); x.strokeRect(40, 520, 432, 440);
+    const altin = x.createLinearGradient(0, 0, 512, 1024);
+    altin.addColorStop(0, '#fff3cf'); altin.addColorStop(0.5, '#d9a94f'); altin.addColorStop(1, '#f7e2a6');
+    x.fillStyle = altin; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 10;
+    x.font = '120px "Great Vibes", "Snell Roundhand", "Brush Script MT", cursive';
+    x.fillText('Devamı', 256, 200);
+    x.fillText('var...', 256, 330);
+    x.fillStyle = '#e0556f'; x.font = '70px Georgia, serif'; x.fillText('♥', 256, 700);
+    doku.needsUpdate = true;
+  }
+  ciz();
+  if (document.fonts && document.fonts.load) document.fonts.load('100px "Great Vibes"', 'Devamı var').then(ciz).catch(() => {});
+  const kanat = new THREE.Mesh(new THREE.PlaneGeometry(GEN, YUK), new THREE.MeshBasicMaterial({ map: doku, color: 0x8a8a8a, fog: false }));
+  kanat.position.set(KX, YUK / 2, KZ + 0.01);
+  sahne.add(kanat);
+  // kapının altından sızan sıcak ışık
+  const isikSerit = new THREE.Mesh(new THREE.PlaneGeometry(GEN, 0.35),
+    new THREE.MeshBasicMaterial({ color: 0xffb35a, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  isikSerit.rotation.x = -Math.PI / 2; isikSerit.position.set(KX, 0.02, KZ + 0.2);
+  sahne.add(isikSerit);
+  sonrakiKapiIsik = isikSerit;
+})();
+
 // ---------- Müzik ----------
 let muzik = null, muzikHedef = 0, muzikVar = true;
 function muzikKur() {
@@ -929,6 +969,8 @@ function kare(simdi) {
 
   // zemin okları: kapı açılınca silik silik yanıp söner
   zeminOklar.forEach(o => { o.mat.opacity = kapiAcik ? 0.03 + 0.3 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 430 - o.k * 0.9), 2) : 0; });
+
+  if (sonrakiKapiIsik) sonrakiKapiIsik.material.opacity = 0.22 + 0.16 * Math.sin(simdi / 900);
 
   // okların nabzı
   const nabiz = 0.7 + 0.3 * Math.sin(simdi / 350);
