@@ -1326,6 +1326,80 @@ function patenCikarGuncelle(simdi) {
   }
 }
 
+// ---------- İkinci odadaki renkli balonlar (çarpınca hareket eder) ----------
+const BALON_R = 0.3;
+const balonlar = [];
+(function balonKur() {
+  const renkler = [0xff5c9e, 0x2fd0d6, 0xa07bff, 0xffd23f, 0x5fd16a, 0xff8a3d, 0x4aa3ff, 0xff4d4d];
+  const konumlar = [[10.2, -15.6], [10.6, -21.8], [11.8, -17.4], [11.4, -20.0], [12.8, -15.2], [13.0, -22.4],
+    [13.6, -18.8], [14.2, -16.4], [14.6, -21.0], [15.4, -19.2], [15.8, -15.4], [12.2, -23.0], [10.0, -18.6], [14.4, -23.0]];
+  konumlar.forEach((k, i) => {
+    const renk = renkler[i % renkler.length];
+    const g = new THREE.Group();
+    const m = new THREE.Mesh(new THREE.SphereGeometry(BALON_R, 20, 14),
+      new THREE.MeshPhongMaterial({ color: renk, specular: 0xffffff, shininess: 80, emissive: new THREE.Color(renk).multiplyScalar(0.28) }));
+    m.scale.set(1, 1.12, 1); m.position.y = BALON_R * 1.12;
+    g.add(m);
+    const dugum = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.09, 8), m.material);
+    dugum.rotation.x = Math.PI; dugum.position.y = 0.02;
+    g.add(dugum);
+    g.position.set(k[0], 0.0, k[1]);
+    sahne.add(g);
+    balonlar.push({ g, m, x: k[0], z: k[1], vx: 0, vz: 0, faz: Math.random() * 6, ezil: 0 });
+  });
+})();
+function balonSesi(siddet) {
+  try {
+    if (!sesBagl) return;
+    const c = sesBagl, t = c.currentTime;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(260 + Math.random() * 60, t); o.frequency.exponentialRampToValueAtTime(150, t + 0.12);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.min(0.13, 0.04 + siddet * 0.05), t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.18);
+  } catch (e) {}
+}
+let balonSesZ = 0;
+function balonGuncelle(dt, t) {
+  const KX0 = HOL_SON + 0.8, KX1 = ODA2_X1 - 1.0, KZ0 = ODA2_Z0 + 0.5, KZ1 = ODA2_Z1 - 0.5;
+  const kHiz = Math.hypot(kon.vx, kon.vz);
+  balonlar.forEach((b, i) => {
+    // sürtünme: yumuşakça yavaşlar
+    const s = Math.exp(-dt * 0.9);
+    b.vx *= s; b.vz *= s;
+    b.x += b.vx * dt; b.z += b.vz * dt;
+    // duvarlardan sek
+    if (b.x < KX0) { b.x = KX0; b.vx = Math.abs(b.vx) * 0.7; }
+    if (b.x > KX1) { b.x = KX1; b.vx = -Math.abs(b.vx) * 0.7; }
+    if (b.z < KZ0) { b.z = KZ0; b.vz = Math.abs(b.vz) * 0.7; }
+    if (b.z > KZ1) { b.z = KZ1; b.vz = -Math.abs(b.vz) * 0.7; }
+    // karaktere çarpma
+    const dx = b.x - kon.x, dz = b.z - kon.z, d = Math.hypot(dx, dz), R = BALON_R + 0.5;
+    if (d < R && d > 0.001) {
+      const nx = dx / d, nz = dz / d;
+      b.x = kon.x + nx * R; b.z = kon.z + nz * R;
+      const hiz = Math.max(1.4, kHiz * 1.35);
+      b.vx = nx * hiz + kon.vx * 0.5; b.vz = nz * hiz + kon.vz * 0.5;
+      b.ezil = 1;
+      if (t - balonSesZ > 0.12) { balonSesZ = t; balonSesi(hiz); }
+    }
+    // balonlar birbirine çarpar
+    for (let j = i + 1; j < balonlar.length; j++) {
+      const o = balonlar[j], ex = o.x - b.x, ez = o.z - b.z, e = Math.hypot(ex, ez), mn = BALON_R * 2;
+      if (e < mn && e > 0.001) {
+        const nx = ex / e, nz = ez / e, ic = (mn - e) / 2;
+        b.x -= nx * ic; b.z -= nz * ic; o.x += nx * ic; o.z += nz * ic;
+        const rel = (o.vx - b.vx) * nx + (o.vz - b.vz) * nz;
+        if (rel < 0) { b.vx += nx * rel; b.vz += nz * rel; o.vx -= nx * rel; o.vz -= nz * rel; o.ezil = 0.6; b.ezil = 0.6; }
+      }
+    }
+    b.ezil = Math.max(0, b.ezil - dt * 4);
+    const sal = Math.sin(t * 1.3 + b.faz) * 0.02;
+    b.g.position.set(b.x, 0.02 + sal + Math.min(0.06, Math.hypot(b.vx, b.vz) * 0.03), b.z);
+    const e = 1 + b.ezil * 0.12;
+    b.m.scale.set(e, 1.12 - b.ezil * 0.1, e);
+  });
+}
+
 // ---------- Kontrol ----------
 const kon = { donuk: 0, vx: 0, vz: 0, oto: null, bakToplam: 0, dragX: 0, dragY: 0, yaw: 0, pitch: -0.22, x: 0, z: 1.2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
 let basladi = false;
@@ -1492,7 +1566,7 @@ function kare(simdi) {
   matOk.color.setRGB(0.91 * nabiz, 0.7 * nabiz, 0.37 * nabiz);
 
   if (basladi && kon.z < KAPI_Z + 6) yaprakDok(dt, simdi / 1000);
-  if (kon.x > ODA_X) cocukFotoGuncelle();
+  if (kon.x > ODA_X) { cocukFotoGuncelle(); if (kon.x > ODA_X + 1.5) balonGuncelle(dt, simdi / 1000); }
 
   // mum titremesi
   const zaman = simdi / 1000;
