@@ -98,6 +98,61 @@ kutu(KOR_X * 2, ODA_Y - YUKSEK, 0.1, matOda, 0, YUKSEK + (ODA_Y - YUKSEK) / 2, K
   sahne.add(abajur);
 });
 
+// ---------- Gül yaprakları ve güller ----------
+(function gulleriSer() {
+  const yapraklar = [];
+  const rast = (a, b) => a + Math.random() * (b - a);
+  for (let i = 0; i < 280; i++) {
+    // ortada yoğun, kenarlara doğru seyrek; kapıya doğru biraz daha çok
+    const x = (Math.random() + Math.random() + Math.random() - 1.5) * 0.95;
+    yapraklar.push([x, rast(KOR_BAS - 0.6, KAPI_Z + 0.3)]);
+  }
+  for (let i = 0; i < 50; i++) {
+    const x = (Math.random() + Math.random() - 1) * 1.8;
+    yapraklar.push([x, rast(KAPI_Z - 0.4, ODA_SON + 3.5)]);
+  }
+  const geo = new THREE.SphereGeometry(0.055, 8, 6);
+  geo.scale(1, 0.14, 0.72);
+  const mat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  const grup = new THREE.InstancedMesh(geo, mat, yapraklar.length);
+  const d = new THREE.Object3D(), renk = new THREE.Color();
+  const tonlar = [0x8a0f1f, 0xa3142a, 0xb81d35, 0x6e0b18, 0xc42a43];
+  yapraklar.forEach((p, i) => {
+    const b = rast(0.8, 1.5);
+    d.position.set(p[0], 0.012 + Math.random() * 0.01, p[1]);
+    d.rotation.set(rast(-0.25, 0.25), rast(0, Math.PI * 2), rast(-0.25, 0.25));
+    d.scale.set(b, b, b);
+    d.updateMatrix();
+    grup.setMatrixAt(i, d.matrix);
+    renk.setHex(tonlar[Math.floor(Math.random() * tonlar.length)]);
+    grup.setColorAt(i, renk);
+  });
+  grup.instanceMatrix.needsUpdate = true;
+  grup.instanceColor.needsUpdate = true;
+  sahne.add(grup);
+
+  // yerde yatan güller: gövde + katmanlı baş
+  const matSap = new THREE.MeshLambertMaterial({ color: 0x2f5a2a });
+  const matGul = [0xa3142a, 0xb81d35, 0x8a0f1f].map(c => new THREE.MeshLambertMaterial({ color: c }));
+  const konumlar = [[-1.1, 2.4], [1.15, 0.6], [-1.2, -2.8], [1.05, -5.0], [-1.0, -7.2],
+    [1.2, -9.4], [-1.15, -11.6], [1.0, -13.4], [-0.9, -14.9], [0.7, -15.2]];
+  konumlar.forEach((k, i) => {
+    const g = new THREE.Group();
+    const sap = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.01, 0.5, 6), matSap);
+    sap.rotation.z = Math.PI / 2; sap.position.set(0.25, 0.02, 0);
+    g.add(sap);
+    [[0.1, 0.045, 0], [0.075, 0.085, 0], [0.05, 0.125, 0]].forEach((r, li) => {
+      const h = new THREE.Mesh(new THREE.SphereGeometry(r[0], 10, 8), matGul[(i + li) % matGul.length]);
+      h.scale.set(1, 0.8, 1);
+      h.position.set(0, r[1], r[2]);
+      g.add(h);
+    });
+    g.position.set(k[0], 0, k[1]);
+    g.rotation.y = rast(0, Math.PI * 2);
+    sahne.add(g);
+  });
+})();
+
 // ---------- Fotoğraf ----------
 const FOTO_Z = ODA_SON + 0.045, FOTO_Y = 1.9, FOTO_YUK = 3;
 let fotoNet = null, fotoBulanik = null, fotoIsik = null;
