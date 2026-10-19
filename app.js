@@ -495,8 +495,23 @@ let zerSira = 0, zerBirik = 0;
 const zerGeo = new THREE.BufferGeometry();
 zerGeo.setAttribute('position', new THREE.BufferAttribute(zerKonum, 3));
 zerGeo.setAttribute('color', new THREE.BufferAttribute(zerRenk, 3));
+const kalpDoku = (function () {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const x = c.getContext('2d');
+  x.translate(32, 34); x.scale(46, -46);
+  x.shadowColor = 'rgba(255,255,255,.9)'; x.shadowBlur = 0.12 * 46 / 46 * 10;
+  x.beginPath();
+  x.moveTo(0, -0.5);
+  x.bezierCurveTo(-0.15, -0.35, -0.6, -0.05, -0.6, 0.22);
+  x.bezierCurveTo(-0.6, 0.5, -0.2, 0.62, 0, 0.3);
+  x.bezierCurveTo(0.2, 0.62, 0.6, 0.5, 0.6, 0.22);
+  x.bezierCurveTo(0.6, -0.05, 0.15, -0.35, 0, -0.5);
+  x.closePath();
+  x.fillStyle = '#ffffff'; x.fill();
+  return new THREE.CanvasTexture(c);
+})();
 const zerPuan = new THREE.Points(zerGeo, new THREE.PointsMaterial({
-  size: 0.07, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true, fog: false }));
+  map: kalpDoku, size: 0.2, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true, fog: false }));
 zerPuan.frustumCulled = false;
 sahne.add(zerPuan);
 function zerreGuncelle(dt, x, z, yon, hareketli) {
@@ -513,9 +528,9 @@ function zerreGuncelle(dt, x, z, yon, hareketli) {
   for (let k = 0; k < ZER; k++) {
     zerYas[k] += dt;
     const t = zerYas[k] / (zerOmur[k] || 1);
-    const par = t >= 1 ? 0 : (1 - t) * 0.9;
-    zerKonum[k * 3 + 1] += dt * 0.22;
-    zerRenk[k * 3] = 1 * par; zerRenk[k * 3 + 1] = 0.78 * par; zerRenk[k * 3 + 2] = 0.42 * par;
+    const par = t >= 1 ? 0 : (1 - t) * 0.5;
+    zerKonum[k * 3 + 1] += dt * 0.28;
+    zerRenk[k * 3] = 1 * par; zerRenk[k * 3 + 1] = 0.4 * par; zerRenk[k * 3 + 2] = 0.55 * par;
   }
   zerGeo.attributes.position.needsUpdate = true;
   zerGeo.attributes.color.needsUpdate = true;
