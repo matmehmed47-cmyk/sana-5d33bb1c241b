@@ -336,11 +336,12 @@ function sahisOklariKur() {
   [-15.9, -15.3, -14.7].forEach((z, n) => sahisOk(ODA2_X1 - 0.02, z, -Math.PI / 2, false, n));
   [16.9, 16.1, 15.3].forEach((x, n) => sahisOk(x, ODA2_Z1 - 0.02, Math.PI, false, 3 + n));
 }
-const vantilator = { bas: null, kanatlar: null };
+const vantilator = { bas: null, kanatlar: null, yazi: null };
 // ---------- İkinci oda eşyaları: halı, ayaklı vantilatör, küçük dolap ----------
 const ENGELLER2 = [
   { x: 10.0, z: -14.4, r: 0.4 },                                        // vantilatör
-  { x: 9.6, z: -23.15, r: 0.4 }, { x: 10.0, z: -23.15, r: 0.4 }, { x: 10.4, z: -23.15, r: 0.4 }   // dolap
+  { x: 9.6, z: -23.15, r: 0.4 }, { x: 10.0, z: -23.15, r: 0.4 }, { x: 10.4, z: -23.15, r: 0.4 },   // dolap
+  { x: 11.55, z: -23.1, r: 0.6 }, { x: 11.55, z: -22.45, r: 0.6 }, { x: 11.55, z: -21.8, r: 0.6 }   // yatak
 ];
 (function oda2Esyalar() {
   // halı: kilim desenli
@@ -401,11 +402,44 @@ const ENGELLER2 = [
     tel.position.z = 0.1; tel.rotation.z = i * Math.PI / 8; bas.add(tel);
   }
   vantilator.bas = bas; vantilator.kanatlar = kanatlar;
+  // direğin yan tarafına dikey, yaklaşınca beliren isim
+  const kc = document.createElement('canvas'); kc.width = 96; kc.height = 640;
+  const kx = kc.getContext('2d');
+  kx.translate(48, 320); kx.rotate(-Math.PI / 2);
+  kx.textAlign = 'center'; kx.textBaseline = 'middle';
+  kx.font = 'bold 64px Georgia, "Times New Roman", serif';
+  kx.shadowColor = 'rgba(255,214,120,.9)'; kx.shadowBlur = 14;
+  kx.fillStyle = '#ffe9b0'; kx.fillText('Kıvanç', 0, 0);
+  const yazi = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.6),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(kc), transparent: true, opacity: 0, depthWrite: false, fog: false }));
+  yazi.position.set(0.034, 0.62, 0); yazi.rotation.y = Math.PI / 2;
+  fan.add(yazi);
+  vantilator.yazi = yazi;
+
+  // yatak: sol duvara başucu dayalı, dolap ile fotoğraf arasında
+  const bAhsap = new THREE.MeshPhongMaterial({ color: 0x6b4a30, specular: 0x221a12, shininess: 14 });
+  const sert = (w, h, d, mat, px, py, pz) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(px, py, pz); sahne.add(m); return m; };
+  const BX = 11.55, BZ0 = -23.6;   // başucu duvarda
+  sert(1.0, 0.06, 0.06, bAhsap, BX, 0.78, BZ0 + 0.03);                       // başlık üst
+  sert(1.0, 0.8, 0.06, bAhsap, BX, 0.4, BZ0 + 0.03);                          // başlık
+  sert(1.0, 0.24, 2.0, bAhsap, BX, 0.22, BZ0 + 1.0);                          // karkas
+  const sMat = new THREE.MeshPhongMaterial({ color: 0xf1ece0, specular: 0x000000, shininess: 4 });
+  const bMat = new THREE.MeshPhongMaterial({ color: 0x3d5a8c, specular: 0x000000, shininess: 4 });
+  sert(0.94, 0.2, 1.94, sMat, BX, 0.44, BZ0 + 1.0);                            // yatak
+  sert(0.96, 0.23, 1.25, bMat, BX, 0.455, BZ0 + 1.34);                          // battaniye
+  sert(0.96, 0.04, 0.12, sMat, BX, 0.58, BZ0 + 0.72);                           // battaniye kıvrımı
+  [-0.22, 0.22].forEach(d => {                                                  // iki yastık
+    const y = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), sMat);
+    y.scale.set(1.1, 0.45, 0.9); y.position.set(BX + d, 0.6, BZ0 + 0.45); sahne.add(y);
+  });
+
 })();
 function vantilatorGuncelle(t) {
   if (!vantilator.kanatlar) return;
   vantilator.kanatlar.rotation.z = t * 14;
   vantilator.bas.rotation.y = Math.PI / 2 + Math.sin(t * 0.5) * 0.55;   // yavaşça sağa sola döner
+  const uz = Math.hypot(kon.x - 10.0, kon.z + 14.4);
+  if (vantilator.yazi) vantilator.yazi.material.opacity = 0.95 * (1 - Math.min(1, Math.max(0, (uz - 1.6) / 1.6)));   // yaklaşınca belirir
 }
 function engelleriItele(nesne, yaricap, sek) {   // nesne: {x,z} (+ vx,vz sekmesi için)
   ENGELLER2.forEach(o => {
