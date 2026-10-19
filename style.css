@@ -62,3 +62,13 @@ html,body{margin:0;height:100%;background:var(--zemin);color:var(--yazi);font-fa
 #patenYazi{font-size:20px;margin-bottom:12px}
 #patenCikarBtn{font:inherit;font-size:20px;padding:10px 24px;border-radius:12px;border:1px solid var(--vurgu);background:transparent;color:var(--vurgu);cursor:pointer}
 #patenCikarBtn:active{background:var(--vurgu);color:var(--zemin)}
+#oturBtn{position:fixed;left:50%;bottom:22%;transform:translateX(-50%);font:inherit;font-size:22px;padding:12px 34px;border-radius:999px;border:1px solid var(--vurgu);background:rgba(14,10,12,.8);color:var(--vurgu);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .4s;z-index:7}
+#oturBtn.acik{opacity:1;pointer-events:auto}
+#surus{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;z-index:7}
+#surus.acik{opacity:1}
+#kalkBtn{position:fixed;right:16px;top:16px;pointer-events:auto;font:inherit;font-size:17px;padding:8px 20px;border-radius:999px;border:1px solid var(--vurgu);background:rgba(14,10,12,.8);color:var(--vurgu)}
+#surusSag{position:fixed;right:18px;bottom:26px;display:flex;gap:14px;align-items:flex-end}
+#surusSag button{pointer-events:auto;font:inherit;font-weight:bold;border-radius:50%;border:2px solid rgba(255,255,255,.7);color:#fff;touch-action:none;user-select:none}
+#gazBtn{width:104px;height:104px;font-size:24px;background:rgba(40,160,70,.7)}
+#frenBtn{width:84px;height:84px;font-size:18px;background:rgba(200,40,50,.7)}
+#surusSag button.bas{transform:scale(.93);filter:brightness(1.3)}
