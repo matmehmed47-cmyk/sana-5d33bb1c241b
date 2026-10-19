@@ -360,6 +360,39 @@ new THREE.TextureLoader().load(ODA1.foto, tex => {
   sahne.add(fotoBulanik);
 });
 
+// ---------- Sol duvardaki video ----------
+const VID_X = -ODA_X + 0.07, VID_Z = -21.6, VID_Y = 1.9, VID_GEN = 3.2, VID_YUK = 1.8;
+const video = document.createElement('video');
+video.src = 'video/pist.mp4';
+video.muted = true; video.loop = true; video.playsInline = true;
+video.setAttribute('playsinline', ''); video.setAttribute('muted', '');
+video.preload = 'auto';
+const vidTex = new THREE.VideoTexture(video);
+vidTex.minFilter = THREE.LinearFilter; vidTex.magFilter = THREE.LinearFilter; vidTex.generateMipmaps = false;
+const vidEkran = new THREE.Mesh(new THREE.PlaneGeometry(VID_GEN, VID_YUK),
+  new THREE.MeshBasicMaterial({ map: vidTex, fog: false }));
+vidEkran.position.set(VID_X, VID_Y, VID_Z);
+vidEkran.rotation.y = Math.PI / 2;
+sahne.add(vidEkran);
+const vidCerceve = new THREE.Mesh(new THREE.BoxGeometry(0.06, VID_YUK + 0.24, VID_GEN + 0.24),
+  new THREE.MeshPhongMaterial({ color: 0x1a1210, specular: 0x000000 }));
+vidCerceve.position.set(-ODA_X + 0.035, VID_Y, VID_Z);
+sahne.add(vidCerceve);
+const vidIsik = new THREE.PointLight(0xdfe8ff, 0, 9, 2);
+vidIsik.position.set(-ODA_X + 1.2, VID_Y, VID_Z);
+sahne.add(vidIsik);
+let vidOynuyor = false;
+function videoGuncelle(icerde) {
+  const uz = Math.hypot(kon.x - VID_X, kon.z - VID_Z);
+  const olsun = icerde && uz < 9;
+  if (olsun !== vidOynuyor) {
+    vidOynuyor = olsun;
+    if (olsun) { const p = video.play(); if (p && p.catch) p.catch(() => {}); }
+    else video.pause();
+  }
+  vidIsik.intensity = olsun ? 0.55 : 0;
+}
+
 // ---------- Müzik ----------
 let muzik = null, muzikHedef = 0, muzikVar = true;
 function muzikKur() {
@@ -473,6 +506,7 @@ function kare(simdi) {
       fotoBulanik.material.color.setRGB(parlak, parlak, parlak);
       fotoBulanik.material.opacity = 1 - yumusak(7, 3.6, fotoUz);
     }
+    videoGuncelle(icerde);
     const yaziGerek = icerde && fotoUz < 4.6;
     if (yaziGerek !== yaziAcik) {
       yaziAcik = yaziGerek;
