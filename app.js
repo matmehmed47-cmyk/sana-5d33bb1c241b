@@ -415,56 +415,111 @@ function muzikKur() {
   if (p && p.catch) p.catch(() => {});
 }
 
-// ---------- Karakter: el ele tutuşan İ ve M ----------
-const matAltin = new THREE.MeshPhongMaterial({ color: 0xe3b44f, specular: 0xfff2c0, shininess: 60, emissive: 0x3a2808 });
-const matGoz = new THREE.MeshBasicMaterial({ color: 0x1a1010 });
-function kapsul(r, uz) {
-  const g = new THREE.Group();
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, uz, 12), matAltin));
-  const u1 = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), matAltin); u1.position.y = uz / 2; g.add(u1);
-  const u2 = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), matAltin); u2.position.y = -uz / 2; g.add(u2);
+// ---------- Karakter: ışıklı İ ve M, aralarında ışık teli ----------
+const matAltin = new THREE.MeshPhongMaterial({ color: 0xf0c15a, specular: 0xfff6d6, shininess: 90, emissive: 0x7a5412 });
+function harfGeo(sekil, ortaX) {
+  const g = new THREE.ExtrudeGeometry(sekil, { depth: 0.07, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012, bevelSegments: 2 });
+  g.translate(-ortaX, 0, -0.035);
   return g;
 }
-function uzuv(r, uz, x, y, z) { // tepesinden sallanan bacak/kol
-  const p = new THREE.Group();
-  const k = kapsul(r, uz); k.position.y = -uz / 2;
-  p.add(k); p.position.set(x, y, z || 0);
-  return p;
+function yuvarlakDikdortgen(w, h, r) {
+  const sh = new THREE.Shape();
+  sh.moveTo(r, 0); sh.lineTo(w - r, 0); sh.absarc(w - r, r, r, -Math.PI / 2, 0, false);
+  sh.lineTo(w, h - r); sh.absarc(w - r, h - r, r, 0, Math.PI / 2, false);
+  sh.lineTo(r, h); sh.absarc(r, h - r, r, Math.PI / 2, Math.PI, false);
+  sh.lineTo(0, r); sh.absarc(r, r, r, Math.PI, Math.PI * 1.5, false);
+  return sh;
 }
-function goz(x, y, z) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), matGoz); m.position.set(x, y, z); return m; }
+function parilti(boy, opaklik) {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, 'rgba(255,214,140,1)'); g.addColorStop(0.35, 'rgba(255,190,100,.45)'); g.addColorStop(1, 'rgba(255,170,80,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, opacity: opaklik, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  sp.scale.set(boy, boy, 1);
+  return sp;
+}
 
-const ikili = new THREE.Group();
-const kolBacak = []; // [uzuv, yön]
+const ikili = new THREE.Group();   // hareket eden ana grup
+const govde = new THREE.Group();   // havada süzülen, sallanan kısım
+ikili.add(govde);
+const halolar = [];
+let ikiliKalp = null;
 (function karakterYap() {
-  // İ
-  const i = new THREE.Group(); i.position.x = -0.3;
-  const govI = kapsul(0.07, 0.5); govI.position.y = 0.45; i.add(govI);
-  const nokta = new THREE.Mesh(new THREE.SphereGeometry(0.065, 12, 8), matAltin); nokta.position.y = 0.93; i.add(nokta);
-  i.add(goz(-0.03, 0.6, -0.062), goz(0.03, 0.6, -0.062));
-  [-0.035, 0.035].forEach((x, k) => { const b = uzuv(0.032, 0.14, x, 0.2); i.add(b); kolBacak.push([b, k ? 1 : -1, 0.7]); });
-  const kolI = uzuv(0.028, 0.3, -0.1, 0.72); i.add(kolI); kolBacak.push([kolI, 1, 0.5]);
-  ikili.add(i);
-  // M
-  const m = new THREE.Group(); m.position.x = 0.3;
-  [-0.15, 0.15].forEach(x => { const b = kapsul(0.045, 0.5); b.position.set(x, 0.45, 0); m.add(b); });
-  const d1 = kapsul(0.04, 0.2); d1.position.set(-0.075, 0.62, 0); d1.rotation.z = 0.6; m.add(d1);
-  const d2 = kapsul(0.04, 0.2); d2.position.set(0.075, 0.62, 0); d2.rotation.z = -0.6; m.add(d2);
-  m.add(goz(-0.15, 0.6, -0.042), goz(0.15, 0.6, -0.042));
-  [-0.15, 0.15].forEach((x, k) => { const b = uzuv(0.032, 0.14, x, 0.2); m.add(b); kolBacak.push([b, k ? -1 : 1, 0.7]); });
-  const kolM = uzuv(0.028, 0.3, 0.215, 0.72); m.add(kolM); kolBacak.push([kolM, -1, 0.5]);
-  ikili.add(m);
-  // el ele
-  const el = kapsul(0.03, 0.34); el.rotation.z = Math.PI / 2; el.position.set(-0.07, 0.5, 0); ikili.add(el);
-  // üstlerinde küçük kalp
-  const kalp = new THREE.Mesh(kalpGeo, matKalp);
-  kalp.scale.set(0.16, 0.16, 1); kalp.rotation.y = Math.PI; kalp.position.set(0.02, 1.32, 0.02);
-  kalp.name = 'kalp';
-  ikili.add(kalp);
+  // İ: ince bir çubuk ve üstünde nokta
+  const harfI = new THREE.Group();
+  harfI.add(new THREE.Mesh(harfGeo(yuvarlakDikdortgen(0.1, 0.5, 0.045), 0.05), matAltin));
+  const nokta = new THREE.Mesh(new THREE.SphereGeometry(0.058, 16, 12), matAltin);
+  nokta.position.set(0, 0.62, 0); harfI.add(nokta);
+  harfI.position.set(-0.36, 0, 0);
+  govde.add(harfI);
+  // M: sade ve kalın çizgili
+  const sM = new THREE.Shape();
+  [[0, 0], [0, 0.5], [0.1, 0.5], [0.25, 0.25], [0.4, 0.5], [0.5, 0.5], [0.5, 0], [0.4, 0], [0.4, 0.3], [0.25, 0.05], [0.1, 0.3], [0.1, 0]]
+    .forEach((p, k) => k ? sM.lineTo(p[0], p[1]) : sM.moveTo(p[0], p[1]));
+  const harfM = new THREE.Mesh(harfGeo(sM, 0.25), matAltin);
+  harfM.position.set(0.36, 0, 0);
+  govde.add(harfM);
+  // aralarında parlayan ışık teli ve kalp
+  const tel = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.37, 8), new THREE.MeshBasicMaterial({ color: 0xffe3a3 }));
+  tel.rotation.z = Math.PI / 2; tel.position.set(0, 0.32, 0); govde.add(tel);
+  ikiliKalp = new THREE.Mesh(kalpGeo, new THREE.MeshBasicMaterial({ color: 0xff5a7a }));
+  ikiliKalp.scale.set(0.11, 0.11, 1); ikiliKalp.position.set(0, 0.33, -0.02); ikiliKalp.rotation.y = Math.PI;
+  govde.add(ikiliKalp);
+  // harelerle parlama
+  [[-0.36, 0.3, 0.95], [0.36, 0.28, 1.15], [0, 0.33, 0.55]].forEach(h => {
+    const p = parilti(h[2], 0.55); p.position.set(h[0], h[1], 0); govde.add(p); halolar.push(p);
+  });
+  govde.position.y = 0.4;
   ikili.scale.setScalar(0.8);
+  // yerdeki yumuşak gölge
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, 'rgba(0,0,0,.55)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+  const golge = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.7),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+  golge.rotation.x = -Math.PI / 2; golge.position.y = 0.012;
+  ikili.add(golge);
   sahne.add(ikili);
 })();
-const ikiliKalp = ikili.getObjectByName('kalp');
-let ikiliYon = 0, yurume = 0, yurumeFaz = 0;
+let ikiliYon = 0, yurume = 0, yurumeFaz = 0, egim = 0;
+
+// arkalarında kalan ışık zerrecikleri
+const ZER = 90;
+const zerKonum = new Float32Array(ZER * 3), zerRenk = new Float32Array(ZER * 3);
+const zerOmur = new Float32Array(ZER).fill(0), zerYas = new Float32Array(ZER).fill(9);
+let zerSira = 0, zerBirik = 0;
+const zerGeo = new THREE.BufferGeometry();
+zerGeo.setAttribute('position', new THREE.BufferAttribute(zerKonum, 3));
+zerGeo.setAttribute('color', new THREE.BufferAttribute(zerRenk, 3));
+const zerPuan = new THREE.Points(zerGeo, new THREE.PointsMaterial({
+  size: 0.07, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true, fog: false }));
+zerPuan.frustumCulled = false;
+sahne.add(zerPuan);
+function zerreGuncelle(dt, x, z, yon, hareketli) {
+  zerBirik += dt * (hareketli ? 40 : 6);
+  while (zerBirik >= 1) {
+    zerBirik -= 1;
+    const k = zerSira = (zerSira + 1) % ZER;
+    const arka = hareketli ? 0.25 : 0;
+    zerKonum[k * 3] = x + Math.sin(yon) * arka + (Math.random() - 0.5) * 0.7;
+    zerKonum[k * 3 + 1] = 0.15 + Math.random() * 0.8;
+    zerKonum[k * 3 + 2] = z + Math.cos(yon) * arka + (Math.random() - 0.5) * 0.25;
+    zerYas[k] = 0; zerOmur[k] = 1.1 + Math.random() * 0.9;
+  }
+  for (let k = 0; k < ZER; k++) {
+    zerYas[k] += dt;
+    const t = zerYas[k] / (zerOmur[k] || 1);
+    const par = t >= 1 ? 0 : (1 - t) * 0.9;
+    zerKonum[k * 3 + 1] += dt * 0.22;
+    zerRenk[k * 3] = 1 * par; zerRenk[k * 3 + 1] = 0.78 * par; zerRenk[k * 3 + 2] = 0.42 * par;
+  }
+  zerGeo.attributes.position.needsUpdate = true;
+  zerGeo.attributes.color.needsUpdate = true;
+}
 
 // ---------- Kontrol ----------
 const kon = { yaw: 0, pitch: -0.22, x: 0, z: 1.2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
@@ -606,12 +661,16 @@ function kare(simdi) {
   }
 
   // karakter animasyonu
-  yurumeFaz += dt * 9 * yurume;
-  const salin = Math.sin(yurumeFaz);
-  kolBacak.forEach(o => { o[0].rotation.x = salin * o[1] * o[2] * yurume; });
-  ikili.position.set(kon.x, Math.abs(Math.sin(yurumeFaz)) * 0.03 * yurume, kon.z);
+  yurumeFaz += dt * 7 * yurume;
+  egim += ((-0.12 * yurume) - egim) * Math.min(1, dt * 6);
+  govde.position.y = 0.4 + Math.sin(simdi / 700) * 0.035 + Math.abs(Math.sin(yurumeFaz)) * 0.025 * yurume;
+  govde.rotation.x = egim;
+  govde.rotation.z = Math.sin(yurumeFaz) * 0.045 * yurume + Math.sin(simdi / 1100) * 0.015;
+  ikili.position.set(kon.x, 0, kon.z);
   ikili.rotation.y = ikiliYon;
-  ikiliKalp.position.y = 1.32 + Math.sin(simdi / 500) * 0.04;
+  ikiliKalp.position.y = 0.33 + Math.sin(simdi / 450) * 0.025;
+  halolar.forEach((h, k) => { h.material.opacity = 0.5 + 0.15 * Math.sin(simdi / 600 + k * 2); });
+  if (basladi) zerreGuncelle(dt, kon.x, kon.z, ikiliYon, yurume > 0.15);
 
   // kamera: karakterin arkasında, bakış yönünün tersinde
   const cp = Math.cos(kon.pitch), sp = Math.sin(kon.pitch);
