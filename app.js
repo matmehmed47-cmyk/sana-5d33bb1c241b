@@ -224,7 +224,7 @@ sahne.add(isik2);
 const cocukFoto = [];
 function cocukFotoGuncelle() {
   cocukFoto.forEach(f => {
-    const uz = Math.hypot(kon.x - (ODA2_X1 - 0.065), kon.z - f.z);
+    const uz = Math.hypot(kon.x - f.px, kon.z - (f.pz !== undefined ? f.pz : f.z));
     const yak = yumusak(11, 3.8, uz), p = 0.12 + 0.88 * yak;
     f.net.material.color.setRGB(p, p, p);
     f.bul.material.color.setRGB(p, p, p);
@@ -258,7 +258,7 @@ function cocukFotoGuncelle() {
       bul.position.set(ODA2_X1 - 0.067, FY, zc);
       bul.rotation.y = -Math.PI / 2;
       sahne.add(bul);
-      cocukFoto.push({ net, bul, z: zc });
+      cocukFoto.push({ net, bul, z: zc, px: ODA2_X1 - 0.065, pz: zc });
     });
     z += gen + BOSLUK;
   });
@@ -288,6 +288,52 @@ function ampulGuncelle(t) {
   ampul.cam.material.color.setHSL(ton, 0.7, 0.75);
   ampul.parilti.material.color.copy(ampulRenk);
   ampul.parilti.material.opacity = 0.5 + 0.15 * Math.sin(t * 2.2);
+}
+// yan duvarlarda şimdiki fotoğraflar: solda Mehmetnur, sağda İrem (yaklaşınca netleşir)
+function duvarFotoEkle(dosya, oran, px, pz, yon) {   // yon: 'sol' (z=ODA2_Z0 duvarı) ya da 'sag' (z=ODA2_Z1 duvarı)
+  const FH = 2.1, FY = 1.6, gen = oran * FH, sol = yon === 'sol';
+  const duvarZ = sol ? ODA2_Z0 : ODA2_Z1, ic = sol ? 1 : -1;     // odaya doğru yön
+  const cer = new THREE.Mesh(new THREE.BoxGeometry(gen + 0.24, FH + 0.24, 0.06),
+    new THREE.MeshPhongMaterial({ color: 0x5a3b22, specular: 0x000000, shininess: 4 }));
+  cer.position.set(px, FY, duvarZ + ic * 0.03);
+  sahne.add(cer);
+  new THREE.TextureLoader().load(dosya, tex => {
+    tex.anisotropy = 4;
+    const c = document.createElement('canvas');
+    c.width = 18; c.height = Math.max(8, Math.round(18 / oran));
+    c.getContext('2d').drawImage(tex.image, 0, 0, c.width, c.height);
+    const bulTex = new THREE.CanvasTexture(c);
+    bulTex.magFilter = THREE.LinearFilter; bulTex.minFilter = THREE.LinearFilter;
+    const z0 = duvarZ + ic * 0.065;
+    const net = new THREE.Mesh(new THREE.PlaneGeometry(gen, FH), new THREE.MeshBasicMaterial({ map: tex, color: 0x1f1f1f, fog: false }));
+    net.position.set(px, FY, z0); net.rotation.y = sol ? 0 : Math.PI;
+    sahne.add(net);
+    const bul = new THREE.Mesh(new THREE.PlaneGeometry(gen, FH), new THREE.MeshBasicMaterial({ map: bulTex, color: 0x1f1f1f, transparent: true, fog: false }));
+    bul.position.set(px, FY, z0 + ic * 0.002); bul.rotation.y = sol ? 0 : Math.PI;
+    sahne.add(bul);
+    cocukFoto.push({ net, bul, z: z0, px, pz: z0 });
+  });
+}
+duvarFotoEkle('foto/mehmetnur.jpg', 1006 / 1267, 13.4, 0, 'sol');
+duvarFotoEkle('foto/irem.jpg', 720 / 1280, 13.4, 0, 'sag');
+
+// kapıdan fotoğraflara giden, hafifçe yanıp sönen duvar okları
+const sahisOklar = [];
+function sahisOk(x, z, rotY, ters, k) {
+  const mat = new THREE.MeshBasicMaterial({ color: 0xe8b25f, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+  const ok = new THREE.Mesh(okGeo, mat);
+  ok.scale.set(ters ? -0.7 : 0.7, 0.7, 1);
+  ok.position.set(x, 1.5, z); ok.rotation.y = rotY;
+  sahne.add(ok);
+  sahisOklar.push({ mat, k });
+}
+function sahisOklariKur() {
+// sol zincir: batı duvarında −z yönüne, sonra sol duvarda +x yönüne (Mehmetnur'a)
+[-20.1, -20.8, -21.5, -22.2].forEach((z, n) => sahisOk(HOL_SON + 0.02, z, Math.PI / 2, false, n));
+[8.9, 9.7, 10.5, 11.3].forEach((x, n) => sahisOk(x, ODA2_Z0 + 0.02, 0, false, 4 + n));
+// sağ zincir: batı duvarında +z yönüne, sonra sağ duvarda +x yönüne (İrem'e)
+[-17.3, -16.6, -15.9, -15.2].forEach((z, n) => sahisOk(HOL_SON + 0.02, z, Math.PI / 2, true, n));
+[8.9, 9.7, 10.5, 11.3].forEach((x, n) => sahisOk(x, ODA2_Z1 - 0.02, Math.PI, true, 4 + n));
 }
 // paten rafı: girişte, holün kuzeyinde
 const rafMat = new THREE.MeshPhongMaterial({ color: 0x8a6240, specular: 0x000000, shininess: 4 });
@@ -387,6 +433,7 @@ const okSekil = new THREE.Shape();
 okSekil.moveTo(-0.3, -0.05); okSekil.lineTo(0.1, -0.05); okSekil.lineTo(0.1, -0.16);
 okSekil.lineTo(0.38, 0); okSekil.lineTo(0.1, 0.16); okSekil.lineTo(0.1, 0.05); okSekil.lineTo(-0.3, 0.05);
 const okGeo = new THREE.ExtrudeGeometry(okSekil, { depth: 0.03, bevelEnabled: false });
+sahisOklariKur();
 const matKalp = new THREE.MeshBasicMaterial({ color: 0xd22a4a });
 const matOk = new THREE.MeshBasicMaterial({ color: 0xe8b25f, side: THREE.DoubleSide });
 const oklar = [];
@@ -1595,7 +1642,7 @@ function kare(simdi) {
   matOk.color.setRGB(0.91 * nabiz, 0.7 * nabiz, 0.37 * nabiz);
 
   if (basladi && kon.z < KAPI_Z + 6) yaprakDok(dt, simdi / 1000);
-  if (kon.x > ODA_X) { ampulGuncelle(simdi / 1000); cocukFotoGuncelle(); if (kon.x > ODA_X + 1.5) balonGuncelle(dt, simdi / 1000); }
+  if (kon.x > ODA_X) { sahisOklar.forEach(o => { o.mat.opacity = 0.04 + 0.2 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 420 - o.k * 0.8), 2); }); ampulGuncelle(simdi / 1000); cocukFotoGuncelle(); if (kon.x > ODA_X + 1.5) balonGuncelle(dt, simdi / 1000); }
 
   // mum titremesi
   const zaman = simdi / 1000;
