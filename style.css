@@ -28,3 +28,6 @@ html,body{margin:0;height:100%;background:var(--zemin);color:var(--yazi);font-fa
 #soruMesaj.dogru{color:#f7c8d2;font-size:19px}
 .ucankalp{position:fixed;bottom:-40px;color:#e0556f;pointer-events:none;z-index:9;animation:uc 3.4s ease-out forwards}
 @keyframes uc{0%{transform:translateY(0);opacity:0}15%{opacity:.9}100%{transform:translateY(-95vh);opacity:0}}
+#yonerge{position:fixed;left:0;right:0;top:56px;text-align:center;font-size:20px;letter-spacing:.04em;opacity:0;transition:opacity 1s;pointer-events:none;text-shadow:0 2px 12px #000;padding:0 16px;z-index:4}
+#yonerge.acik{opacity:.92}
+#soruSec button.solgun{opacity:.35;border-style:dashed}

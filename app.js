@@ -381,7 +381,7 @@ const yanOklar = [];
     ok.scale.set(yon * 0.7, 0.7, 1);
     ok.position.set(yon * x, 1.9, ODA_SON + 0.04);
     sahne.add(ok);
-    yanOklar.push({ mat, k });
+    yanOklar.push({ mat, k, yon });
   });
   // devamı: yan duvarda köşeden videoya doğru
   [-26.3, -25.6, -24.9, -24.2].forEach((z, n) => {
@@ -391,7 +391,7 @@ const yanOklar = [];
     ok.position.set(yon * (ODA_X - 0.01), 1.9, z);
     ok.rotation.y = -yon * Math.PI / 2;
     sahne.add(ok);
-    yanOklar.push({ mat, k: 5 + n });
+    yanOklar.push({ mat, k: 5 + n, yon });
   });
 });
 
@@ -500,7 +500,7 @@ function videoEkrani(kaynak, sol, z, y, gen, yuk) {
   const isik = new THREE.PointLight(0xdfe8ff, 0, 9, 2);
   isik.position.set(yon * (ODA_X - 1.2), y, z);
   sahne.add(isik);
-  videolar.push({ v, isik, ekran, x: ekran.position.x, z, oynuyor: false, parlak: 0.3 });
+  videolar.push({ v, isik, ekran, x: ekran.position.x, z, oynuyor: false, parlak: 0.3, izle: 0 });
 }
 videoEkrani('video/pist.mp4', true, -21.6, 1.9, 3.2, 1.8);
 videoEkrani('video/yan.mp4', false, -21.6, 1.85, 2.6 * 478 / 850, 2.6);
@@ -517,6 +517,7 @@ function videoGuncelle(icerde, dt) {
       if (olsun) { const p = o.v.play(); if (p && p.catch) p.catch(() => {}); }
       else o.v.pause();
     }
+    if (o.oynuyor && o.parlak > 0.6) o.izle += dt;
     const hedefP = olsun ? 1 : (icerde ? 0.3 : 0);
     o.parlak += (hedefP - o.parlak) * Math.min(1, dt * 3);
     o.ekran.material.color.setRGB(o.parlak, o.parlak, o.parlak);
@@ -524,7 +525,7 @@ function videoGuncelle(icerde, dt) {
   });
 }
 
-// ---------- Soru tahtası: "Mehmetnur kaç kere kayıp düştü?" ----------
+// ---------- Kapı sorusu: "Mehmetnur kaç kere kayıp düştü?" ----------
 const SORU = {
   metin: 'Mehmetnur kaç kere kayıp düştü?',
   secenekler: ['4', '5', '6', 'Çok'],
@@ -534,51 +535,43 @@ const SORU = {
     '5': 'Hayır hayır, saymayı bırakmıştım...',
     '6': 'Yaklaşmadı bile. Buz biliyor 🙈'
   },
-  dogruMesaj: 'Bildin! Çok! Buz da, o çocuk da şahit.'
+  ipucu: 'İpucu: Sayamayacağın kadar.',
+  dogruMesaj: 'Bildin! Çok! Kapı açılıyor...'
 };
-const SORU_X = -3.2, SORU_Z = -16.16, SORU_Y = 1.85;
-let soruCozuldu = false;
-const soruCan = document.createElement('canvas');
-soruCan.width = 1024; soruCan.height = 768;
-const soruDoku = new THREE.CanvasTexture(soruCan);
-soruDoku.anisotropy = 4;
-function soruCiz() {
-  const x = soruCan.getContext('2d'), W = 1024, H = 768;
-  x.clearRect(0, 0, W, H);
+const KAPI2_X = ODA_X, KAPI2_Z = -18.7;
+const kapi2 = { hinge: null, glow: null, isik: null, aci: 0, acik: false };
+let soruCozuldu = false, yanlisSayi = 0;
+
+// kapının yanındaki küçük "kilitli" plakası
+const plakaCan = document.createElement('canvas');
+plakaCan.width = 512; plakaCan.height = 384;
+const plakaDoku = new THREE.CanvasTexture(plakaCan);
+function plakaCiz() {
+  const x = plakaCan.getContext('2d'), W = 512, H = 384;
   x.fillStyle = '#1b1517'; x.fillRect(0, 0, W, H);
   const altin = x.createLinearGradient(0, 0, W, H);
   altin.addColorStop(0, '#fff3cf'); altin.addColorStop(0.5, '#d9a94f'); altin.addColorStop(1, '#f7e2a6');
-  x.strokeStyle = altin; x.lineWidth = 8; x.strokeRect(24, 24, W - 48, H - 48);
-  x.lineWidth = 3; x.strokeRect(46, 46, W - 92, H - 92);
-  x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = altin;
-  const font = (b) => b + 'px "Great Vibes", "Snell Roundhand", "Brush Script MT", cursive';
-  const sar = (t, y, b, en) => { x.font = font(b); while (x.measureText(t).width > en && b > 30) { b -= 4; x.font = font(b); } x.fillText(t, W / 2, y); };
-  if (!soruCozuldu) {
-    sar('Bir soru', 150, 120, 700);
-    sar('Mehmetnur', 330, 150, 760);
-    sar('kaç kere', 470, 130, 760);
-    sar('kayıp düştü?', 610, 130, 760);
-    x.font = 'italic 34px Georgia, serif'; x.fillStyle = 'rgba(243,233,220,.7)';
-    x.fillText('cevap için yaklaş', W / 2, 700);
-  } else {
-    sar('Cevap', 170, 130, 700);
-    sar('Çok!', 400, 260, 760);
-    x.fillStyle = '#e0556f'; x.font = '80px Georgia, serif';
-    x.fillText('♥', W / 2, 640);
-  }
-  soruDoku.needsUpdate = true;
+  x.strokeStyle = altin; x.lineWidth = 6; x.strokeRect(14, 14, W - 28, H - 28);
+  x.lineWidth = 2; x.strokeRect(30, 30, W - 60, H - 60);
+  x.fillStyle = altin; x.strokeStyle = altin; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.font = '100px "Great Vibes", "Snell Roundhand", "Brush Script MT", cursive';
+  x.fillText(soruCozuldu ? 'Açık' : 'Kilitli', W / 2, 270);
+  // kilit
+  x.lineWidth = 12;
+  x.beginPath();
+  if (soruCozuldu) { x.arc(W / 2 + 18, 112, 38, Math.PI, 0); x.moveTo(W / 2 + 56, 112); x.lineTo(W / 2 + 56, 90); }
+  else x.arc(W / 2, 112, 38, Math.PI, 0);
+  x.stroke();
+  x.fillRect(W / 2 - 56, 112, 112, 78);
+  x.fillStyle = '#1b1517'; x.beginPath(); x.arc(W / 2, 148, 11, 0, Math.PI * 2); x.fill();
+  plakaDoku.needsUpdate = true;
 }
-soruCiz();
-if (document.fonts && document.fonts.load) document.fonts.load('100px "Great Vibes"', 'Bir soru Mehmetnur kaç kere kayıp düştü? Cevap Çok').then(soruCiz).catch(() => {});
-const soruCerceve = new THREE.Mesh(new THREE.BoxGeometry(1.52, 1.17, 0.04),
-  new THREE.MeshPhongMaterial({ color: 0x3a2a14, specular: 0x000000 }));
-soruCerceve.position.set(SORU_X, SORU_Y, SORU_Z + 0.03);
-sahne.add(soruCerceve);
-const soruTahta = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.05),
-  new THREE.MeshBasicMaterial({ map: soruDoku, color: 0x9a9a9a, fog: false }));
-soruTahta.position.set(SORU_X, SORU_Y, SORU_Z - 0.0);
-soruTahta.rotation.y = Math.PI;
-sahne.add(soruTahta);
+plakaCiz();
+if (document.fonts && document.fonts.load) document.fonts.load('100px "Great Vibes"', 'Kilitli Açık').then(plakaCiz).catch(() => {});
+const plaka = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.465), new THREE.MeshBasicMaterial({ map: plakaDoku, color: 0xb0b0b0, fog: false }));
+plaka.position.set(ODA_X - 0.03, 1.5, -17.25);
+plaka.rotation.y = -Math.PI / 2;
+sahne.add(plaka);
 
 const soruKart = document.getElementById('soru'), soruBaslik = document.getElementById('soruBaslik'),
   soruSec = document.getElementById('soruSec'), soruMesaj = document.getElementById('soruMesaj');
@@ -594,13 +587,17 @@ SORU.secenekler.forEach(sc => {
       soruMesaj.textContent = SORU.dogruMesaj;
       soruMesaj.className = 'dogru';
       soruSec.style.display = 'none';
-      soruCiz();
+      plakaCiz();
       kalpPatlat();
-      soruBitisZ = performance.now() + 6000;
+      kapi2.acik = true;
+      gicirti(1.6);
+      soruBitisZ = performance.now() + 5000;
     } else {
-      soruMesaj.textContent = SORU.yanlis[sc] || 'Bir daha dene.';
+      yanlisSayi++;
+      soruMesaj.textContent = (SORU.yanlis[sc] || 'Bir daha dene.') + (yanlisSayi >= 2 ? ' ' + SORU.ipucu : '');
       soruMesaj.className = 'yanlis';
       b.classList.add('sal');
+      b.classList.add('solgun');
       setTimeout(() => b.classList.remove('sal'), 400);
     }
   });
@@ -618,11 +615,30 @@ function kalpPatlat() {
   }
 }
 function soruGuncelle(icerde) {
-  const dx = SORU_X - kon.x, dz = SORU_Z - kon.z, uz = Math.hypot(dx, dz);
+  const dx = KAPI2_X - kon.x, dz = KAPI2_Z - kon.z, uz = Math.hypot(dx, dz);
   const bak = (-Math.sin(kon.yaw) * dx - Math.cos(kon.yaw) * dz) / (uz || 1);
-  let goster = icerde && uz < 4.8 && bak > (soruGorunur ? 0.2 : 0.45);
+  let goster = icerde && uz < 3.4 && bak > (soruGorunur ? 0.2 : 0.45);
   if (soruCozuldu && performance.now() > soruBitisZ) goster = false;
   if (goster !== soruGorunur) { soruGorunur = goster; soruKart.classList.toggle('acik', goster); }
+}
+
+// ---------- Yönerge: odadaki sıra ----------
+let asama = 0, asamaT = 0, yonYazilan = -1, yonZaman = 0;
+const yonKutu = document.getElementById('yonerge');
+const ASAMA_YAZI = ['Karşıdaki fotoğrafa yaklaş.', 'Şimdi solundaki videoya bak.', 'Şimdi sağdaki videoya geç.',
+  'Kapıya git. Bir sorum var.', 'Kapı açıldı.'];
+function yonergeGuncelle(icerde, dt, fotoUz) {
+  if (!icerde) { yonKutu.classList.remove('acik'); yonYazilan = -1; return; }
+  if (asama === 0 && fotoUz < 4.4) { asamaT += dt; if (asamaT > 4) asama = 1; }
+  if (asama === 1 && videolar[0].izle > 10) asama = 2;
+  if (asama === 2 && videolar[1].izle > 10) asama = 3;
+  if (asama >= 0 && asama < 4 && soruCozuldu) asama = 4;
+  if (asama !== yonYazilan) {
+    yonYazilan = asama; yonZaman = performance.now();
+    yonKutu.textContent = ASAMA_YAZI[asama];
+    yonKutu.classList.add('acik');
+  }
+  if (asama === 4 && performance.now() - yonZaman > 5000) yonKutu.classList.remove('acik');
 }
 
 // ---------- Kapıdan her tabloya giden, zeminde silik yanıp sönen oklar ----------
@@ -644,11 +660,26 @@ function zeminYolu(bx, bz, sx, sz, adet) {
     zeminOklar.push({ mat, k });
   }
 }
-zeminYolu(0, -17.7, 0, -23.4, 7);          // fotoğrafa
-zeminYolu(-0.8, -18.0, -4.0, -21.4, 5);    // sol videoya
-zeminYolu(0.8, -18.0, 4.0, -21.4, 5);      // sağ videoya
-zeminYolu(-1.2, -17.0, -2.7, -17.0, 3);    // soru tahtasına
-zeminYolu(0.8, -17.7, 3.6, -18.5, 3);      // sonraki odaya kapıya
+
+// ---------- Kapı gıcırtısı (sentezlenmiş, dosyasız) ----------
+function gicirti(d) {
+  try {
+    if (!sesBagl) return;
+    d = d || 1.3;
+    const c = sesBagl, t = c.currentTime;
+    const o = c.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(95, t); o.frequency.linearRampToValueAtTime(190, t + d * 0.45); o.frequency.linearRampToValueAtTime(120, t + d);
+    const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 11; lg.gain.value = 9;
+    lfo.connect(lg); lg.connect(o.frequency);
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 6;
+    f.frequency.setValueAtTime(700, t); f.frequency.linearRampToValueAtTime(1400, t + d * 0.5); f.frequency.linearRampToValueAtTime(900, t + d);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22, t + 0.15);
+    g.gain.setValueAtTime(0.22, t + d * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(f); f.connect(g); g.connect(c.destination);
+    o.start(t); lfo.start(t); o.stop(t + d + 0.05); lfo.stop(t + d + 0.05);
+  } catch (e) {}
+}
 
 // ---------- Kapı kapanma sesi (küçük, yumuşak bir "tok") ----------
 let sesBagl = null;
@@ -669,7 +700,7 @@ let sonrakiKapiIsik = null;
 (function sonrakiKapi() {
   const GEN = 1.3, YUK = 2.35;
   const g = new THREE.Group();
-  g.position.set(ODA_X, 0, -18.7);
+  g.position.set(ODA_X, 0, KAPI2_Z);
   g.rotation.y = -Math.PI / 2; // yüzü odaya (−x) bakar
   const kasaMat = new THREE.MeshPhongMaterial({ color: 0xb08a4f, specular: 0xfff0c0, shininess: 40, emissive: 0x2a1c06 });
   [-1, 1].forEach(y => {
@@ -678,6 +709,20 @@ let sonrakiKapiIsik = null;
   });
   const ust = new THREE.Mesh(new THREE.BoxGeometry(GEN + 0.18, 0.1, 0.1), kasaMat);
   ust.position.set(0, YUK + 0.05, 0.05); g.add(ust);
+  // kapı açılınca görünen sıcak ışık
+  const gc = document.createElement('canvas'); gc.width = 64; gc.height = 128;
+  const gx = gc.getContext('2d');
+  const gr = gx.createRadialGradient(32, 84, 4, 32, 84, 90);
+  gr.addColorStop(0, 'rgba(255,236,190,1)'); gr.addColorStop(0.5, 'rgba(255,190,110,.9)'); gr.addColorStop(1, 'rgba(255,150,70,.6)');
+  gx.fillStyle = gr; gx.fillRect(0, 0, 64, 128);
+  const isikAlan = new THREE.Mesh(new THREE.PlaneGeometry(GEN, YUK),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(gc), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  isikAlan.position.set(0, YUK / 2, 0.03);
+  g.add(isikAlan);
+  kapi2.glow = isikAlan;
+  // menteşeli kanat (sol menteşe)
+  const hinge = new THREE.Group();
+  hinge.position.set(-GEN / 2, 0, 0.06);
   const c = document.createElement('canvas'); c.width = 512; c.height = 1024;
   const x = c.getContext('2d');
   const doku = new THREE.CanvasTexture(c);
@@ -697,9 +742,11 @@ let sonrakiKapiIsik = null;
   }
   ciz();
   if (document.fonts && document.fonts.load) document.fonts.load('100px "Great Vibes"', 'Devamı var').then(ciz).catch(() => {});
-  const kanat = new THREE.Mesh(new THREE.PlaneGeometry(GEN, YUK), new THREE.MeshBasicMaterial({ map: doku, color: 0x8a8a8a, fog: false }));
-  kanat.position.set(0, YUK / 2, 0.06);
-  g.add(kanat);
+  const kanat = new THREE.Mesh(new THREE.PlaneGeometry(GEN, YUK), new THREE.MeshBasicMaterial({ map: doku, color: 0x8a8a8a, fog: false, side: THREE.DoubleSide }));
+  kanat.position.set(GEN / 2, YUK / 2, 0);
+  hinge.add(kanat);
+  g.add(hinge);
+  kapi2.hinge = hinge;
   // kapının altından sızan sıcak ışık
   const isikSerit = new THREE.Mesh(new THREE.PlaneGeometry(GEN, 0.35),
     new THREE.MeshBasicMaterial({ color: 0xffb35a, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
@@ -938,7 +985,7 @@ function kare(simdi) {
     // kapı
     if (!kapiAcik) {
       // koridordan yaklaşınca ya da odadan kapıya dönünce açılır
-      if (kon.z < KAPI_Z + 3.2 && kon.z > KAPI_Z - 2.0) kapiAcik = true;
+      if (kon.z < KAPI_Z + 3.2 && kon.z > KAPI_Z - 2.0) { kapiAcik = true; gicirti(1.3); }
     } else if (kon.z < KAPI_Z - 3.4) {
       // odaya iyice girince arkasından kapanır
       kapiAcik = false;
@@ -962,6 +1009,7 @@ function kare(simdi) {
     }
     videoGuncelle(icerde, dt);
     soruGuncelle(icerde);
+    yonergeGuncelle(icerde, dt, fotoUz);
     const yaziGerek = icerde && fotoUz < 4.6;
     if (yaziGerek !== yaziAcik) {
       yaziAcik = yaziGerek;
@@ -971,12 +1019,15 @@ function kare(simdi) {
   }
 
   // fotoğraf yanı oklar: odadayken yumuşakça yanıp söner
-  yanOklar.forEach(o => { o.mat.opacity = odadaMi ? 0.06 + 0.6 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 380 - o.k * 0.9), 2) : 0; });
+  yanOklar.forEach(o => { const gor = (asama === 1 && o.yon < 0) || (asama === 2 && o.yon > 0); o.mat.opacity = (odadaMi && gor) ? 0.06 + 0.6 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 380 - o.k * 0.9), 2) : 0; });
 
   // zemin okları: kapı açılınca silik silik yanıp söner
   zeminOklar.forEach(o => { o.mat.opacity = kapiAcik ? 0.03 + 0.3 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 430 - o.k * 0.9), 2) : 0; });
 
-  if (sonrakiKapiIsik) sonrakiKapiIsik.material.opacity = 0.22 + 0.16 * Math.sin(simdi / 900);
+  if (sonrakiKapiIsik) sonrakiKapiIsik.material.opacity = (kapi2.acik ? 0.6 : 0.22) + 0.16 * Math.sin(simdi / 900);
+  kapi2.aci += ((kapi2.acik ? -1.9 : 0) - kapi2.aci) * Math.min(1, dt * 1.6);
+  if (kapi2.hinge) kapi2.hinge.rotation.y = kapi2.aci;
+  if (kapi2.glow) kapi2.glow.material.opacity = 0.95 * Math.min(1, Math.abs(kapi2.aci) / 1.2);
 
   // okların nabzı
   const nabiz = 0.7 + 0.3 * Math.sin(simdi / 350);
