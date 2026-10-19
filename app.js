@@ -880,6 +880,7 @@ const ikili = new THREE.Group();   // hareket eden ana grup
 const govde = new THREE.Group();   // havada süzülen, sallanan kısım
 ikili.add(govde);
 const halolar = [];
+const patenler = [];
 let ikiliKalp = null;
 (function karakterYap() {
   // İ: ince bir çubuk ve üstünde nokta
@@ -906,7 +907,36 @@ let ikiliKalp = null;
   [[-0.36, 0.3, 0.95], [0.36, 0.28, 1.15], [0, 0.33, 0.55]].forEach(h => {
     const p = parilti(h[2], 0.55); p.position.set(h[0], h[1], 0); govde.add(p); halolar.push(p);
   });
-  govde.position.y = 0.4;
+  // buz patenleri: İ'nin altında 1, M'nin iki bacağında 2
+  const matBot = new THREE.MeshPhongMaterial({ color: 0xf1ece0, specular: 0xffffff, shininess: 40, emissive: 0x2b2820 });
+  const matBicak = new THREE.MeshPhongMaterial({ color: 0xcfe3f5, specular: 0xffffff, shininess: 130, emissive: 0x1d3550 });
+  const botSekil = new THREE.Shape();
+  botSekil.moveTo(-0.12, 0); botSekil.lineTo(0.12, 0);
+  botSekil.quadraticCurveTo(0.17, 0, 0.17, 0.05); botSekil.quadraticCurveTo(0.17, 0.09, 0.11, 0.11);
+  botSekil.lineTo(0.03, 0.12); botSekil.quadraticCurveTo(0.0, 0.16, 0.01, 0.2);
+  botSekil.lineTo(-0.07, 0.2); botSekil.lineTo(-0.1, 0.07); botSekil.quadraticCurveTo(-0.12, 0.03, -0.12, 0);
+  const botGeo = new THREE.ExtrudeGeometry(botSekil, { depth: 0.14, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.008, bevelSegments: 2 });
+  botGeo.translate(0, 0, -0.07);
+  const bicakSekil = new THREE.Shape();
+  bicakSekil.moveTo(-0.12, -0.05); bicakSekil.lineTo(0.11, -0.05);
+  bicakSekil.quadraticCurveTo(0.19, -0.05, 0.19, 0.01); bicakSekil.lineTo(-0.12, 0.01);
+  const bicakGeo = new THREE.ExtrudeGeometry(bicakSekil, { depth: 0.012, bevelEnabled: false });
+  bicakGeo.translate(0, 0, -0.006);
+  function patenYap(x, faz) {
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(botGeo, matBot), new THREE.Mesh(bicakGeo, matBicak));
+    const dis = new THREE.Group();
+    dis.add(g);
+    g.scale.setScalar(0.65);
+    dis.rotation.y = Math.PI / 2;   // burun ileriye (−z) baksın
+    dis.position.set(x, -0.09, 0);
+    govde.add(dis);
+    patenler.push({ g: dis, faz });
+  }
+  patenYap(-0.36, 0);
+  patenYap(0.16, Math.PI);
+  patenYap(0.56, 0);
+  govde.position.y = 0.19;
   ikili.scale.setScalar(0.8);
   // yerdeki yumuşak gölge
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1214,8 +1244,9 @@ function kare(simdi) {
   // karakter animasyonu
   yurumeFaz += dt * 7 * yurume;
   egim += ((-0.12 * yurume) - egim) * Math.min(1, dt * 6);
-  govde.position.y = 0.4 + Math.sin(simdi / 700) * 0.035 + Math.abs(Math.sin(yurumeFaz)) * 0.025 * yurume;
+  govde.position.y = 0.19 + Math.sin(simdi / 700) * 0.03 + Math.abs(Math.sin(yurumeFaz)) * 0.025 * yurume;
   govde.rotation.x = egim;
+  patenler.forEach(p => { p.g.position.z = Math.sin(yurumeFaz + p.faz) * 0.07 * yurume; });
   govde.rotation.z = Math.sin(yurumeFaz) * 0.045 * yurume + Math.sin(simdi / 1100) * 0.015;
   ikili.position.set(kon.x, 0, kon.z);
   ikili.rotation.y = ikiliYon;
