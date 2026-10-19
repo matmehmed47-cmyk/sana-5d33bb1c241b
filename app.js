@@ -110,7 +110,7 @@ kapiMenteşe.add(kol);
     [[104, 104], [W - 104, 104], [104, H - 104], [W - 104, H - 104]].forEach(p => { kalp(p[0], p[1], 38); x.fill(); });
     // üst süs
     x.strokeStyle = altin; x.lineWidth = 3;
-    ayirac(300, 260);
+    ayirac(340, 260);
     // yazı
     x.textAlign = 'center'; x.textBaseline = 'middle';
     x.fillStyle = altin;
@@ -120,6 +120,7 @@ kapiMenteşe.add(kol);
       while (x.measureText(t).width > enCok && b > 40) { b -= 4; x.font = b + 'px "Great Vibes", "Snell Roundhand", "Brush Script MT", cursive'; }
       x.fillText(t, W / 2, y);
     };
+    yaz('Gülüm', 205, 200, 700);
     yaz('Her şey', 560, 260, 780);
     yaz('burada', 790, 260, 780);
     yaz('başladı', 1020, 260, 780);
