@@ -219,7 +219,17 @@ kutu(0.1, ODA2_Y, ODA2_Z1 - (HOL_Z + 0.8), matDuvar2, HOL_SON - 0.05, ODA2_Y / 2
 const isik2 = new THREE.PointLight(0xffd9a0, 1.1, 16, 1.5);
 isik2.position.set(o2cx, 2.7, o2cz);
 sahne.add(isik2);
-// karşı duvarda yan yana iki çocukluk fotoğrafı
+// karşı duvarda yan yana iki çocukluk fotoğrafı (yaklaştıkça netleşir)
+const cocukFoto = [];
+function cocukFotoGuncelle() {
+  cocukFoto.forEach(f => {
+    const uz = Math.hypot(kon.x - (ODA2_X1 - 0.065), kon.z - f.z);
+    const yak = yumusak(11, 3.8, uz), p = 0.12 + 0.88 * yak;
+    f.net.material.color.setRGB(p, p, p);
+    f.bul.material.color.setRGB(p, p, p);
+    f.bul.material.opacity = 1 - yumusak(8, 4.2, uz);
+  });
+}
 (function cocuklukFotolari() {
   const FY = 1.6, FH = 2.1, BOSLUK = 0.5;
   const liste = [{ dosya: 'foto/cocuk1.jpg', oran: 1254 / 939 }, { dosya: 'foto/cocuk2.jpg', oran: 720 / 1280 }];
@@ -233,10 +243,21 @@ sahne.add(isik2);
     sahne.add(cer);
     new THREE.TextureLoader().load(f.dosya, tex => {
       tex.anisotropy = 4;
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(gen, FH), new THREE.MeshBasicMaterial({ map: tex, color: 0xe6e0d6, fog: false }));
-      m.position.set(ODA2_X1 - 0.065, FY, zc);
-      m.rotation.y = -Math.PI / 2;     // yüzü odaya (−x) bakar
-      sahne.add(m);
+      const img = tex.image;
+      const c = document.createElement('canvas');   // bulanık sürüm
+      c.width = 18; c.height = Math.max(8, Math.round(18 / f.oran));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const bulTex = new THREE.CanvasTexture(c);
+      bulTex.magFilter = THREE.LinearFilter; bulTex.minFilter = THREE.LinearFilter;
+      const net = new THREE.Mesh(new THREE.PlaneGeometry(gen, FH), new THREE.MeshBasicMaterial({ map: tex, color: 0x1f1f1f, fog: false }));
+      net.position.set(ODA2_X1 - 0.065, FY, zc);
+      net.rotation.y = -Math.PI / 2;     // yüzü odaya (−x) bakar
+      sahne.add(net);
+      const bul = new THREE.Mesh(new THREE.PlaneGeometry(gen, FH), new THREE.MeshBasicMaterial({ map: bulTex, color: 0x1f1f1f, transparent: true, fog: false }));
+      bul.position.set(ODA2_X1 - 0.067, FY, zc);
+      bul.rotation.y = -Math.PI / 2;
+      sahne.add(bul);
+      cocukFoto.push({ net, bul, z: zc });
     });
     z += gen + BOSLUK;
   });
@@ -1471,6 +1492,7 @@ function kare(simdi) {
   matOk.color.setRGB(0.91 * nabiz, 0.7 * nabiz, 0.37 * nabiz);
 
   if (basladi && kon.z < KAPI_Z + 6) yaprakDok(dt, simdi / 1000);
+  if (kon.x > ODA_X) cocukFotoGuncelle();
 
   // mum titremesi
   const zaman = simdi / 1000;
