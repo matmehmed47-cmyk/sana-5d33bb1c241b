@@ -264,8 +264,8 @@ function duvarMum(x, y, z, rotY, isikGuc, menzil, yansima) {
 // koridorun başı: uç duvarda
 [-0.9, 0.9].forEach(x => duvarMum(x, 1.5, KOR_BAS, Math.PI, 0, 0));
 // oda: fotoğraf duvarı
-duvarMum(-1.6, 1.15, ODA_SON, 0, 1.5, 10, true);
-duvarMum(1.6, 1.15, ODA_SON, 0, 1.5, 10, true);
+duvarMum(-1.6, 1.15, ODA_SON, 0, 0.5, 7, true);
+duvarMum(1.6, 1.15, ODA_SON, 0, 0.5, 7, true);
 [-3.0, 3.0, -4.6, 4.6].forEach(x => duvarMum(x, 1.15, ODA_SON, 0, 0, 0, true));
 // oda: yan duvarlar (videoların iki yanında)
 [-17.6, -18.9, -24.6, -25.7].forEach(z => {
@@ -497,7 +497,7 @@ function yaprakDok(dt, t) {
 const FOTO_Z = ODA_SON + 0.045, FOTO_Y = 1.9, FOTO_YUK = 3;
 let fotoNet = null, fotoBulanik = null, fotoIsik = null, fotoYansima = null;
 const odaIsik = new THREE.PointLight(0xfff0dc, 0, 16, 2);
-odaIsik.position.set(0, 2.6, ODA_SON + 3);
+odaIsik.position.set(0, 3.5, ODA_SON + 3);
 sahne.add(odaIsik);
 
 new THREE.TextureLoader().load(ODA1.foto, tex => {
@@ -1293,7 +1293,7 @@ function kare(simdi) {
     if (icerde !== odadaMi) { odadaMi = icerde; muzikHedef = icerde ? 0.85 : 0; }
     const fotoUz = Math.hypot(kon.x, kon.z - FOTO_Z);
     const yakin = icerde ? yumusak(10, 3.2, fotoUz) : 0;
-    odaIsik.intensity = 0.3 + 1.4 * yakin;
+    odaIsik.intensity = 0.12 + 0.35 * yakin;
     if (fotoNet) {
       const parlak = 0.12 + 0.88 * yakin;
       fotoNet.material.color.setRGB(parlak, parlak, parlak);
