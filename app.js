@@ -219,11 +219,11 @@ function duvarMum(x, y, z, rotY, isikGuc, menzil) {
 // oda: fotoğraf duvarı
 duvarMum(-1.6, 1.15, ODA_SON, 0, 1.5, 10);
 duvarMum(1.6, 1.15, ODA_SON, 0, 1.5, 10);
-[-3.0, 3.0, -4.6].forEach(x => duvarMum(x, 1.15, ODA_SON, 0, 0, 0));
+[-3.0, 3.0, -4.6, 4.6].forEach(x => duvarMum(x, 1.15, ODA_SON, 0, 0, 0));
 // oda: yan duvarlar (videoların iki yanında)
 [-17.6, -18.9, -24.6, -25.7].forEach(z => {
   duvarMum(-ODA_X, 1.2, z, Math.PI / 2, 0, 0);
-  duvarMum(ODA_X, 1.2, z, -Math.PI / 2, 0, 0);
+  if (z < -20) duvarMum(ODA_X, 1.2, z, -Math.PI / 2, 0, 0);
 });
 // oda: kapı tarafındaki duvar
 [-4.0, -2.4, 2.4, 4.0].forEach(x => duvarMum(x, 1.5, KAPI_Z - 0.11, Math.PI, 0, 0));
@@ -376,7 +376,6 @@ sahne.add(kapiOku);
 const yanOklar = [];
 [-1, 1].forEach(yon => {
   [1.95, 2.55, 3.15, 3.75, 4.35].forEach((x, k) => {
-    if (yon > 0 && x > 3.5) return; // sağ köşede sonraki oda kapısı var
     const mat = new THREE.MeshBasicMaterial({ color: 0xe8b25f, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
     const ok = new THREE.Mesh(okGeo, mat);
     ok.scale.set(yon * 0.7, 0.7, 1);
@@ -392,7 +391,7 @@ const yanOklar = [];
     ok.position.set(yon * (ODA_X - 0.01), 1.9, z);
     ok.rotation.y = -yon * Math.PI / 2;
     sahne.add(ok);
-    yanOklar.push({ mat, k: (yon > 0 ? 3 : 5) + n });
+    yanOklar.push({ mat, k: 5 + n });
   });
 });
 
@@ -649,6 +648,7 @@ zeminYolu(0, -17.7, 0, -23.4, 7);          // fotoğrafa
 zeminYolu(-0.8, -18.0, -4.0, -21.4, 5);    // sol videoya
 zeminYolu(0.8, -18.0, 4.0, -21.4, 5);      // sağ videoya
 zeminYolu(-1.2, -17.0, -2.7, -17.0, 3);    // soru tahtasına
+zeminYolu(0.8, -17.7, 3.6, -18.5, 3);      // sonraki odaya kapıya
 
 // ---------- Kapı kapanma sesi (küçük, yumuşak bir "tok") ----------
 let sesBagl = null;
@@ -665,14 +665,19 @@ function kapiSesi() {
 }
 
 let sonrakiKapiIsik = null;
-// ---------- Sonraki odaya kapı (sağ arka köşe) ----------
+// ---------- Sonraki odaya kapı (sağ duvar, odaya girince hemen sağda) ----------
 (function sonrakiKapi() {
-  const KX = 4.35, KZ = ODA_SON + 0.04, GEN = 1.3, YUK = 2.35;
+  const GEN = 1.3, YUK = 2.35;
+  const g = new THREE.Group();
+  g.position.set(ODA_X, 0, -18.7);
+  g.rotation.y = -Math.PI / 2; // yüzü odaya (−x) bakar
   const kasaMat = new THREE.MeshPhongMaterial({ color: 0xb08a4f, specular: 0xfff0c0, shininess: 40, emissive: 0x2a1c06 });
-  [[-GEN / 2 - 0.05, YUK / 2, 0.08, YUK + 0.1], [GEN / 2 + 0.05, YUK / 2, 0.08, YUK + 0.1]].forEach(p => {
-    const k = new THREE.Mesh(new THREE.BoxGeometry(p[2], p[3], 0.1), kasaMat); k.position.set(KX + p[0], p[1], KZ); sahne.add(k);
+  [-1, 1].forEach(y => {
+    const k = new THREE.Mesh(new THREE.BoxGeometry(0.08, YUK + 0.1, 0.1), kasaMat);
+    k.position.set(y * (GEN / 2 + 0.05), YUK / 2, 0.05); g.add(k);
   });
-  const ust = new THREE.Mesh(new THREE.BoxGeometry(GEN + 0.18, 0.1, 0.1), kasaMat); ust.position.set(KX, YUK + 0.05, KZ); sahne.add(ust);
+  const ust = new THREE.Mesh(new THREE.BoxGeometry(GEN + 0.18, 0.1, 0.1), kasaMat);
+  ust.position.set(0, YUK + 0.05, 0.05); g.add(ust);
   const c = document.createElement('canvas'); c.width = 512; c.height = 1024;
   const x = c.getContext('2d');
   const doku = new THREE.CanvasTexture(c);
@@ -693,14 +698,15 @@ let sonrakiKapiIsik = null;
   ciz();
   if (document.fonts && document.fonts.load) document.fonts.load('100px "Great Vibes"', 'Devamı var').then(ciz).catch(() => {});
   const kanat = new THREE.Mesh(new THREE.PlaneGeometry(GEN, YUK), new THREE.MeshBasicMaterial({ map: doku, color: 0x8a8a8a, fog: false }));
-  kanat.position.set(KX, YUK / 2, KZ + 0.01);
-  sahne.add(kanat);
+  kanat.position.set(0, YUK / 2, 0.06);
+  g.add(kanat);
   // kapının altından sızan sıcak ışık
   const isikSerit = new THREE.Mesh(new THREE.PlaneGeometry(GEN, 0.35),
     new THREE.MeshBasicMaterial({ color: 0xffb35a, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
-  isikSerit.rotation.x = -Math.PI / 2; isikSerit.position.set(KX, 0.02, KZ + 0.2);
-  sahne.add(isikSerit);
+  isikSerit.rotation.x = -Math.PI / 2; isikSerit.position.set(0, 0.02, 0.25);
+  g.add(isikSerit);
   sonrakiKapiIsik = isikSerit;
+  sahne.add(g);
 })();
 
 // ---------- Müzik ----------
