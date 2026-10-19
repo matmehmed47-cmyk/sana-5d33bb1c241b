@@ -9,7 +9,7 @@ const ODA1 = {
 
 const canvas = document.getElementById('sahne');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 const sahne = new THREE.Scene();
 const ZEMIN = 0x0b0a0f;
 sahne.background = new THREE.Color(ZEMIN);
@@ -144,6 +144,7 @@ sahne.add(kapiMenteşe);
 // oda
 const odaUzun = KAPI_Z - ODA_SON;
 const odaOrta = (KAPI_Z + ODA_SON) / 2;
+const YANSIMA = false; // zemindeki ışık yansımaları (kapalı)
 const BUZ = true; // false yapılırsa eski koyu zemine ve normal yürümeye döner
 function buzDokusu() {
   const c = document.createElement('canvas'); c.width = c.height = 512;
@@ -248,7 +249,7 @@ function duvarMum(x, y, z, rotY, isikGuc, menzil, yansima) {
     isik.position.set(0, 0.3, 0.25);
     g.add(isik);
   }
-  if (BUZ && yansima) {
+  if (BUZ && YANSIMA && yansima) {
     const ref = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 1.1),
       new THREE.MeshBasicMaterial({ map: sicakDoku, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     ref.rotation.x = -Math.PI / 2; ref.position.set(0, -y + 0.022, 0.65);
@@ -257,7 +258,7 @@ function duvarMum(x, y, z, rotY, isikGuc, menzil, yansima) {
   mumlar.push({ alev, isik, guc: isikGuc, faz: Math.random() * 10 });
 }
 // koridor: iki duvarda dönüşümlü
-[[-1, 1.0, 1.6], [1, -2.0, 1.6], [-1, -5.0, 1.6], [1, -8.0, 1.6], [-1, -11.0, 1.6], [1, -14.0, 0]].forEach(k => {
+[[-1, 1.0, 2.0], [1, -2.0, 0], [-1, -5.0, 2.0], [1, -8.0, 0], [-1, -11.0, 2.0], [1, -14.0, 0]].forEach(k => {
   duvarMum(k[0] * KOR_X, 1.5, k[1], -k[0] * Math.PI / 2, k[2], 7);
 });
 // koridorun başı: uç duvarda
@@ -447,10 +448,10 @@ const DOK_YER = [
   { x: -5.05, z: -23.8, gx: 0.3, gz: 0.4 }, { x: -5.05, z: -19.4, gx: 0.3, gz: 0.4 },
   { x: 5.05, z: -23.0, gx: 0.3, gz: 0.4 }, { x: 5.05, z: -20.2, gx: 0.3, gz: 0.4 }
 ];
-const DOK_N = 280;
+const DOK_N = 150;
 const dokGeo = new THREE.SphereGeometry(0.06, 8, 6);
 dokGeo.scale(1, 0.14, 0.72);
-const dokGrup = new THREE.InstancedMesh(dokGeo, new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x220a0a, shininess: 10 }), DOK_N);
+const dokGrup = new THREE.InstancedMesh(dokGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), DOK_N);
 const dokDurum = [];
 (function dokKur() {
   const tonlar = [0x8a0f1f, 0xa3142a, 0xb81d35, 0x6e0b18, 0xc42a43], renk = new THREE.Color();
@@ -521,7 +522,7 @@ new THREE.TextureLoader().load(ODA1.foto, tex => {
     new THREE.MeshBasicMaterial({ map: bulTex, color: 0x1f1f1f, transparent: true, fog: false }));
   fotoBulanik.position.set(0, FOTO_Y, FOTO_Z + 0.004);
   sahne.add(fotoBulanik);
-  if (BUZ) {
+  if (BUZ && YANSIMA) {
     const rc = document.createElement('canvas'); rc.width = 128; rc.height = Math.max(64, Math.round(128 / oran));
     const rx = rc.getContext('2d');
     rx.drawImage(img, 0, 0, rc.width, rc.height);
@@ -558,11 +559,9 @@ function videoEkrani(kaynak, sol, z, y, gen, yuk) {
     new THREE.MeshPhongMaterial({ color: 0x1a1210, specular: 0x000000 }));
   cerceve.position.set(yon * (ODA_X - 0.035), y, z);
   sahne.add(cerceve);
-  const isik = new THREE.PointLight(0xdfe8ff, 0, 9, 2);
-  isik.position.set(yon * (ODA_X - 1.2), y, z);
-  sahne.add(isik);
+  const isik = { intensity: 0 };   // (gerçek ışık kaldırıldı: telefonu yoruyordu)
   let refl = null;
-  if (BUZ) refl = zeminParilti(soguDoku, yon * (ODA_X - 0.9), z, 1.5, gen + 0.8, 0.1);
+  if (BUZ && YANSIMA) refl = zeminParilti(soguDoku, yon * (ODA_X - 0.9), z, 1.5, gen + 0.8, 0.1);
   videolar.push({ v, isik, ekran, refl, x: ekran.position.x, z, oynuyor: false, parlak: 0.3, izle: 0 });
 }
 videoEkrani('video/pist.mp4', true, -21.6, 1.9, 3.2, 1.8);
