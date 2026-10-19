@@ -73,6 +73,24 @@ kapiMenteşe.add(kanat);
 const kol = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0xd9b56b }));
 kol.position.set(AC_GEN - 0.15, 1.05, 0.06);
 kapiMenteşe.add(kol);
+// kapı yazısı
+(function kapiYazisi() {
+  const c = document.createElement('canvas');
+  c.width = 1024; c.height = 512;
+  const x = c.getContext('2d');
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 10;
+  x.fillStyle = '#f1dfb4';
+  x.font = 'italic 110px Georgia, "Times New Roman", serif';
+  x.fillText('Her şey', 512, 170);
+  x.fillText('burada başladı', 512, 330);
+  const t = new THREE.CanvasTexture(c);
+  t.anisotropy = 4;
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.65),
+    new THREE.MeshBasicMaterial({ map: t, transparent: true, fog: false }));
+  p.position.set(AC_GEN / 2, 1.65, 0.035);
+  kapiMenteşe.add(p);
+})();
 sahne.add(kapiMenteşe);
 
 // oda
