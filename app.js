@@ -1916,6 +1916,8 @@ function motorFotoEkle(dosya, px, pz, tarafi) {   // taraf: 'bati' | 'doga' | 'k
 }
 motorFotoEkle('foto/motor-a.jpg', 5.9, R3.z1, 'kuzey');
 motorFotoEkle('foto/motor-b.jpg', 14.1, R3.z1, 'kuzey');
+motorFotoEkle('foto/motor-c.jpg', R3.x1, -5.8, 'doga');    // sol duvar (içeri girerken sol)
+motorFotoEkle('foto/motor-d.jpg', R3.x0, -5.8, 'bati');    // sağ duvar
 function motorGuncelle(dt) { motor.platlar.forEach(p => { p.g.rotation.y += dt * p.hiz; }); }
 
 // ---------- Kontrol ----------
