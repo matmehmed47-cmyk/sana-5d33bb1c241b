@@ -625,20 +625,29 @@ function soruGuncelle(icerde) {
 // ---------- Yönerge: odadaki sıra ----------
 let asama = 0, asamaT = 0, yonYazilan = -1, yonZaman = 0;
 const yonKutu = document.getElementById('yonerge');
-const ASAMA_YAZI = ['Karşıdaki fotoğrafa yaklaş.', 'Şimdi solundaki videoya bak.', 'Şimdi sağdaki videoya geç.',
+const ASAMA_YAZI = ['Karşıdaki fotoğrafa yaklaş.', 'Şimdi solundaki videoya bak.', 'Arkandaki videoya bak.',
   'Kapıya git. Bir sorum var.', 'Kapı açıldı.'];
+const FOTO_SURE = 15, SOL_VIDEO_SURE = 35, SAG_VIDEO_SURE = 15;
+function videoBasaSar(o) { if (o.izle < 1) { try { o.v.currentTime = 0; } catch (e) {} } }
 function yonergeGuncelle(icerde, dt, fotoUz) {
   if (!icerde) { yonKutu.classList.remove('acik'); yonYazilan = -1; return; }
-  if (asama === 0 && fotoUz < 4.4) { asamaT += dt; if (asamaT > 4) asama = 1; }
-  if (asama === 1 && videolar[0].izle > 10) asama = 2;
-  if (asama === 2 && videolar[1].izle > 10) asama = 3;
-  if (asama >= 0 && asama < 4 && soruCozuldu) asama = 4;
+  if (asama === 0 && fotoUz < 5.5) { asamaT += dt; if (asamaT >= FOTO_SURE) { asama = 1; videoBasaSar(videolar[0]); } }
+  if (asama === 1 && videolar[0].izle >= SOL_VIDEO_SURE) { asama = 2; videoBasaSar(videolar[1]); }
+  if (asama === 2 && videolar[1].izle >= SAG_VIDEO_SURE) asama = 3;
+  if (asama < 4 && soruCozuldu) asama = 4;
+  const simdi = performance.now();
   if (asama !== yonYazilan) {
-    yonYazilan = asama; yonZaman = performance.now();
+    yonYazilan = asama; yonZaman = simdi;
     yonKutu.textContent = ASAMA_YAZI[asama];
     yonKutu.classList.add('acik');
   }
-  if (asama === 4 && performance.now() - yonZaman > 5000) yonKutu.classList.remove('acik');
+  // yazı bir süre kalır, izlerken ekranda hiçbir şey yazmaz
+  let gizle = false;
+  if (asama === 0 && asamaT > 3) gizle = true;
+  if ((asama === 1 || asama === 2) && simdi - yonZaman > 6000) gizle = true;
+  if (asama === 3 && soruGorunur) gizle = true;
+  if (asama === 4 && simdi - yonZaman > 5000) gizle = true;
+  yonKutu.classList.toggle('acik', !gizle);
 }
 
 // ---------- Kapıdan her tabloya giden, zeminde silik yanıp sönen oklar ----------
@@ -1019,7 +1028,7 @@ function kare(simdi) {
   }
 
   // fotoğraf yanı oklar: odadayken yumuşakça yanıp söner
-  yanOklar.forEach(o => { const gor = (asama === 1 && o.yon < 0) || (asama === 2 && o.yon > 0); o.mat.opacity = (odadaMi && gor) ? 0.06 + 0.6 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 380 - o.k * 0.9), 2) : 0; });
+  yanOklar.forEach(o => { const gor = ((asama === 1 && o.yon < 0) || (asama === 2 && o.yon > 0)) && (performance.now() - yonZaman < 9000); o.mat.opacity = (odadaMi && gor) ? 0.06 + 0.6 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 380 - o.k * 0.9), 2) : 0; });
 
   // zemin okları: kapı açılınca silik silik yanıp söner
   zeminOklar.forEach(o => { o.mat.opacity = kapiAcik ? 0.03 + 0.3 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 430 - o.k * 0.9), 2) : 0; });
