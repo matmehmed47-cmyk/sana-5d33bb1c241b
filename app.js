@@ -114,12 +114,55 @@ function mumYap(x, z, isikGuc, menzil) {
   mumYap(k[0], k[1], i % 2 === 0 ? 1.6 : 0, 7);
 });
 // koridorun başında ve ortasında kısa mum kümeleri
-[[-0.9, 3.2], [-0.8, 3.0], [0.9, 3.3], [0.0, -7.0]].forEach(k => mumYap(k[0], k[1], 0, 0));
+[[-0.9, 3.2], [-0.8, 3.0], [0.9, 3.3]].forEach(k => mumYap(k[0], k[1], 0, 0));
 // oda: fotoğrafın iki yanı
 mumYap(-2.6, ODA_SON + 0.8, 1.1, 9);
 mumYap(2.6, ODA_SON + 0.8, 1.1, 9);
 mumYap(-1.8, ODA_SON + 0.6, 0, 0);
 mumYap(1.8, ODA_SON + 0.6, 0, 0);
+
+// ---------- Duvar kalpleri ve kapıyı gösteren oklar ----------
+const kalpSekil = new THREE.Shape();
+kalpSekil.moveTo(0, -0.5);
+kalpSekil.bezierCurveTo(-0.15, -0.35, -0.6, -0.05, -0.6, 0.22);
+kalpSekil.bezierCurveTo(-0.6, 0.5, -0.2, 0.62, 0, 0.3);
+kalpSekil.bezierCurveTo(0.2, 0.62, 0.6, 0.5, 0.6, 0.22);
+kalpSekil.bezierCurveTo(0.6, -0.05, 0.15, -0.35, 0, -0.5);
+const kalpGeo = new THREE.ExtrudeGeometry(kalpSekil, { depth: 0.04, bevelEnabled: false });
+const okSekil = new THREE.Shape();
+okSekil.moveTo(-0.3, -0.05); okSekil.lineTo(0.1, -0.05); okSekil.lineTo(0.1, -0.16);
+okSekil.lineTo(0.38, 0); okSekil.lineTo(0.1, 0.16); okSekil.lineTo(0.1, 0.05); okSekil.lineTo(-0.3, 0.05);
+const okGeo = new THREE.ExtrudeGeometry(okSekil, { depth: 0.03, bevelEnabled: false });
+const matKalp = new THREE.MeshBasicMaterial({ color: 0xd22a4a });
+const matOk = new THREE.MeshBasicMaterial({ color: 0xe8b25f, side: THREE.DoubleSide });
+const oklar = [];
+
+[[-1, 1], [1, -1]].forEach(([yon, ters]) => {
+  const duvarX = yon * (KOR_X - 0.01);
+  const donus = -yon * Math.PI / 2;
+  [1.0, -2.0, -5.0, -8.0, -11.0, -14.0].forEach((z, i) => {
+    const kalp = new THREE.Mesh(kalpGeo, matKalp);
+    const b = i % 2 === 0 ? 0.3 : 0.22;
+    kalp.scale.set(b, b, 1);
+    kalp.position.set(duvarX, 2.15 - (i % 2) * 0.15, z + (yon > 0 ? 0 : 0.6));
+    kalp.rotation.y = donus;
+    sahne.add(kalp);
+  });
+  [2.5, -0.5, -3.5, -6.5, -9.5, -12.5].forEach(z => {
+    const ok = new THREE.Mesh(okGeo, matOk);
+    ok.scale.set(ters * 1.2, 1.2, 1);
+    ok.position.set(duvarX, 1.35, z);
+    ok.rotation.y = donus;
+    sahne.add(ok);
+    oklar.push(ok);
+  });
+});
+// kapının üstünde aşağı bakan ok
+const kapiOku = new THREE.Mesh(okGeo, matOk);
+kapiOku.scale.set(0.6, 0.6, 1);
+kapiOku.rotation.z = -Math.PI / 2;
+kapiOku.position.set(0, AC_YUK + 0.28, KAPI_Z + 0.06);
+sahne.add(kapiOku);
 
 // ---------- Gül yaprakları ve güller ----------
 (function gulleriSer() {
@@ -372,6 +415,10 @@ function kare(simdi) {
       yaziKutu.classList.toggle('acik', yaziAcik);
     }
   }
+
+  // okların nabzı
+  const nabiz = 0.7 + 0.3 * Math.sin(simdi / 350);
+  matOk.color.setRGB(0.91 * nabiz, 0.7 * nabiz, 0.37 * nabiz);
 
   // mum titremesi
   const zaman = simdi / 1000;
