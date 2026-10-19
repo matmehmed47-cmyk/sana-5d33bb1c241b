@@ -43,3 +43,17 @@ html,body{margin:0;height:100%;background:var(--zemin);color:var(--yazi);font-fa
 @keyframes elSol{0%{transform:translateX(30px);opacity:0}20%{opacity:1}100%{transform:translateX(-130px);opacity:0}}
 @keyframes elSag{0%{transform:translateX(-30px);opacity:0}20%{opacity:1}100%{transform:translateX(130px);opacity:0}}
 @keyframes elBak{0%{transform:translate(0,0)}20%{transform:translate(-90px,0)}40%{transform:translate(90px,0)}60%{transform:translate(0,0)}75%{transform:translate(0,-60px)}90%{transform:translate(0,50px)}100%{transform:translate(0,0)}}
+#ogretici.buyuk{font-size:25px}
+#ogrListe{position:fixed;left:0;right:0;top:20px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;opacity:0;transition:opacity .8s;pointer-events:none;z-index:7;padding:0 12px}
+#ogrListe.acik{opacity:1}
+#ogrListe span{font-size:13px;padding:3px 10px;border-radius:999px;border:1px solid rgba(243,233,220,.4);background:rgba(11,10,15,.55);opacity:.8}
+#ogrListe span.tamam{border-color:#e8a86b;color:#e8a86b;opacity:1}
+#ogrListe span.tamam::before{content:"✓ "}
+.el.ileri{opacity:1;left:82px;top:calc(100% - 86px);animation:elIleri 1.5s ease-in-out infinite}
+.el.geri{opacity:1;left:82px;top:calc(100% - 86px);animation:elGeri 1.5s ease-in-out infinite}
+.el.bak-yukari{opacity:1;left:50%;top:55%;animation:elYukari 1.8s ease-in-out infinite}
+.el.bak-asagi{opacity:1;left:50%;top:40%;animation:elAsagi 1.8s ease-in-out infinite}
+@keyframes elIleri{0%{transform:translateY(8px);opacity:.2}20%{opacity:1}100%{transform:translateY(-38px);opacity:.2}}
+@keyframes elGeri{0%{transform:translateY(-22px);opacity:.2}20%{opacity:1}100%{transform:translateY(34px);opacity:.2}}
+@keyframes elYukari{0%{transform:translateY(40px);opacity:0}20%{opacity:1}100%{transform:translateY(-110px);opacity:0}}
+@keyframes elAsagi{0%{transform:translateY(-40px);opacity:0}20%{opacity:1}100%{transform:translateY(110px);opacity:0}}
