@@ -695,6 +695,14 @@ const FOTO_SURE = 15, SOL_VIDEO_SURE = 35, SAG_VIDEO_SURE = 15;
 function videoBasaSar(o) { if (o.izle < 1) { try { o.v.currentTime = 0; } catch (e) {} } }
 function yonergeGuncelle(icerde, dt, fotoUz) {
   if (!icerde) { yonKutu.classList.remove('acik'); yonYazilan = -1; return; }
+  if (!patenGiyildi) {
+    if (yonYazilan !== -2) {
+      yonYazilan = -2;
+      yonKutu.textContent = 'Buz patenlerini giy: üzerlerine yürü.';
+      yonKutu.classList.add('acik'); elGoster('yuru');
+    }
+    return;
+  }
   if (asama === 0 && fotoUz < 5.5) { asamaT += dt; if (asamaT >= FOTO_SURE) { asama = 1; videoBasaSar(videolar[0]); } }
   if (asama === 1 && videolar[0].izle >= SOL_VIDEO_SURE) { asama = 2; videoBasaSar(videolar[1]); }
   if (asama === 2 && videolar[1].izle >= SAG_VIDEO_SURE) asama = 3;
@@ -880,7 +888,8 @@ const ikili = new THREE.Group();   // hareket eden ana grup
 const govde = new THREE.Group();   // havada süzülen, sallanan kısım
 ikili.add(govde);
 const halolar = [];
-const patenler = [];
+const patenler = [], harfPaten = [], yerPaten = [];
+let patenGiyildi = false, patenUcus = null;
 let ikiliKalp = null;
 (function karakterYap() {
   // İ: ince bir çubuk ve üstünde nokta
@@ -922,20 +931,38 @@ let ikiliKalp = null;
   bicakSekil.quadraticCurveTo(0.19, -0.05, 0.19, 0.01); bicakSekil.lineTo(-0.12, 0.01);
   const bicakGeo = new THREE.ExtrudeGeometry(bicakSekil, { depth: 0.012, bevelEnabled: false });
   bicakGeo.translate(0, 0, -0.006);
-  function patenYap(x, faz) {
+  function patenMesh() {
     const g = new THREE.Group();
     g.add(new THREE.Mesh(botGeo, matBot), new THREE.Mesh(bicakGeo, matBicak));
+    g.scale.setScalar(0.65);
     const dis = new THREE.Group();
     dis.add(g);
-    g.scale.setScalar(0.65);
     dis.rotation.y = Math.PI / 2;   // burun ileriye (−z) baksın
+    return dis;
+  }
+  function patenYap(x, faz) {      // harfin ayağındaki yuva (giyilince görünür)
+    const dis = patenMesh();
     dis.position.set(x, -0.09, 0);
+    dis.visible = false;
     govde.add(dis);
     patenler.push({ g: dis, faz });
+    harfPaten.push(dis);
   }
   patenYap(-0.36, 0);
   patenYap(0.16, Math.PI);
   patenYap(0.56, 0);
+  // odanın girişinde yerde bekleyen patenler
+  [[-0.5, -18.5], [0.0, -18.9], [0.5, -18.5]].forEach((p, i) => {
+    const dis = patenMesh();
+    dis.position.set(p[0], 0.05, p[1]);
+    dis.rotation.y = Math.PI / 2 + (i - 1) * 0.35;
+    sahne.add(dis);
+    const halka = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9),
+      new THREE.MeshBasicMaterial({ map: sicakDoku, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+    halka.rotation.x = -Math.PI / 2; halka.position.set(p[0], 0.03, p[1]);
+    sahne.add(halka);
+    yerPaten.push({ g: dis, halka, bx: p[0], bz: p[1], by: 0.05, r0: dis.rotation.y });
+  });
   govde.position.y = 0.19;
   ikili.scale.setScalar(0.8);
   // yerdeki yumuşak gölge
@@ -1066,6 +1093,59 @@ function otoBak(hx, hz) {
   kon.oto = { yaw: Math.atan2(-dx, -dz), pitch: -0.1 };
 }
 
+// ---------- Patenleri giyme ----------
+function patenSesi() {
+  try {
+    if (!sesBagl) return;
+    const c = sesBagl, t0 = c.currentTime;
+    [0, 0.13, 0.26].forEach((dt, i) => {
+      const t = t0 + dt;
+      [1800 + i * 300, 2700 + i * 400].forEach(f => {
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = 'triangle'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.1, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+        o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.18);
+      });
+    });
+  } catch (e) {}
+}
+const gecici = new THREE.Vector3();
+function patenGuncelle(simdi) {
+  if (patenGiyildi) return;
+  const cx = 0, cz = -18.7;
+  yerPaten.forEach((p, i) => {
+    if (!patenUcus) {
+      p.g.position.y = p.by + Math.sin(simdi / 500 + i) * 0.02;
+      p.halka.material.opacity = 0.35 + 0.25 * Math.sin(simdi / 450 + i);
+    }
+  });
+  if (!patenUcus && odadaMi && Math.hypot(kon.x - cx, kon.z - cz) < 1.0) {
+    patenUcus = { t0: simdi };
+    patenSesi();
+  }
+  if (!patenUcus) return;
+  let bitenler = 0;
+  yerPaten.forEach((p, i) => {
+    const t = Math.max(0, Math.min(1, (simdi - patenUcus.t0 - i * 140) / 800));
+    const e = t * t * (3 - 2 * t);
+    harfPaten[i].getWorldPosition(gecici);
+    p.g.position.set(p.bx + (gecici.x - p.bx) * e, p.by + (gecici.y - p.by) * e + Math.sin(Math.PI * e) * 0.5, p.bz + (gecici.z - p.bz) * e);
+    const hedefR = ikiliYon + Math.PI / 2;
+    const fark = Math.atan2(Math.sin(hedefR - p.r0), Math.cos(hedefR - p.r0));
+    p.g.rotation.y = p.r0 + fark * e;
+    p.g.scale.setScalar(1 - 0.2 * e);
+    p.halka.material.opacity = 0.5 * (1 - e);
+    if (t >= 1) bitenler++;
+  });
+  if (bitenler === yerPaten.length) {
+    yerPaten.forEach(p => { p.g.visible = false; p.halka.visible = false; });
+    harfPaten.forEach(h => { h.visible = true; });
+    patenGiyildi = true;
+    ogrYaz('Patenlerini giydin! ⛸️', null);
+    setTimeout(() => ogrKutu.classList.remove('acik'), 2400);
+  }
+}
+
 // ---------- Kontrol ----------
 const kon = { vx: 0, vz: 0, oto: null, bakToplam: 0, dragX: 0, dragY: 0, yaw: 0, pitch: -0.22, x: 0, z: 1.2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
 let basladi = false;
@@ -1140,7 +1220,7 @@ function kare(simdi) {
     let mx = -sy * ileri + cy * yan, mz = -cy * ileri - sy * yan;
     const ml = Math.hypot(mx, mz);
     if (ml > 1) { mx /= ml; mz /= ml; }
-    const kay = (BUZ && odadaMi) ? 2.2 : 14;       // buz üstünde yavaş hızlanır, yavaş durur
+    const kay = (BUZ && odadaMi && patenGiyildi) ? 2.2 : 14;       // buz üstünde yavaş hızlanır, yavaş durur
     kon.vx += (mx * hiz - kon.vx) * Math.min(1, dt * kay);
     kon.vz += (mz * hiz - kon.vz) * Math.min(1, dt * kay);
     kon.x += kon.vx * dt;
@@ -1253,6 +1333,8 @@ function kare(simdi) {
   ikiliKalp.position.y = 0.33 + Math.sin(simdi / 450) * 0.025;
   halolar.forEach((h, k) => { h.material.opacity = 0.5 + 0.15 * Math.sin(simdi / 600 + k * 2); });
   if (basladi) zerreGuncelle(dt, kon.x, kon.z, ikiliYon, yurume > 0.15);
+
+  patenGuncelle(simdi);
 
   // kamera: karakterin arkasında, bakış yönünün tersinde
   const cp = Math.cos(kon.pitch), sp = Math.sin(kon.pitch);
