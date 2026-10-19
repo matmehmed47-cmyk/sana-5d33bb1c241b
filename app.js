@@ -280,7 +280,7 @@ const ampul = { cam: null, parilti: null };
 })();
 const ampulRenk = new THREE.Color();
 function ampulGuncelle(t) {
-  const ton = (t * 0.09) % 1;                    // renkler sırayla akar
+  const ton = (t * 0.2) % 1;                    // renkler sırayla akar
   ampulRenk.setHSL(ton, 0.95, 0.55);
   isik2.color.copy(ampulRenk);
   isik2.intensity = 1.5 + 0.2 * Math.sin(t * 3);
