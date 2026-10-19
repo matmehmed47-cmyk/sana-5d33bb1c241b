@@ -699,8 +699,10 @@ function yonergeGuncelle(icerde, dt, fotoUz) {
     if (yonYazilan !== -2) {
       yonYazilan = -2;
       yonKutu.textContent = 'Buz patenlerini giy: üzerlerine yürü.';
+      yonZaman = performance.now();
       yonKutu.classList.add('acik'); elGoster('yuru');
     }
+    if (elSu === 'yuru' && performance.now() - yonZaman > 6000) elGoster(null);
     return;
   }
   if (asama === 0 && fotoUz < 5.5) { asamaT += dt; if (asamaT >= FOTO_SURE) { asama = 1; videoBasaSar(videolar[0]); } }
