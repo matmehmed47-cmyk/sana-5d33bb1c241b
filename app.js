@@ -7,6 +7,7 @@ const ODA1 = {
   sarki: 'muzik/kupa-kizi.mp3'
 };
 
+const KAPILAR_ACIK = true;   // hazırlık sırasında tüm kapılar açık (kontrol hızlı olsun). false yapılırsa kapılar normal çalışır
 const canvas = document.getElementById('sahne');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
@@ -701,7 +702,7 @@ const SORU = {
   dogruMesaj: 'Bildin! Çok! Kapı açılıyor...'
 };
 const KAPI2_X = ODA_X, KAPI2_Z = -18.7;
-const kapi2 = { hinge: null, glow: null, isik: null, aci: 0, acik: false };
+const kapi2 = { hinge: null, glow: null, isik: null, aci: KAPILAR_ACIK ? -1.9 : 0, acik: KAPILAR_ACIK };
 let soruCozuldu = false, yanlisSayi = 0;
 
 // kapının yanındaki küçük "kilitli" plakası
@@ -717,11 +718,11 @@ function plakaCiz() {
   x.lineWidth = 2; x.strokeRect(30, 30, W - 60, H - 60);
   x.fillStyle = altin; x.strokeStyle = altin; x.textAlign = 'center'; x.textBaseline = 'middle';
   x.font = '100px "Great Vibes", "Snell Roundhand", "Brush Script MT", cursive';
-  x.fillText(soruCozuldu ? 'Açık' : 'Kilitli', W / 2, 270);
+  x.fillText((soruCozuldu || KAPILAR_ACIK) ? 'Açık' : 'Kilitli', W / 2, 270);
   // kilit
   x.lineWidth = 12;
   x.beginPath();
-  if (soruCozuldu) { x.arc(W / 2 + 18, 112, 38, Math.PI, 0); x.moveTo(W / 2 + 56, 112); x.lineTo(W / 2 + 56, 90); }
+  if (soruCozuldu || KAPILAR_ACIK) { x.arc(W / 2 + 18, 112, 38, Math.PI, 0); x.moveTo(W / 2 + 56, 112); x.lineTo(W / 2 + 56, 90); }
   else x.arc(W / 2, 112, 38, Math.PI, 0);
   x.stroke();
   x.fillRect(W / 2 - 56, 112, 112, 78);
@@ -1478,7 +1479,7 @@ canvas.addEventListener('pointercancel', bakBitir);
 // ---------- Döngü ----------
 const yaziKutu = document.getElementById('yazi');
 let ilkGiris = false;
-let kapiAci = 0, kapiAcik = false, odadaMi = false, yaziAcik = false;
+let kapiAci = KAPILAR_ACIK ? Math.PI * 0.5 : 0, kapiAcik = KAPILAR_ACIK, odadaMi = false, yaziAcik = false;
 const sinir = (v, a, b) => Math.max(a, Math.min(b, v));
 const yumusak = (a, b, v) => { const t = sinir((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 let onceki = performance.now();
@@ -1544,7 +1545,7 @@ function kare(simdi) {
     if (!kapiAcik) {
       // koridordan yaklaşınca ya da odadan kapıya dönünce açılır
       if (kon.z < KAPI_Z + 3.2 && kon.z > KAPI_Z - 2.0 && kon.x < ODA_X && kapiHazir()) { kapiAcik = true; gicirti(1.3); }
-    } else if (kon.z < KAPI_Z - 3.4) {
+    } else if (!KAPILAR_ACIK && kon.z < KAPI_Z - 3.4) {
       // odaya iyice girince arkasından kapanır
       kapiAcik = false;
       kapiSesi();
