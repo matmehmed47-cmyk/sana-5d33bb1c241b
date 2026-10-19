@@ -212,7 +212,10 @@ const o2w = ODA2_X1 - HOL_SON, o2d = ODA2_Z1 - ODA2_Z0, o2cx = (HOL_SON + ODA2_X
 kutu(o2w, 0.1, o2d, matZemin2, o2cx, -0.05, o2cz);
 kutu(o2w, 0.1, o2d, matTavan2, o2cx, ODA2_Y + 0.05, o2cz);
 kutu(o2w, ODA2_Y, 0.1, matDuvar2, o2cx, ODA2_Y / 2, ODA2_Z0 - 0.05);
-kutu(o2w, ODA2_Y, 0.1, matDuvar2, o2cx, ODA2_Y / 2, ODA2_Z1 + 0.05);
+// kuzey duvar: gül kapısı için boşluklu (x 9.35 – 10.65)
+kutu(9.35 - HOL_SON, ODA2_Y, 0.1, matDuvar2, (HOL_SON + 9.35) / 2, ODA2_Y / 2, ODA2_Z1 + 0.05);
+kutu(ODA2_X1 - 10.65, ODA2_Y, 0.1, matDuvar2, (10.65 + ODA2_X1) / 2, ODA2_Y / 2, ODA2_Z1 + 0.05);
+kutu(1.3, ODA2_Y - 2.45, 0.1, matDuvar2, 10.0, 2.45 + (ODA2_Y - 2.45) / 2, ODA2_Z1 + 0.05);
 kutu(0.1, ODA2_Y, o2d, matDuvar2, ODA2_X1 + 0.05, ODA2_Y / 2, o2cz);
 // batı duvarı (holün açıldığı yer boş)
 kutu(0.1, ODA2_Y, (HOL_Z - 0.8) - ODA2_Z0, matDuvar2, HOL_SON - 0.05, ODA2_Y / 2, (ODA2_Z0 + HOL_Z - 0.8) / 2);
@@ -444,8 +447,8 @@ function vantilatorGuncelle(t) {
   const uz = Math.hypot(kon.x - 12.5, kon.z + 21.2);
   if (vantilator.yazi) vantilator.yazi.material.opacity = 0.95 * (1 - Math.min(1, Math.max(0, (uz - 1.6) / 1.6)));   // yaklaşınca belirir
 }
-function engelleriItele(nesne, yaricap, sek) {   // nesne: {x,z} (+ vx,vz sekmesi için)
-  ENGELLER2.forEach(o => {
+function engelleriItele(nesne, yaricap, sek, liste) {   // nesne: {x,z} (+ vx,vz sekmesi için)
+  (liste || ENGELLER2).forEach(o => {
     const dx = nesne.x - o.x, dz = nesne.z - o.z, d = Math.hypot(dx, dz), R = o.r + yaricap;
     if (d < R && d > 0.0001) {
       nesne.x = o.x + dx / d * R; nesne.z = o.z + dz / d * R;
@@ -605,7 +608,7 @@ function k3Guncelle(simdi) {
   // kapı açılması
   K3.aci += ((K3.acik ? -1.9 : 0) - K3.aci) * Math.min(1, dt * 1.6);
   K3.hinge.rotation.y = K3.aci;
-  K3.glow.material.opacity = 0.3 * Math.min(1, Math.abs(K3.aci) / 1.2);
+  K3.glow.material.opacity = 0;
   if (K3.acik) kal.visible = false;
 }
 // paten rafı: girişte, holün kuzeyinde
@@ -1314,7 +1317,7 @@ let sonrakiKapiIsik = null;
 
 // ---------- Müzik ----------
 let muzik = null, muzikHedef = 0, muzikVar = true;
-let muzik2 = null, muzik2Hedef = 0;
+let muzik2 = null, muzik2Hedef = 0, muzik3 = null, muzik3Hedef = 0;
 function muzikKur() {
   muzik = new Audio(ODA1.sarki);
   muzik.loop = true;
@@ -1326,6 +1329,10 @@ function muzikKur() {
   muzik2.loop = true; muzik2.volume = 0;
   const p2 = muzik2.play();
   if (p2 && p2.catch) p2.catch(() => {});
+  muzik3 = new Audio('muzik/serseri.mp3');
+  muzik3.loop = true; muzik3.volume = 0;
+  const p3 = muzik3.play();
+  if (p3 && p3.catch) p3.catch(() => {});
 }
 
 // ---------- Karakter: ışıklı İ ve M, aralarında ışık teli ----------
@@ -1750,6 +1757,136 @@ function balonGuncelle(dt, t) {
   });
 }
 
+// ---------- Üçüncü oda: motor garajı (gül kapısının arkası) ----------
+const HOL3_Z1 = -11.3;
+const R3 = { x0: 4.0, x1: 16.0, z0: -11.3, z1: -0.5, y: 3.4 };
+const R3cx = (R3.x0 + R3.x1) / 2, R3cz = (R3.z0 + R3.z1) / 2;
+const ENGELLER3 = [{ x: R3cx, z: -5.5, r: 1.3 }];
+const motor = { grup: null, aci: 0 };
+(function motorOdasi() {
+  const duvar3 = new THREE.MeshPhongMaterial({ color: 0x34363b, specular: 0x000000, shininess: 4 });
+  const zemin3 = new THREE.MeshPhongMaterial({ color: 0x4b4d53, specular: 0x000000, shininess: 4 });
+  const tavan3 = new THREE.MeshPhongMaterial({ color: 0x232428, specular: 0x000000, shininess: 4 });
+  const ay = (w, h, d, mat, px, py, pz) => kutu(w, h, d, mat, px, py, pz);
+  // hol (gül kapısından odaya)
+  ay(1.6, 0.1, HOL3_Z1 - ODA2_Z1, zemin3, K3.x, -0.05, (ODA2_Z1 + HOL3_Z1) / 2);
+  ay(1.6, 0.1, HOL3_Z1 - ODA2_Z1, tavan3, K3.x, 3.05, (ODA2_Z1 + HOL3_Z1) / 2);
+  [-1, 1].forEach(y => ay(0.1, 3.1, HOL3_Z1 - ODA2_Z1, duvar3, K3.x + y * 0.85, 1.5, (ODA2_Z1 + HOL3_Z1) / 2));
+  // oda
+  const w = R3.x1 - R3.x0, d = R3.z1 - R3.z0;
+  ay(w, 0.1, d, zemin3, R3cx, -0.05, R3cz);
+  ay(w, 0.1, d, tavan3, R3cx, R3.y + 0.05, R3cz);
+  ay(w, R3.y, 0.1, duvar3, R3cx, R3.y / 2, R3.z1 + 0.05);                 // kuzey (arka)
+  ay(0.1, R3.y, d, duvar3, R3.x0 - 0.05, R3.y / 2, R3cz);                  // batı
+  ay(0.1, R3.y, d, duvar3, R3.x1 + 0.05, R3.y / 2, R3cz);                  // doğu
+  // güney duvarı (holün açıldığı yer boş)
+  const sa = (K3.x - 0.8) - R3.x0, sb = R3.x1 - (K3.x + 0.8);
+  ay(sa, R3.y, 0.1, duvar3, R3.x0 + sa / 2, R3.y / 2, R3.z0 - 0.05);
+  ay(sb, R3.y, 0.1, duvar3, K3.x + 0.8 + sb / 2, R3.y / 2, R3.z0 - 0.05);
+  // duvar boyunca kırmızı şerit
+  const serit = new THREE.MeshBasicMaterial({ color: 0xd1162b });
+  ay(0.02, 0.06, d, serit, R3.x0 + 0.01, 0.9, R3cz); ay(0.02, 0.06, d, serit, R3.x1 - 0.01, 0.9, R3cz);
+  ay(w, 0.06, 0.02, serit, R3cx, 0.9, R3.z1 - 0.01);
+  // tavanda aydınlatma şeritleri
+  const neonB = new THREE.MeshBasicMaterial({ color: 0xdfe9ff });
+  [-3, 0, 3].forEach(dx => ay(0.12, 0.03, d - 3, neonB, R3cx + dx * 1.6, R3.y - 0.02, R3cz));
+  // zeminde sarı kesik yol çizgisi (holden motora)
+  const sari = new THREE.MeshBasicMaterial({ color: 0xe8c33a });
+  for (let i = 0; i < 4; i++) { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.14, 0.7), sari); p.rotation.x = -Math.PI / 2; p.position.set(K3.x, 0.012, HOL3_Z1 + 0.5 + i * 1.0); sahne.add(p); }
+  // ışıklar
+  const anaIsik = new THREE.PointLight(0xffe7cf, 1.1, 15, 1.5); anaIsik.position.set(R3cx, 3.0, R3cz); sahne.add(anaIsik);
+  const kirmiziIsik = new THREE.PointLight(0xff2a4a, 0.8, 9, 1.8); kirmiziIsik.position.set(R3cx, 2.5, R3.z1 - 1.0); sahne.add(kirmiziIsik);
+
+  // neon yazı
+  const nc = document.createElement('canvas'); nc.width = 1024; nc.height = 192;
+  const nx = nc.getContext('2d'); const nd = new THREE.CanvasTexture(nc);
+  function neonCiz() {
+    nx.clearRect(0, 0, 1024, 192);
+    nx.textAlign = 'center'; nx.textBaseline = 'middle';
+    nx.font = 'bold 110px "Arial Black", Impact, Arial, sans-serif';
+    nx.shadowColor = '#ff2a4a'; nx.shadowBlur = 40; nx.fillStyle = '#ff9aa9'; nx.fillText('YOLA ÇIKALIM', 512, 100);
+    nx.shadowBlur = 14; nx.fillStyle = '#fff0f2'; nx.fillText('YOLA ÇIKALIM', 512, 100);
+    nd.needsUpdate = true;
+  }
+  neonCiz();
+  const neon = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 4.4 * 192 / 1024), new THREE.MeshBasicMaterial({ map: nd, transparent: true, depthWrite: false, fog: false }));
+  neon.position.set(R3cx, 2.45, R3.z1 - 0.04); neon.rotation.y = Math.PI; sahne.add(neon);
+
+  // dönen platformda motosiklet
+  const m = new THREE.Group(); m.position.set(R3cx, 0, -5.5); sahne.add(m);
+  const plat = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.4, 0.1, 40), new THREE.MeshPhongMaterial({ color: 0x1c1d21, specular: 0x333333, shininess: 30 })); plat.position.y = 0.05; m.add(plat);
+  const halka = new THREE.Mesh(new THREE.TorusGeometry(1.32, 0.018, 8, 60), new THREE.MeshBasicMaterial({ color: 0xff2a4a })); halka.rotation.x = Math.PI / 2; halka.position.y = 0.105; m.add(halka);
+  const moto = new THREE.Group(); moto.position.y = 0.1; m.add(moto);
+  const kirmizi = new THREE.MeshPhongMaterial({ color: 0xd1162b, specular: 0xffffff, shininess: 90, emissive: 0x2a0408 });
+  const siyah = new THREE.MeshPhongMaterial({ color: 0x15161a, specular: 0x444444, shininess: 30 });
+  const krom = new THREE.MeshPhongMaterial({ color: 0xcfd3da, specular: 0xffffff, shininess: 120 });
+  const parca = (geo, mat, x, y, z, rz) => { const p = new THREE.Mesh(geo, mat); p.position.set(x, y, z); if (rz) p.rotation.z = rz; moto.add(p); return p; };
+  [0.65, -0.65].forEach(x => {   // tekerler
+    parca(new THREE.TorusGeometry(0.31, 0.08, 12, 32), siyah, x, 0.4, 0);
+    parca(new THREE.TorusGeometry(0.22, 0.015, 8, 28), krom, x, 0.4, 0);
+    parca(new THREE.CylinderGeometry(0.05, 0.05, 0.12, 12), krom, x, 0.4, 0).rotation.x = Math.PI / 2;
+  });
+  parca(new THREE.CylinderGeometry(0.022, 0.022, 0.6, 8), krom, 0.55, 0.72, 0.1, 0.355);   // ön amortisör (iki yan)
+  parca(new THREE.CylinderGeometry(0.022, 0.022, 0.6, 8), krom, 0.55, 0.72, -0.1, 0.355);
+  parca(new THREE.CylinderGeometry(0.015, 0.015, 0.62, 8), siyah, 0.5, 0.97, 0).rotation.x = Math.PI / 2;     // gidon
+  [0.31, -0.31].forEach(z => parca(new THREE.CylinderGeometry(0.02, 0.02, 0.12, 8), siyah, 0.5, 0.97, z).rotation.x = Math.PI / 2);
+  parca(new THREE.SphereGeometry(0.1, 14, 10), new THREE.MeshBasicMaterial({ color: 0xfff1c9 }), 0.7, 0.9, 0);            // far
+  const depo = parca(new THREE.SphereGeometry(0.38, 18, 12), kirmizi, 0.12, 0.88, 0); depo.scale.set(1, 0.5, 0.52);       // depo
+  parca(new THREE.BoxGeometry(0.55, 0.07, 0.22), siyah, -0.3, 0.8, 0);                                                     // sele
+  parca(new THREE.BoxGeometry(0.4, 0.3, 0.3), new THREE.MeshPhongMaterial({ color: 0x5e6066, specular: 0xffffff, shininess: 50 }), 0.05, 0.5, 0);   // motor bloğu
+  parca(new THREE.BoxGeometry(0.7, 0.05, 0.05), krom, -0.3, 0.4, 0.12);                                                    // salıncak
+  parca(new THREE.BoxGeometry(0.7, 0.05, 0.05), krom, -0.3, 0.4, -0.12);
+  parca(new THREE.CylinderGeometry(0.05, 0.065, 0.85, 12), krom, -0.45, 0.32, 0.2, Math.PI / 2 + 0.05);                    // egzoz
+  parca(new THREE.BoxGeometry(0.5, 0.025, 0.2), kirmizi, -0.7, 0.75, 0, 0.25);                                              // arka çamurluk
+  parca(new THREE.CylinderGeometry(0.035, 0.035, 0.1, 10), kirmizi, 0.58, 1.04, 0.0);                                      // ayna kökü
+  motor.grup = moto;
+})();
+
+// duvar çerçeveleri: motor fotoğrafları (foto/motor1.jpg ... motor6.jpg). Yoksa yer tutucu görünür.
+function motorFotoEkle(dosya, px, pz, tarafi) {   // taraf: 'bati' | 'doga' | 'kuzey'
+  const FH = 1.05, FW = 1.5, FY = 1.75;
+  const rot = tarafi === 'bati' ? Math.PI / 2 : tarafi === 'doga' ? -Math.PI / 2 : Math.PI;
+  const yon = tarafi === 'bati' ? [1, 0] : tarafi === 'doga' ? [-1, 0] : [0, -1];
+  const cx = px + yon[0] * 0.065, cz = pz + yon[1] * 0.065;
+  const cer = new THREE.Mesh(new THREE.BoxGeometry(tarafi === 'kuzey' ? FW + 0.2 : 0.06, FH + 0.2, tarafi === 'kuzey' ? 0.06 : FW + 0.2),
+    new THREE.MeshPhongMaterial({ color: 0x111215, specular: 0x333333, shininess: 30 }));
+  cer.position.set(px + yon[0] * 0.03, FY, pz + yon[1] * 0.03); sahne.add(cer);
+  // yer tutucu: motosiklet silueti
+  const c = document.createElement('canvas'); c.width = 512; c.height = 360;
+  const x = c.getContext('2d');
+  x.fillStyle = '#17181c'; x.fillRect(0, 0, 512, 360);
+  x.strokeStyle = '#d1162b'; x.lineWidth = 8; x.lineCap = 'round';
+  x.beginPath(); x.arc(130, 235, 62, 0, 7); x.stroke(); x.beginPath(); x.arc(382, 235, 62, 0, 7); x.stroke();
+  x.beginPath(); x.moveTo(130, 235); x.lineTo(210, 140); x.lineTo(310, 150); x.lineTo(382, 235); x.moveTo(210, 140); x.lineTo(250, 235); x.lineTo(310, 150); x.moveTo(310, 150); x.lineTo(340, 100); x.lineTo(380, 100); x.stroke();
+  x.fillStyle = 'rgba(243,233,220,.55)'; x.font = '26px Georgia, serif'; x.textAlign = 'center'; x.fillText('Motor fotoğrafı', 256, 330);
+  const yer = new THREE.CanvasTexture(c);
+  const net = new THREE.Mesh(new THREE.PlaneGeometry(FW, FH), new THREE.MeshBasicMaterial({ map: yer, color: 0x3a3a3a, fog: false }));
+  net.position.set(cx, FY, cz); net.rotation.y = rot; sahne.add(net);
+  const kayit = { net, bul: { material: { color: new THREE.Color(), opacity: 1 } }, z: cz, px: cx, pz: cz };
+  cocukFoto.push(kayit);
+  new THREE.TextureLoader().load(dosya, tex => {
+    tex.anisotropy = 4;
+    const oran = tex.image.width / tex.image.height;
+    const gen = Math.min(2.0, FH * oran);
+    net.material.map = tex; net.material.needsUpdate = true;
+    net.scale.x = gen / FW; cer.scale.set(tarafi === 'kuzey' ? 1 : 1, 1, 1);
+    if (tarafi === 'kuzey') cer.scale.x = (gen + 0.2) / (FW + 0.2); else cer.scale.z = (gen + 0.2) / (FW + 0.2);
+    const bc = document.createElement('canvas'); bc.width = 18; bc.height = Math.max(8, Math.round(18 / oran));
+    bc.getContext('2d').drawImage(tex.image, 0, 0, bc.width, bc.height);
+    const bt = new THREE.CanvasTexture(bc); bt.magFilter = THREE.LinearFilter; bt.minFilter = THREE.LinearFilter;
+    const bul = new THREE.Mesh(new THREE.PlaneGeometry(gen, FH), new THREE.MeshBasicMaterial({ map: bt, color: 0x1f1f1f, transparent: true, fog: false }));
+    bul.position.set(cx + yon[0] * 0.002, FY, cz + yon[1] * 0.002); bul.rotation.y = rot; sahne.add(bul);
+    kayit.bul = bul;
+  }, undefined, () => {});
+}
+motorFotoEkle('foto/motor1.jpg', R3.x0, -8.6, 'bati');
+motorFotoEkle('foto/motor2.jpg', R3.x0, -3.4, 'bati');
+motorFotoEkle('foto/motor3.jpg', R3.x1, -8.6, 'doga');
+motorFotoEkle('foto/motor4.jpg', R3.x1, -3.4, 'doga');
+motorFotoEkle('foto/motor5.jpg', 6.6, R3.z1, 'kuzey');
+motorFotoEkle('foto/motor6.jpg', 13.4, R3.z1, 'kuzey');
+function motorGuncelle(dt) { if (motor.grup) motor.grup.parent.rotation.y += dt * 0.35; }
+
 // ---------- Kontrol ----------
 const kon = { donuk: 0, vx: 0, vz: 0, oto: null, bakToplam: 0, dragX: 0, dragY: 0, yaw: 0, pitch: -0.22, x: 0, z: 1.2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
 let basladi = false;
@@ -1845,10 +1982,14 @@ function kare(simdi) {
     }
 
     // sınırlar
-    if (kapi2.acik && kon.x > ODA_X + 0.3) {
+    if (K3.acik && kon.z > ODA2_Z1 - 0.2 && kon.x > 2.5) {
+      // gül kapısının ötesi: hol ve üçüncü oda
+      if (kon.z < HOL3_Z1 + 0.2) kon.x = sinir(kon.x, K3.x - 0.45, K3.x + 0.45);
+      else { kon.x = sinir(kon.x, R3.x0 + 0.7, R3.x1 - 0.7); kon.z = Math.min(kon.z, R3.z1 - 0.7); engelleriItele(kon, 0.4, false, ENGELLER3); }
+    } else if (kapi2.acik && kon.x > ODA_X + 0.3) {
       // kapının ötesi: hol ve ikinci oda
       if (kon.x < HOL_SON + 0.2) kon.z = sinir(kon.z, HOL_Z - 0.45, HOL_Z + 0.45);
-      else { kon.z = sinir(kon.z, ODA2_Z0 + 0.7, ODA2_Z1 - 0.7); kon.x = Math.min(kon.x, ODA2_X1 - 0.7); }
+      else { kon.z = sinir(kon.z, ODA2_Z0 + 0.7, (K3.acik && Math.abs(kon.x - K3.x) < 0.5) ? ODA2_Z1 + 0.5 : ODA2_Z1 - 0.7); kon.x = Math.min(kon.x, ODA2_X1 - 0.7); }
       if (patenTakili) kon.x = Math.min(kon.x, HOL_SON - 0.4);   // patenle odaya giremez
       if (kon.x > HOL_SON) engelleriItele(kon, 0.4, false);
     } else if (kon.z > KAPI_Z + 0.4) {
@@ -1917,6 +2058,7 @@ function kare(simdi) {
   matOk.color.setRGB(0.91 * nabiz, 0.7 * nabiz, 0.37 * nabiz);
 
   if (basladi && kon.z < KAPI_Z + 6) yaprakDok(dt, simdi / 1000);
+  if (K3.acik && kon.z > ODA2_Z1 && kon.x > 2.5) { cocukFotoGuncelle(); motorGuncelle(dt); }
   if (kon.x > ODA_X) { k3Guncelle(simdi); vantilatorGuncelle(simdi / 1000); sahisOklar.forEach(o => { o.mat.opacity = 0.04 + 0.2 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 420 - o.k * 0.8), 2); }); ampulGuncelle(simdi / 1000); cocukFotoGuncelle(); if (kon.x > ODA_X + 1.5) balonGuncelle(dt, simdi / 1000); }
 
   // mum titremesi
@@ -1928,7 +2070,10 @@ function kare(simdi) {
   });
 
   // ikinci odanın şarkısı
-  muzik2Hedef = (kapi2.acik && kon.x > ODA_X + 1.0) ? 0.85 : 0;
+  const oda3te = K3.acik && kon.z > ODA2_Z1 + 0.3 && kon.x > 2.5;
+  muzik2Hedef = (kapi2.acik && kon.x > ODA_X + 1.0 && !oda3te) ? 0.85 : 0;
+  muzik3Hedef = oda3te ? 0.85 : 0;
+  if (muzik3) { const v3 = muzik3.volume; muzik3.volume = sinir(v3 + (muzik3Hedef - v3) * Math.min(1, dt * 0.7), 0, 1); }
   if (muzik2) { const v2 = muzik2.volume; muzik2.volume = sinir(v2 + (muzik2Hedef - v2) * Math.min(1, dt * 0.7), 0, 1); }
 
   // müzik yumuşak geçiş
@@ -1966,7 +2111,10 @@ function kare(simdi) {
   const bx = -Math.sin(kon.yaw) * cp, by = sp, bz = -Math.cos(kon.yaw) * cp;
   const D = 2.4, hx = kon.x, hy = 0.85, hz = kon.z;
   let cx = hx - bx * D, cy2 = hy - by * D, cz = hz - bz * D;
-  if (kapi2.acik && kon.x > ODA_X + 0.3) {
+  if (K3.acik && kon.z > ODA2_Z1 - 0.2 && kon.x > 2.5) {
+    if (cz < HOL3_Z1) { cx = sinir(cx, K3.x - 0.7, K3.x + 0.7); cz = Math.max(cz, ODA2_Z1 - 3.0); }
+    else { cx = sinir(cx, R3.x0 + 0.2, R3.x1 - 0.2); cz = sinir(cz, HOL3_Z1 + 0.1, R3.z1 - 0.2); }
+  } else if (kapi2.acik && kon.x > ODA_X + 0.3) {
     cx = sinir(cx, ODA_X + 0.15, ODA2_X1 - 0.2);
     cz = cx < HOL_SON ? sinir(cz, HOL_Z - 0.7, HOL_Z + 0.7) : sinir(cz, ODA2_Z0 + 0.2, ODA2_Z1 - 0.2);
   } else if (cz > KAPI_Z + 0.1) { cx = sinir(cx, -KOR_X + 0.2, KOR_X - 0.2); cz = Math.min(cz, KOR_BAS - 0.15); }
@@ -1990,6 +2138,6 @@ document.getElementById('basla').addEventListener('click', () => {
 
 document.addEventListener('visibilitychange', () => {
   if (!muzik) return;
-  if (document.hidden) { muzik.pause(); if (muzik2) muzik2.pause(); }
-  else if (basladi) { const p = muzik.play(); if (p && p.catch) p.catch(() => {}); if (muzik2) { const q = muzik2.play(); if (q && q.catch) q.catch(() => {}); } }
+  if (document.hidden) { muzik.pause(); if (muzik2) muzik2.pause(); if (muzik3) muzik3.pause(); }
+  else if (basladi) { const p = muzik.play(); if (p && p.catch) p.catch(() => {}); if (muzik2) { const q = muzik2.play(); if (q && q.catch) q.catch(() => {}); } if (muzik3) { const r = muzik3.play(); if (r && r.catch) r.catch(() => {}); } }
 });
