@@ -625,6 +625,30 @@ function soruGuncelle(icerde) {
   if (goster !== soruGorunur) { soruGorunur = goster; soruKart.classList.toggle('acik', goster); }
 }
 
+// ---------- Kapıdan her tabloya giden, zeminde silik yanıp sönen oklar ----------
+const zeminOklar = [];
+function zeminYolu(bx, bz, sx, sz, adet) {
+  const dx = sx - bx, dz = sz - bz, uz = Math.hypot(dx, dz);
+  const phi = Math.atan2(-dz / uz, dx / uz);
+  for (let k = 0; k < adet; k++) {
+    const t = adet === 1 ? 0 : k / (adet - 1);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xe8b25f, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+    const ok = new THREE.Mesh(okGeo, mat);
+    ok.rotation.x = -Math.PI / 2;
+    ok.scale.set(0.55, 0.55, 1);
+    const grup = new THREE.Group();
+    grup.add(ok);
+    grup.position.set(bx + dx * t, 0.045, bz + dz * t);
+    grup.rotation.y = phi;
+    sahne.add(grup);
+    zeminOklar.push({ mat, k });
+  }
+}
+zeminYolu(0, -17.7, 0, -23.4, 7);          // fotoğrafa
+zeminYolu(-0.8, -18.0, -4.0, -21.4, 5);    // sol videoya
+zeminYolu(0.8, -18.0, 4.0, -21.4, 5);      // sağ videoya
+zeminYolu(-1.2, -17.0, -2.7, -17.0, 3);    // soru tahtasına
+
 // ---------- Müzik ----------
 let muzik = null, muzikHedef = 0, muzikVar = true;
 function muzikKur() {
@@ -881,6 +905,9 @@ function kare(simdi) {
 
   // fotoğraf yanı oklar: odadayken yumuşakça yanıp söner
   yanOklar.forEach(o => { o.mat.opacity = odadaMi ? 0.06 + 0.6 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 380 - o.k * 0.9), 2) : 0; });
+
+  // zemin okları: kapı açılınca silik silik yanıp söner
+  zeminOklar.forEach(o => { o.mat.opacity = kapiAcik ? 0.03 + 0.3 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 430 - o.k * 0.9), 2) : 0; });
 
   // okların nabzı
   const nabiz = 0.7 + 0.3 * Math.sin(simdi / 350);
