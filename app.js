@@ -361,37 +361,44 @@ new THREE.TextureLoader().load(ODA1.foto, tex => {
   sahne.add(fotoBulanik);
 });
 
-// ---------- Sol duvardaki video ----------
-const VID_X = -ODA_X + 0.07, VID_Z = -21.6, VID_Y = 1.9, VID_GEN = 3.2, VID_YUK = 1.8;
-const video = document.createElement('video');
-video.src = 'video/pist.mp4';
-video.muted = true; video.loop = true; video.playsInline = true;
-video.setAttribute('playsinline', ''); video.setAttribute('muted', '');
-video.preload = 'auto';
-const vidTex = new THREE.VideoTexture(video);
-vidTex.minFilter = THREE.LinearFilter; vidTex.magFilter = THREE.LinearFilter; vidTex.generateMipmaps = false;
-const vidEkran = new THREE.Mesh(new THREE.PlaneGeometry(VID_GEN, VID_YUK),
-  new THREE.MeshBasicMaterial({ map: vidTex, fog: false }));
-vidEkran.position.set(VID_X, VID_Y, VID_Z);
-vidEkran.rotation.y = Math.PI / 2;
-sahne.add(vidEkran);
-const vidCerceve = new THREE.Mesh(new THREE.BoxGeometry(0.06, VID_YUK + 0.24, VID_GEN + 0.24),
-  new THREE.MeshPhongMaterial({ color: 0x1a1210, specular: 0x000000 }));
-vidCerceve.position.set(-ODA_X + 0.035, VID_Y, VID_Z);
-sahne.add(vidCerceve);
-const vidIsik = new THREE.PointLight(0xdfe8ff, 0, 9, 2);
-vidIsik.position.set(-ODA_X + 1.2, VID_Y, VID_Z);
-sahne.add(vidIsik);
-let vidOynuyor = false;
+// ---------- Duvar videoları (sol ve sağ) ----------
+const videolar = [];
+function videoEkrani(kaynak, sol, z, y, gen, yuk) {
+  const yon = sol ? -1 : 1;
+  const v = document.createElement('video');
+  v.src = kaynak;
+  v.muted = true; v.loop = true; v.playsInline = true;
+  v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
+  v.preload = 'auto';
+  const tex = new THREE.VideoTexture(v);
+  tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.generateMipmaps = false;
+  const ekran = new THREE.Mesh(new THREE.PlaneGeometry(gen, yuk), new THREE.MeshBasicMaterial({ map: tex, fog: false }));
+  ekran.position.set(yon * (ODA_X - 0.07), y, z);
+  ekran.rotation.y = -yon * Math.PI / 2;
+  sahne.add(ekran);
+  const cerceve = new THREE.Mesh(new THREE.BoxGeometry(0.06, yuk + 0.24, gen + 0.24),
+    new THREE.MeshPhongMaterial({ color: 0x1a1210, specular: 0x000000 }));
+  cerceve.position.set(yon * (ODA_X - 0.035), y, z);
+  sahne.add(cerceve);
+  const isik = new THREE.PointLight(0xdfe8ff, 0, 9, 2);
+  isik.position.set(yon * (ODA_X - 1.2), y, z);
+  sahne.add(isik);
+  videolar.push({ v, isik, x: ekran.position.x, z, oynuyor: false });
+}
+videoEkrani('video/pist.mp4', true, -21.6, 1.9, 3.2, 1.8);
+videoEkrani('video/yan.mp4', false, -21.6, 1.85, 2.6 * 478 / 850, 2.6);
+
 function videoGuncelle(icerde) {
-  const uz = Math.hypot(kon.x - VID_X, kon.z - VID_Z);
-  const olsun = icerde && uz < 9;
-  if (olsun !== vidOynuyor) {
-    vidOynuyor = olsun;
-    if (olsun) { const p = video.play(); if (p && p.catch) p.catch(() => {}); }
-    else video.pause();
-  }
-  vidIsik.intensity = olsun ? 0.55 : 0;
+  videolar.forEach(o => {
+    const uz = Math.hypot(kon.x - o.x, kon.z - o.z);
+    const olsun = icerde && uz < 9;
+    if (olsun !== o.oynuyor) {
+      o.oynuyor = olsun;
+      if (olsun) { const p = o.v.play(); if (p && p.catch) p.catch(() => {}); }
+      else o.v.pause();
+    }
+    o.isik.intensity = olsun ? 0.55 : 0;
+  });
 }
 
 // ---------- Müzik ----------
