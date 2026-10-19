@@ -754,23 +754,38 @@ function zeminYolu(bx, bz, sx, sz, adet) {
 }
 
 // ---------- Koridorda yürüme sesi (yumuşak ahşap adım) ----------
-let adimBirik = 0, adimTek = false;
+let adimBirik = 0, adimTek = false, adimSon = -1;
+const adimTamponlar = [];
+function adimlariYukle() {
+  if (!sesBagl || adimTamponlar.length) return;
+  for (let i = 1; i <= 6; i++) {
+    fetch('ses/adim' + i + '.mp3').then(r => r.arrayBuffer())
+      .then(ab => new Promise((ok, hata) => sesBagl.decodeAudioData(ab, ok, hata)))
+      .then(buf => adimTamponlar.push(buf)).catch(() => {});
+  }
+}
+function adimSentez() {   // dosya yüklenemezse yedek
+  try {
+    const c = sesBagl, t = c.currentTime;
+    adimTek = !adimTek;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(adimTek ? 118 : 100, t); o.frequency.exponentialRampToValueAtTime(52, t + 0.1);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.11, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.15);
+  } catch (e) {}
+}
 function adimSesi() {
   try {
     if (!sesBagl) return;
-    const c = sesBagl, t = c.currentTime;
-    adimTek = !adimTek;
-    const f0 = adimTek ? 118 : 100;
-    const o = c.createOscillator(), g = c.createGain();
-    o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(52, t + 0.1);
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.11, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
-    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.15);
-    const uz = Math.floor(c.sampleRate * 0.05), buf = c.createBuffer(1, uz, c.sampleRate), v = buf.getChannelData(0);
-    for (let i = 0; i < uz; i++) v[i] = (Math.random() * 2 - 1) * (1 - i / uz);
-    const k = c.createBufferSource(); k.buffer = buf;
-    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700;
-    const g2 = c.createGain(); g2.gain.value = 0.05;
-    k.connect(lp); lp.connect(g2); g2.connect(c.destination); k.start(t);
+    if (!adimTamponlar.length) { adimSentez(); return; }
+    let k;
+    do { k = Math.floor(Math.random() * adimTamponlar.length); } while (k === adimSon && adimTamponlar.length > 1);
+    adimSon = k;
+    const c = sesBagl, kay = c.createBufferSource(), g = c.createGain();
+    kay.buffer = adimTamponlar[k];
+    kay.playbackRate.value = 0.94 + Math.random() * 0.12;
+    g.gain.value = 0.55 + Math.random() * 0.15;
+    kay.connect(g); g.connect(c.destination); kay.start();
   } catch (e) {}
 }
 
@@ -1411,7 +1426,7 @@ document.getElementById('basla').addEventListener('click', () => {
   basladi = true;
   muzikKur();
   ogrBasla();
-  try { sesBagl = new (window.AudioContext || window.webkitAudioContext)(); if (sesBagl.resume) sesBagl.resume(); } catch (e) { sesBagl = null; }
+  try { sesBagl = new (window.AudioContext || window.webkitAudioContext)(); if (sesBagl.resume) sesBagl.resume(); adimlariYukle(); } catch (e) { sesBagl = null; }
   document.getElementById('giris').classList.add('gizli');
   setTimeout(() => document.getElementById('ipucu').classList.add('gizli'), 7000);
 });
