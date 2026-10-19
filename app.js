@@ -13,7 +13,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 const sahne = new THREE.Scene();
 const ZEMIN = 0x0b0a0f;
 sahne.background = new THREE.Color(ZEMIN);
-sahne.fog = new THREE.FogExp2(ZEMIN, 0.03);
+sahne.fog = new THREE.FogExp2(ZEMIN, 0.024);
 const kamera = new THREE.PerspectiveCamera(70, 1, 0.05, 60);
 kamera.rotation.order = 'YXZ';
 
@@ -30,11 +30,11 @@ boyutla();
 // ---------- Düzen ----------
 const KOR_X = 1.5, KOR_BAS = 4, KAPI_Z = -16, ODA_SON = -27, ODA_X = 5.5, YUKSEK = 3, ODA_Y = 4;
 
-sahne.add(new THREE.AmbientLight(0x3a2c40, 0.45));
+sahne.add(new THREE.AmbientLight(0x45354c, 0.62));
 
 const matZemin = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x2b1d17 });
 const matDuvar = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x5a4636 });
-const matOda = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x241f2a });
+const matOda = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x362f3d });
 
 function kutu(w, h, d, mat, x, y, z) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -144,7 +144,7 @@ sahne.add(kapiMenteşe);
 // oda
 const odaUzun = KAPI_Z - ODA_SON;
 const odaOrta = (KAPI_Z + ODA_SON) / 2;
-kutu(ODA_X * 2, 0.1, odaUzun, new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x100c14 }), 0, -0.05, odaOrta);
+kutu(ODA_X * 2, 0.1, odaUzun, new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x1d1723 }), 0, -0.05, odaOrta);
 kutu(ODA_X * 2, 0.1, odaUzun, matOda, 0, ODA_Y + 0.05, odaOrta);
 kutu(0.1, ODA_Y, odaUzun, matOda, -ODA_X - 0.05, ODA_Y / 2, odaOrta);
 kutu(0.1, ODA_Y, odaUzun, matOda, ODA_X + 0.05, ODA_Y / 2, odaOrta);
@@ -217,8 +217,8 @@ function duvarMum(x, y, z, rotY, isikGuc, menzil) {
 // koridorun başı: uç duvarda
 [-0.9, 0.9].forEach(x => duvarMum(x, 1.5, KOR_BAS, Math.PI, 0, 0));
 // oda: fotoğraf duvarı
-duvarMum(-1.6, 1.15, ODA_SON, 0, 1.1, 9);
-duvarMum(1.6, 1.15, ODA_SON, 0, 1.1, 9);
+duvarMum(-1.6, 1.15, ODA_SON, 0, 1.5, 10);
+duvarMum(1.6, 1.15, ODA_SON, 0, 1.5, 10);
 [-3.0, 3.0, -4.6, 4.6].forEach(x => duvarMum(x, 1.15, ODA_SON, 0, 0, 0));
 // oda: yan duvarlar (videoların iki yanında)
 [-17.6, -18.9, -24.6, -25.7].forEach(z => {
@@ -886,7 +886,7 @@ function kare(simdi) {
     if (icerde !== odadaMi) { odadaMi = icerde; muzikHedef = icerde ? 0.85 : 0; }
     const fotoUz = Math.hypot(kon.x, kon.z - FOTO_Z);
     const yakin = icerde ? yumusak(10, 3.2, fotoUz) : 0;
-    odaIsik.intensity = 0.15 + 1.6 * yakin;
+    odaIsik.intensity = 0.55 + 1.4 * yakin;
     if (fotoNet) {
       const parlak = 0.12 + 0.88 * yakin;
       fotoNet.material.color.setRGB(parlak, parlak, parlak);
