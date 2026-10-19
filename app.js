@@ -174,20 +174,59 @@ function mumYap(x, z, isikGuc, menzil) {
   }
   mumlar.push({ alev, isik, guc: isikGuc, faz: Math.random() * 10 });
 }
-// koridor: iki yanda dizili, ışıklı olanlar sağda/solda dönüşümlü
-[[-1.2, 2.2], [1.2, 0.2], [-1.2, -2.0], [1.2, -4.0], [-1.2, -6.0], [1.2, -8.0],
- [-1.2, -10.0], [1.2, -12.0], [-1.2, -14.0], [1.2, -15.0]].forEach((k, i) => {
-  mumYap(k[0], k[1], i % 2 === 0 ? 1.6 : 0, 7);
+// duvar şamdanı: altın plaka, kol, kadeh, mum ve altında küçük gül-yaprak süsü
+const matSamdan = new THREE.MeshPhongMaterial({ color: 0xc9a24a, specular: 0xfff0c0, shininess: 50, emissive: 0x2a1c06 });
+const matSuYesil = new THREE.MeshPhongMaterial({ color: 0x2f5a2a, specular: 0x000000 });
+const matSuGul = new THREE.MeshPhongMaterial({ color: 0xa3142a, specular: 0x331010, shininess: 14 });
+function duvarMum(x, y, z, rotY, isikGuc, menzil) {
+  const g = new THREE.Group();
+  const plaka = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.015, 16), matSamdan);
+  plaka.rotation.x = Math.PI / 2; plaka.position.z = 0.008; g.add(plaka);
+  const kol = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.11), matSamdan);
+  kol.position.set(0, 0, 0.065); g.add(kol);
+  const kadeh = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.035, 0.04, 12), matSamdan);
+  kadeh.position.set(0, 0, 0.12); g.add(kadeh);
+  const mum = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.034, 0.2, 10), matMum);
+  mum.position.set(0, 0.12, 0.12); g.add(mum);
+  const alev = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), matAlev);
+  alev.scale.set(1, 1.9, 1); alev.position.set(0, 0.255, 0.12); g.add(alev);
+  // altında sarkan küçük gül ve yaprak süsü
+  [[-0.035, -0.1], [0.04, -0.115]].forEach(p => {
+    const r = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), matSuGul);
+    r.position.set(p[0], p[1], 0.05); g.add(r);
+  });
+  [[-0.06, -0.14, 0.7], [0.0, -0.17, 0], [0.06, -0.14, -0.7]].forEach(p => {
+    const l = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), matSuYesil);
+    l.scale.set(1, 0.14, 0.45); l.position.set(p[0], p[1], 0.045); l.rotation.z = p[2]; g.add(l);
+  });
+  g.position.set(x, y, z);
+  g.rotation.y = rotY;
+  sahne.add(g);
+  let isik = null;
+  if (isikGuc > 0) {
+    isik = new THREE.PointLight(0xffa850, isikGuc, menzil, 1.6);
+    isik.position.set(0, 0.3, 0.25);
+    g.add(isik);
+  }
+  mumlar.push({ alev, isik, guc: isikGuc, faz: Math.random() * 10 });
+}
+// koridor: iki duvarda dönüşümlü
+[[-1, 1.0, 1.6], [1, -2.0, 1.6], [-1, -5.0, 1.6], [1, -8.0, 1.6], [-1, -11.0, 1.6], [1, -14.0, 0]].forEach(k => {
+  duvarMum(k[0] * KOR_X, 1.5, k[1], -k[0] * Math.PI / 2, k[2], 7);
 });
-// koridorun başında ve ortasında kısa mum kümeleri
-[[-0.9, 3.2], [-0.8, 3.0], [0.9, 3.3]].forEach(k => mumYap(k[0], k[1], 0, 0));
-// oda: fotoğrafın iki yanı
-mumYap(-2.6, ODA_SON + 0.8, 1.1, 9);
-mumYap(2.6, ODA_SON + 0.8, 1.1, 9);
-mumYap(-1.8, ODA_SON + 0.6, 0, 0);
-mumYap(1.8, ODA_SON + 0.6, 0, 0);
-[[-4.8, -19.0], [4.8, -19.0], [-4.8, -25.3], [4.8, -25.3], [-3.0, -26.2], [3.0, -26.2],
- [-1.6, -26.3], [1.6, -26.3], [-2.0, -24.6], [2.0, -24.6], [-4.6, -17.6], [4.6, -17.6]].forEach(k => mumYap(k[0], k[1], 0, 0));
+// koridorun başı: uç duvarda
+[-0.9, 0.9].forEach(x => duvarMum(x, 1.5, KOR_BAS, Math.PI, 0, 0));
+// oda: fotoğraf duvarı
+duvarMum(-1.6, 1.15, ODA_SON, 0, 1.1, 9);
+duvarMum(1.6, 1.15, ODA_SON, 0, 1.1, 9);
+[-3.0, 3.0, -4.6, 4.6].forEach(x => duvarMum(x, 1.15, ODA_SON, 0, 0, 0));
+// oda: yan duvarlar (videoların iki yanında)
+[-17.6, -18.9, -24.6, -25.7].forEach(z => {
+  duvarMum(-ODA_X, 1.2, z, Math.PI / 2, 0, 0);
+  duvarMum(ODA_X, 1.2, z, -Math.PI / 2, 0, 0);
+});
+// oda: kapı tarafındaki duvar
+[-4.0, -2.4, 2.4, 4.0].forEach(x => duvarMum(x, 1.5, KAPI_Z - 0.11, Math.PI, 0, 0));
 
 // ---------- Duvar kalpleri ve kapıyı gösteren oklar ----------
 const kalpSekil = new THREE.Shape();
@@ -358,11 +397,11 @@ const yanOklar = [];
 
 // ---------- Tabloların yanından dökülen gül yaprakları ----------
 const DOK_YER = [
-  { x: -1.75, z: ODA_SON + 0.5, gx: 0.5, gz: 0.3 }, { x: 1.75, z: ODA_SON + 0.5, gx: 0.5, gz: 0.3 },
+  { x: -1.5, z: ODA_SON + 0.4, gx: 0.45, gz: 0.25 }, { x: 1.5, z: ODA_SON + 0.4, gx: 0.45, gz: 0.25 },
   { x: -5.05, z: -23.8, gx: 0.3, gz: 0.4 }, { x: -5.05, z: -19.4, gx: 0.3, gz: 0.4 },
   { x: 5.05, z: -23.0, gx: 0.3, gz: 0.4 }, { x: 5.05, z: -20.2, gx: 0.3, gz: 0.4 }
 ];
-const DOK_N = 210;
+const DOK_N = 280;
 const dokGeo = new THREE.SphereGeometry(0.06, 8, 6);
 dokGeo.scale(1, 0.14, 0.72);
 const dokGrup = new THREE.InstancedMesh(dokGeo, new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x220a0a, shininess: 10 }), DOK_N);
