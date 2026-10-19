@@ -341,6 +341,16 @@ const yanOklar = [];
     sahne.add(ok);
     yanOklar.push({ mat, k });
   });
+  // devamı: yan duvarda köşeden videoya doğru
+  [-26.3, -25.6, -24.9, -24.2].forEach((z, n) => {
+    const mat = new THREE.MeshBasicMaterial({ color: 0xe8b25f, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+    const ok = new THREE.Mesh(okGeo, mat);
+    ok.scale.set(yon < 0 ? -0.7 : 0.7, 0.7, 1);
+    ok.position.set(yon * (ODA_X - 0.01), 1.9, z);
+    ok.rotation.y = -yon * Math.PI / 2;
+    sahne.add(ok);
+    yanOklar.push({ mat, k: 5 + n });
+  });
 });
 
 // ---------- Fotoğraf ----------
