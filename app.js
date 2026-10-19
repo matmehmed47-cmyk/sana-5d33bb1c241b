@@ -219,6 +219,28 @@ kutu(0.1, ODA2_Y, ODA2_Z1 - (HOL_Z + 0.8), matDuvar2, HOL_SON - 0.05, ODA2_Y / 2
 const isik2 = new THREE.PointLight(0xffd9a0, 1.1, 16, 1.5);
 isik2.position.set(o2cx, 2.7, o2cz);
 sahne.add(isik2);
+// karşı duvarda yan yana iki çocukluk fotoğrafı
+(function cocuklukFotolari() {
+  const FY = 1.6, FH = 2.1, BOSLUK = 0.5;
+  const liste = [{ dosya: 'foto/cocuk1.jpg', oran: 1254 / 939 }, { dosya: 'foto/cocuk2.jpg', oran: 720 / 1280 }];
+  const toplam = liste.reduce((t, f) => t + f.oran * FH, 0) + BOSLUK;
+  let z = o2cz - toplam / 2;   // sol uçtan (−z) başla; +x'e bakınca sol = −z
+  const cerMat = new THREE.MeshPhongMaterial({ color: 0x5a3b22, specular: 0x000000, shininess: 4 });
+  liste.forEach(f => {
+    const gen = f.oran * FH, zc = z + gen / 2;
+    const cer = new THREE.Mesh(new THREE.BoxGeometry(0.06, FH + 0.24, gen + 0.24), cerMat);
+    cer.position.set(ODA2_X1 - 0.03, FY, zc);
+    sahne.add(cer);
+    new THREE.TextureLoader().load(f.dosya, tex => {
+      tex.anisotropy = 4;
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(gen, FH), new THREE.MeshBasicMaterial({ map: tex, color: 0xe6e0d6, fog: false }));
+      m.position.set(ODA2_X1 - 0.065, FY, zc);
+      m.rotation.y = -Math.PI / 2;     // yüzü odaya (−x) bakar
+      sahne.add(m);
+    });
+    z += gen + BOSLUK;
+  });
+})();
 // paten rafı: girişte, holün kuzeyinde
 const rafMat = new THREE.MeshPhongMaterial({ color: 0x8a6240, specular: 0x000000, shininess: 4 });
 kutu(0.55, 0.06, 1.8, rafMat, HOL_SON + 0.3, 0.38, -16.4);
