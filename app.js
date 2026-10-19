@@ -1761,8 +1761,8 @@ function balonGuncelle(dt, t) {
 const HOL3_Z1 = -11.3;
 const R3 = { x0: 4.0, x1: 16.0, z0: -11.3, z1: -0.5, y: 3.4 };
 const R3cx = (R3.x0 + R3.x1) / 2, R3cz = (R3.z0 + R3.z1) / 2;
-const ENGELLER3 = [{ x: R3cx, z: -5.5, r: 1.3 }];
-const motor = { grup: null, aci: 0 };
+const ENGELLER3 = [{ x: R3cx, z: -5.5, r: 1.35 }, { x: R3cx - 3.8, z: -5.8, r: 1.15 }, { x: R3cx + 3.8, z: -5.8, r: 1.2 }];
+const motor = { grup: null, aci: 0, platlar: [] };
 (function motorOdasi() {
   const duvar3 = new THREE.MeshPhongMaterial({ color: 0x34363b, specular: 0x000000, shininess: 4 });
   const zemin3 = new THREE.MeshPhongMaterial({ color: 0x4b4d53, specular: 0x000000, shininess: 4 });
@@ -1812,39 +1812,74 @@ const motor = { grup: null, aci: 0 };
   const neon = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 4.4 * 192 / 1024), new THREE.MeshBasicMaterial({ map: nd, transparent: true, depthWrite: false, fog: false }));
   neon.position.set(R3cx, 2.45, R3.z1 - 0.04); neon.rotation.y = Math.PI; sahne.add(neon);
 
-  // dönen platformda motosiklet
-  const m = new THREE.Group(); m.position.set(R3cx, 0, -5.5); sahne.add(m);
-  const plat = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.4, 0.1, 40), new THREE.MeshPhongMaterial({ color: 0x1c1d21, specular: 0x333333, shininess: 30 })); plat.position.y = 0.05; m.add(plat);
-  const halka = new THREE.Mesh(new THREE.TorusGeometry(1.32, 0.018, 8, 60), new THREE.MeshBasicMaterial({ color: 0xff2a4a })); halka.rotation.x = Math.PI / 2; halka.position.y = 0.105; m.add(halka);
-  const moto = new THREE.Group(); moto.position.y = 0.1; m.add(moto);
-  const kirmizi = new THREE.MeshPhongMaterial({ color: 0xd1162b, specular: 0xffffff, shininess: 90, emissive: 0x2a0408 });
+  // dönen platformlarda motosikletler: ortada macera tipi (Ducati tarzı), yanlarda spor ve cruiser
   const siyah = new THREE.MeshPhongMaterial({ color: 0x15161a, specular: 0x444444, shininess: 30 });
   const krom = new THREE.MeshPhongMaterial({ color: 0xcfd3da, specular: 0xffffff, shininess: 120 });
-  const parca = (geo, mat, x, y, z, rz) => { const p = new THREE.Mesh(geo, mat); p.position.set(x, y, z); if (rz) p.rotation.z = rz; moto.add(p); return p; };
-  [0.65, -0.65].forEach(x => {   // tekerler
-    parca(new THREE.TorusGeometry(0.31, 0.08, 12, 32), siyah, x, 0.4, 0);
-    parca(new THREE.TorusGeometry(0.22, 0.015, 8, 28), krom, x, 0.4, 0);
-    parca(new THREE.CylinderGeometry(0.05, 0.05, 0.12, 12), krom, x, 0.4, 0).rotation.x = Math.PI / 2;
+  const gri = new THREE.MeshPhongMaterial({ color: 0x5e6066, specular: 0xffffff, shininess: 50 });
+  const camMat = new THREE.MeshPhongMaterial({ color: 0x9fb4c8, specular: 0xffffff, shininess: 80, transparent: true, opacity: 0.45, side: THREE.DoubleSide });
+  function motoYap(stil, boya, boya2, vurgu) {
+    const moto = new THREE.Group();
+    const boyaM = new THREE.MeshPhongMaterial({ color: boya, specular: 0xffffff, shininess: 90, emissive: new THREE.Color(boya).multiplyScalar(0.12) });
+    const boya2M = new THREE.MeshPhongMaterial({ color: boya2, specular: 0xffffff, shininess: 80, emissive: new THREE.Color(boya2).multiplyScalar(0.08) });
+    const vurguM = new THREE.MeshPhongMaterial({ color: vurgu, specular: 0xffffff, shininess: 60, emissive: new THREE.Color(vurgu).multiplyScalar(0.2) });
+    const P = (geo, mat, x, y, z, rz, rx) => { const p = new THREE.Mesh(geo, mat); p.position.set(x, y, z); if (rz) p.rotation.z = rz; if (rx) p.rotation.x = rx; moto.add(p); return p; };
+    const buyuk = stil === 'adv' ? 0.35 : stil === 'cruiser' ? 0.3 : 0.31;
+    const boyUz = stil === 'cruiser' ? 0.78 : 0.66;
+    [boyUz, -boyUz].forEach(x => {   // tekerler
+      P(new THREE.TorusGeometry(buyuk, stil === 'adv' ? 0.095 : 0.08, 12, 32), siyah, x, buyuk + 0.1, 0);
+      P(new THREE.TorusGeometry(buyuk - 0.1, 0.015, 8, 28), krom, x, buyuk + 0.1, 0);
+      P(new THREE.CylinderGeometry(0.05, 0.05, 0.12, 12), krom, x, buyuk + 0.1, 0, 0, Math.PI / 2);
+      if (stil === 'adv') for (let i = 0; i < 6; i++) { const sp = P(new THREE.BoxGeometry(0.012, buyuk * 1.7, 0.012), krom, x, buyuk + 0.1, 0); sp.rotation.z = i * Math.PI / 6; }
+    });
+    const gx = stil === 'cruiser' ? 0.6 : 0.52;
+    [0.1, -0.1].forEach(z => P(new THREE.CylinderGeometry(0.022, 0.022, 0.62, 8), krom, gx + 0.08, 0.76, z, 0.355));   // ön amortisör
+    P(new THREE.CylinderGeometry(0.016, 0.016, stil === 'cruiser' ? 0.9 : 0.64, 8), siyah, gx - 0.02, 1.02, 0, 0, Math.PI / 2);   // gidon
+    [1, -1].forEach(d => P(new THREE.CylinderGeometry(0.02, 0.02, 0.12, 8), siyah, gx - 0.02, 1.02, d * (stil === 'cruiser' ? 0.45 : 0.32), 0, Math.PI / 2));
+    P(new THREE.SphereGeometry(0.1, 14, 10), new THREE.MeshBasicMaterial({ color: 0xfff1c9 }), gx + 0.2, 0.92, 0);   // far
+    // gövde
+    const depo = P(new THREE.SphereGeometry(0.38, 18, 12), boyaM, 0.15, 0.95, 0); depo.scale.set(1, 0.5, 0.52);
+    P(new THREE.BoxGeometry(0.5, 0.07, 0.22), siyah, -0.28, 0.85, 0);                                                    // sele
+    P(new THREE.BoxGeometry(0.4, 0.3, 0.3), gri, 0.05, 0.55, 0);                                                         // motor bloğu
+    [0.12, -0.12].forEach(z => P(new THREE.BoxGeometry(0.75, 0.05, 0.05), krom, -0.32, 0.45, z));                       // salıncak
+    P(new THREE.CylinderGeometry(0.05, 0.065, 0.85, 12), krom, -0.45, 0.38, 0.2, Math.PI / 2 + 0.05);                   // egzoz
+    P(new THREE.BoxGeometry(0.5, 0.025, 0.2), boya2M, -0.72, 0.8, 0, 0.25);                                              // arka çamurluk
+    if (stil === 'adv') {
+      P(new THREE.BoxGeometry(0.1, 0.04, 0.22), vurguM, -0.5, 0.83, 0);                                                  // kırmızı sele ucu
+      const cam = P(new THREE.PlaneGeometry(0.3, 0.34), camMat, gx + 0.18, 1.2, 0); cam.rotation.y = Math.PI / 2; cam.rotation.z = -0.4;   // rüzgârlık
+      P(new THREE.BoxGeometry(0.42, 0.05, 0.14), boya2M, gx + 0.18, 0.78, 0, -0.15);                                      // gaga çamurluk
+      [0.28, -0.28].forEach(z => P(new THREE.BoxGeometry(0.42, 0.26, 0.17), siyah, -0.6, 0.78, z));                       // yan çantalar
+      P(new THREE.BoxGeometry(0.34, 0.1, 0.34), boya2M, 0.12, 0.62, 0, 0, 0);                                            // karter koruma
+      P(new THREE.BoxGeometry(0.28, 0.04, 0.28), vurguM, 0.14, 0.9, 0);                                                  // tank şeridi (kırmızı)
+    }
+    if (stil === 'sport') {
+      const kapak = P(new THREE.SphereGeometry(0.34, 16, 12), boyaM, gx + 0.05, 0.95, 0); kapak.scale.set(1.05, 0.9, 0.55);   // ön kaporta
+      P(new THREE.BoxGeometry(0.4, 0.04, 0.2), vurguM, 0.0, 0.7, 0);
+    }
+    if (stil === 'cruiser') {
+      P(new THREE.CylinderGeometry(0.14, 0.14, 0.05, 16), krom, gx + 0.2, 0.92, 0, Math.PI / 2);                          // yuvarlak far çerçevesi
+      [0.2, -0.2].forEach(z => P(new THREE.SphereGeometry(0.19, 14, 10), krom, -0.78, 0.55, z));                           // yan çanta borusu parlak
+    }
+    return moto;
+  }
+  const bikeler = [
+    { x: R3cx, z: -5.5, stil: 'adv', boya: 0xf2f2f2, boya2: 0x15161a, vurgu: 0xd1162b, r: 1.35, hiz: 0.3, aci: 0.4 },
+    { x: R3cx - 3.8, z: -5.8, stil: 'sport', boya: 0xd1162b, boya2: 0x15161a, vurgu: 0xffffff, r: 1.15, hiz: -0.4, aci: 1.2 },
+    { x: R3cx + 3.8, z: -5.8, stil: 'cruiser', boya: 0x1f4fa8, boya2: 0x15161a, vurgu: 0xe8c33a, r: 1.2, hiz: 0.35, aci: 2.1 }
+  ];
+  motor.platlar = [];
+  bikeler.forEach(bk => {
+    const m = new THREE.Group(); m.position.set(bk.x, 0, bk.z); m.rotation.y = bk.aci; sahne.add(m);
+    const plat = new THREE.Mesh(new THREE.CylinderGeometry(bk.r, bk.r + 0.05, 0.1, 40), new THREE.MeshPhongMaterial({ color: 0x1c1d21, specular: 0x333333, shininess: 30 })); plat.position.y = 0.05; m.add(plat);
+    const halka = new THREE.Mesh(new THREE.TorusGeometry(bk.r - 0.03, 0.018, 8, 60), new THREE.MeshBasicMaterial({ color: bk.stil === 'cruiser' ? 0x4aa3ff : 0xff2a4a })); halka.rotation.x = Math.PI / 2; halka.position.y = 0.105; m.add(halka);
+    const moto = motoYap(bk.stil, bk.boya, bk.boya2, bk.vurgu); moto.position.y = 0.1; m.add(moto);
+    motor.platlar.push({ g: m, hiz: bk.hiz });
   });
-  parca(new THREE.CylinderGeometry(0.022, 0.022, 0.6, 8), krom, 0.55, 0.72, 0.1, 0.355);   // ön amortisör (iki yan)
-  parca(new THREE.CylinderGeometry(0.022, 0.022, 0.6, 8), krom, 0.55, 0.72, -0.1, 0.355);
-  parca(new THREE.CylinderGeometry(0.015, 0.015, 0.62, 8), siyah, 0.5, 0.97, 0).rotation.x = Math.PI / 2;     // gidon
-  [0.31, -0.31].forEach(z => parca(new THREE.CylinderGeometry(0.02, 0.02, 0.12, 8), siyah, 0.5, 0.97, z).rotation.x = Math.PI / 2);
-  parca(new THREE.SphereGeometry(0.1, 14, 10), new THREE.MeshBasicMaterial({ color: 0xfff1c9 }), 0.7, 0.9, 0);            // far
-  const depo = parca(new THREE.SphereGeometry(0.38, 18, 12), kirmizi, 0.12, 0.88, 0); depo.scale.set(1, 0.5, 0.52);       // depo
-  parca(new THREE.BoxGeometry(0.55, 0.07, 0.22), siyah, -0.3, 0.8, 0);                                                     // sele
-  parca(new THREE.BoxGeometry(0.4, 0.3, 0.3), new THREE.MeshPhongMaterial({ color: 0x5e6066, specular: 0xffffff, shininess: 50 }), 0.05, 0.5, 0);   // motor bloğu
-  parca(new THREE.BoxGeometry(0.7, 0.05, 0.05), krom, -0.3, 0.4, 0.12);                                                    // salıncak
-  parca(new THREE.BoxGeometry(0.7, 0.05, 0.05), krom, -0.3, 0.4, -0.12);
-  parca(new THREE.CylinderGeometry(0.05, 0.065, 0.85, 12), krom, -0.45, 0.32, 0.2, Math.PI / 2 + 0.05);                    // egzoz
-  parca(new THREE.BoxGeometry(0.5, 0.025, 0.2), kirmizi, -0.7, 0.75, 0, 0.25);                                              // arka çamurluk
-  parca(new THREE.CylinderGeometry(0.035, 0.035, 0.1, 10), kirmizi, 0.58, 1.04, 0.0);                                      // ayna kökü
-  motor.grup = moto;
+  motor.grup = motor.platlar[0].g;
 })();
 
 // duvar çerçeveleri: motor fotoğrafları (foto/motor1.jpg ... motor6.jpg). Yoksa yer tutucu görünür.
 function motorFotoEkle(dosya, px, pz, tarafi) {   // taraf: 'bati' | 'doga' | 'kuzey'
-  const FH = 1.05, FW = 1.5, FY = 1.75;
+  const FH = 1.5, FW = 1.8, FY = 1.7;
   const rot = tarafi === 'bati' ? Math.PI / 2 : tarafi === 'doga' ? -Math.PI / 2 : Math.PI;
   const yon = tarafi === 'bati' ? [1, 0] : tarafi === 'doga' ? [-1, 0] : [0, -1];
   const cx = px + yon[0] * 0.065, cz = pz + yon[1] * 0.065;
@@ -1867,7 +1902,7 @@ function motorFotoEkle(dosya, px, pz, tarafi) {   // taraf: 'bati' | 'doga' | 'k
   new THREE.TextureLoader().load(dosya, tex => {
     tex.anisotropy = 4;
     const oran = tex.image.width / tex.image.height;
-    const gen = Math.min(2.0, FH * oran);
+    const gen = Math.min(2.6, FH * oran);
     net.material.map = tex; net.material.needsUpdate = true;
     net.scale.x = gen / FW; cer.scale.set(tarafi === 'kuzey' ? 1 : 1, 1, 1);
     if (tarafi === 'kuzey') cer.scale.x = (gen + 0.2) / (FW + 0.2); else cer.scale.z = (gen + 0.2) / (FW + 0.2);
@@ -1879,13 +1914,9 @@ function motorFotoEkle(dosya, px, pz, tarafi) {   // taraf: 'bati' | 'doga' | 'k
     kayit.bul = bul;
   }, undefined, () => {});
 }
-motorFotoEkle('foto/motor1.jpg', R3.x0, -8.6, 'bati');
-motorFotoEkle('foto/motor2.jpg', R3.x0, -3.4, 'bati');
-motorFotoEkle('foto/motor3.jpg', R3.x1, -8.6, 'doga');
-motorFotoEkle('foto/motor4.jpg', R3.x1, -3.4, 'doga');
-motorFotoEkle('foto/motor5.jpg', 6.6, R3.z1, 'kuzey');
-motorFotoEkle('foto/motor6.jpg', 13.4, R3.z1, 'kuzey');
-function motorGuncelle(dt) { if (motor.grup) motor.grup.parent.rotation.y += dt * 0.35; }
+motorFotoEkle('foto/motor-a.jpg', 5.9, R3.z1, 'kuzey');
+motorFotoEkle('foto/motor-b.jpg', 14.1, R3.z1, 'kuzey');
+function motorGuncelle(dt) { motor.platlar.forEach(p => { p.g.rotation.y += dt * p.hiz; }); }
 
 // ---------- Kontrol ----------
 const kon = { donuk: 0, vx: 0, vz: 0, oto: null, bakToplam: 0, dragX: 0, dragY: 0, yaw: 0, pitch: -0.22, x: 0, z: 1.2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
