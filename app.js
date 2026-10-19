@@ -753,6 +753,27 @@ function zeminYolu(bx, bz, sx, sz, adet) {
   }
 }
 
+// ---------- Koridorda yürüme sesi (yumuşak ahşap adım) ----------
+let adimBirik = 0, adimTek = false;
+function adimSesi() {
+  try {
+    if (!sesBagl) return;
+    const c = sesBagl, t = c.currentTime;
+    adimTek = !adimTek;
+    const f0 = adimTek ? 118 : 100;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(52, t + 0.1);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.11, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.15);
+    const uz = Math.floor(c.sampleRate * 0.05), buf = c.createBuffer(1, uz, c.sampleRate), v = buf.getChannelData(0);
+    for (let i = 0; i < uz; i++) v[i] = (Math.random() * 2 - 1) * (1 - i / uz);
+    const k = c.createBufferSource(); k.buffer = buf;
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700;
+    const g2 = c.createGain(); g2.gain.value = 0.05;
+    k.connect(lp); lp.connect(g2); g2.connect(c.destination); k.start(t);
+  } catch (e) {}
+}
+
 // ---------- Kapı gıcırtısı (sentezlenmiş, dosyasız) ----------
 function gicirti(d) {
   // yumuşak ahşap kapı sesi: alçak bir "tok", hafif hava ve çok kısık küçük bir gıcırtı
@@ -1254,6 +1275,11 @@ function kare(simdi) {
     kon.vz += (mz * hiz - kon.vz) * Math.min(1, dt * kay);
     kon.x += kon.vx * dt;
     kon.z += kon.vz * dt;
+    // adım sesi: sadece kapıya kadar, koridorda
+    if (kon.z > KAPI_Z + 0.2 && ogr >= 1) {
+      adimBirik += Math.hypot(kon.vx, kon.vz) * dt;
+      if (adimBirik > 0.8) { adimBirik = 0; adimSesi(); }
+    } else adimBirik = 0;
     yurume = Math.min(1, Math.max(ml, Math.hypot(kon.vx, kon.vz) / hiz));
     if (ml > 0.08) {
       const hedef = Math.atan2(-mx, -mz);
