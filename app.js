@@ -653,6 +653,9 @@ function yonergeGuncelle(icerde, dt, fotoUz) {
   if (asama === 4 && simdi - yonZaman > 5000) gizle = true;
   yonKutu.classList.toggle('acik', !gizle);
   if (gizle && (asama === 1 || asama === 2)) elGoster(null);
+  if (asama === 3 && elSu === 'yuru' && simdi - yonZaman > 7000) elGoster(null);
+  if (asama === 4 && elSu) elGoster(null);
+  if (elSu === 'bak' && sonBakZaman >= yonZaman) elGoster(null);
   // yazı uzun süre ekranda kalıp bakma olmadıysa küçük el hatırlatması
   if (!gizle && ogr >= 2 && simdi - yonZaman > 12000 && sonBakZaman < yonZaman) elGoster('bak');
 }
@@ -907,7 +910,8 @@ function zerreGuncelle(dt, x, z, yon, hareketli) {
 // ---------- Öğretici: el simgesi, yürüme ve bakma ----------
 const elKutu = document.getElementById('el'), ogrKutu = document.getElementById('ogretici');
 const DOKUNMATIK = !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
-function elGoster(tur) { elKutu.className = (tur && DOKUNMATIK) ? 'el ' + tur : 'el'; }
+let elSu = null;
+function elGoster(tur) { elSu = tur; elKutu.className = (tur && DOKUNMATIK) ? 'el ' + tur : 'el'; }
 let ogr = -1, ogrBas = null, ogrBakBas = 0;
 function ogrYaz(t, el) {
   ogrKutu.textContent = t; ogrKutu.classList.add('acik'); elGoster(el);
