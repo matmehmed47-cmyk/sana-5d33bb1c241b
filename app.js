@@ -166,7 +166,7 @@ function buzDokusu() {
   return t;
 }
 const zeminMat = BUZ
-  ? new THREE.MeshPhongMaterial({ color: 0x46586a, map: buzDokusu(), specular: 0xffffff, shininess: 110 })
+  ? new THREE.MeshPhongMaterial({ color: 0x46586a, map: buzDokusu(), specular: 0x000000, shininess: 5 })
   : new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6, color: 0x1d1723 });
 kutu(ODA_X * 2, 0.1, odaUzun, zeminMat, 0, -0.05, odaOrta);
 // yansıma parıltıları için ortak yumuşak ışık dokusu
