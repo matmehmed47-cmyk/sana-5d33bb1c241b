@@ -152,9 +152,9 @@ function buzDokusu() {
   const g = x.createLinearGradient(0, 0, 512, 512);
   g.addColorStop(0, '#e4f0fa'); g.addColorStop(0.5, '#cfe2f1'); g.addColorStop(1, '#e9f3fb');
   x.fillStyle = g; x.fillRect(0, 0, 512, 512);
-  for (let i = 0; i < 70; i++) {   // patenlerin bıraktığı ince çizgiler
-    x.strokeStyle = Math.random() < 0.5 ? 'rgba(255,255,255,.55)' : 'rgba(120,160,195,.28)';
-    x.lineWidth = 0.6 + Math.random() * 1.2;
+  for (let i = 0; i < 90; i++) {   // patenlerin bıraktığı ince çizgiler
+    x.strokeStyle = Math.random() < 0.5 ? 'rgba(255,255,255,.8)' : 'rgba(90,135,180,.45)';
+    x.lineWidth = 0.9 + Math.random() * 1.6;
     x.beginPath();
     const x0 = Math.random() * 512, y0 = Math.random() * 512;
     x.moveTo(x0, y0);
@@ -166,7 +166,7 @@ function buzDokusu() {
   return t;
 }
 const zeminMat = BUZ
-  ? new THREE.MeshPhongMaterial({ color: 0x36475a, map: buzDokusu(), specular: 0x000000, shininess: 5 })
+  ? new THREE.MeshPhongMaterial({ color: 0x4a6278, emissive: 0x0e1c28, map: buzDokusu(), specular: 0x000000, shininess: 5 })
   : new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6, color: 0x1d1723 });
 kutu(ODA_X * 2, 0.1, odaUzun, zeminMat, 0, -0.05, odaOrta);
 // yansıma parıltıları için ortak yumuşak ışık dokusu
