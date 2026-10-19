@@ -414,6 +414,9 @@ const ENGELLER2 = [
     new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(kc), transparent: true, opacity: 0, depthWrite: false, fog: false }));
   yazi.position.set(0.034, 0.62, 0); yazi.rotation.y = Math.PI / 2;
   fan.add(yazi);
+  const yazi2 = yazi.clone(); yazi2.material = yazi.material;   // direğin öbür yüzü
+  yazi2.position.set(-0.034, 0.62, 0); yazi2.rotation.y = -Math.PI / 2;
+  fan.add(yazi2);
   vantilator.yazi = yazi;
 
   // yatak: sol duvara başucu dayalı, dolap ile fotoğraf arasında
