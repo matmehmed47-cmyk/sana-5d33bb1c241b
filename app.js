@@ -328,12 +328,13 @@ function sahisOk(x, z, rotY, ters, k) {
   sahisOklar.push({ mat, k });
 }
 function sahisOklariKur() {
-// sol zincir: batı duvarında −z yönüne, sonra sol duvarda +x yönüne (Mehmetnur'a)
-[-20.1, -20.8, -21.5, -22.2].forEach((z, n) => sahisOk(HOL_SON + 0.02, z, Math.PI / 2, false, n));
-[8.9, 9.7, 10.5, 11.3].forEach((x, n) => sahisOk(x, ODA2_Z0 + 0.02, 0, false, 4 + n));
-// sağ zincir: batı duvarında +z yönüne, sonra sağ duvarda +x yönüne (İrem'e)
-[-17.3, -16.6, -15.9, -15.2].forEach((z, n) => sahisOk(HOL_SON + 0.02, z, Math.PI / 2, true, n));
-[8.9, 9.7, 10.5, 11.3].forEach((x, n) => sahisOk(x, ODA2_Z1 - 0.02, Math.PI, true, 4 + n));
+  // çocukluk fotoğrafından şimdiki fotoğrafa giden oklar
+  // Mehmetnur: karşı duvarda çocukluk fotoğrafının solundan köşeye, sonra sol duvarda şimdiki fotoğrafa
+  [-21.55, -22.15, -22.75].forEach((z, n) => sahisOk(ODA2_X1 - 0.02, z, -Math.PI / 2, true, n));
+  [16.9, 16.1, 15.3].forEach((x, n) => sahisOk(x, ODA2_Z0 + 0.02, 0, true, 3 + n));
+  // İrem: çocukluk fotoğrafının sağından köşeye, sonra sağ duvarda şimdiki fotoğrafa
+  [-15.9, -15.3, -14.7].forEach((z, n) => sahisOk(ODA2_X1 - 0.02, z, -Math.PI / 2, false, n));
+  [16.9, 16.1, 15.3].forEach((x, n) => sahisOk(x, ODA2_Z1 - 0.02, Math.PI, false, 3 + n));
 }
 // paten rafı: girişte, holün kuzeyinde
 const rafMat = new THREE.MeshPhongMaterial({ color: 0x8a6240, specular: 0x000000, shininess: 4 });
