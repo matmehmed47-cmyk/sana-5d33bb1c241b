@@ -391,7 +391,10 @@ videoEkrani('video/yan.mp4', false, -21.6, 1.85, 2.6 * 478 / 850, 2.6);
 function videoGuncelle(icerde) {
   videolar.forEach(o => {
     const uz = Math.hypot(kon.x - o.x, kon.z - o.z);
-    const olsun = icerde && uz < 9;
+    const dx = o.x - kon.x, dz = o.z - kon.z;
+    const bak = (-Math.sin(kon.yaw) * dx - Math.cos(kon.yaw) * dz) / (uz || 1);
+    const bakiyor = bak > (o.oynuyor ? 0.25 : 0.5);
+    const olsun = icerde && uz < 10 && bakiyor;
     if (olsun !== o.oynuyor) {
       o.oynuyor = olsun;
       if (olsun) { const p = o.v.play(); if (p && p.catch) p.catch(() => {}); }
