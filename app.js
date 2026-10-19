@@ -2089,8 +2089,8 @@ function surusGuncelle(dt, simdi) {
   const gaz = surus.gaz || t['w'] || t['arrowup'] || t[' '], fren = surus.fren || t['s'] || t['arrowdown'];
   // hız
   if (gaz) surus.v += 3.6 * dt; else surus.v -= 1.1 * dt * Math.sign(surus.v);
-  if (fren) surus.v = Math.max(0, surus.v - 8 * dt);
-  surus.v = Math.max(0, Math.min(6.5, surus.v));
+  if (fren) { if (surus.v > 0.02) surus.v = Math.max(0, surus.v - 8 * dt); else surus.v = Math.max(-1.8, surus.v - 2.2 * dt); }   // durunca frene basılı tutmak geri vitese alır
+  surus.v = Math.max(-1.8, Math.min(6.5, surus.v));
   if (Math.abs(surus.v) < 0.02 && !gaz && !fren) surus.v = 0;
   // direksiyon: yavaşken geniş, hızlanınca keskin, çok hızlıda biraz daha yumuşak
   const donusHizi = 2.2 * Math.min(1, Math.abs(surus.v) / 1.8) * (1 - Math.min(0.35, Math.abs(surus.v) / 18));
