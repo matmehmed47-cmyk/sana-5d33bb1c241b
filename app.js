@@ -13,7 +13,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 const sahne = new THREE.Scene();
 const ZEMIN = 0x0b0a0f;
 sahne.background = new THREE.Color(ZEMIN);
-sahne.fog = new THREE.FogExp2(ZEMIN, 0.045);
+sahne.fog = new THREE.FogExp2(ZEMIN, 0.03);
 const kamera = new THREE.PerspectiveCamera(70, 1, 0.05, 60);
 kamera.rotation.order = 'YXZ';
 
@@ -30,11 +30,11 @@ boyutla();
 // ---------- Düzen ----------
 const KOR_X = 1.5, KOR_BAS = 4, KAPI_Z = -16, ODA_SON = -27, ODA_X = 5.5, YUKSEK = 3, ODA_Y = 4;
 
-sahne.add(new THREE.AmbientLight(0x2a2030, 0.35));
+sahne.add(new THREE.AmbientLight(0x3a2c40, 0.6));
 
-const matZemin = new THREE.MeshLambertMaterial({ color: 0x2b1d17 });
-const matDuvar = new THREE.MeshLambertMaterial({ color: 0x5a4636 });
-const matOda = new THREE.MeshLambertMaterial({ color: 0x3a3340 });
+const matZemin = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x2b1d17 });
+const matDuvar = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x5a4636 });
+const matOda = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x3a3340 });
 
 function kutu(w, h, d, mat, x, y, z) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -60,17 +60,17 @@ kutu(yanGen, YUKSEK, 0.1, matDuvar, AC_GEN / 2 + yanGen / 2, YUKSEK / 2, KAPI_Z)
 kutu(AC_GEN, YUKSEK - AC_YUK, 0.1, matDuvar, 0, AC_YUK + (YUKSEK - AC_YUK) / 2, KAPI_Z);
 
 // kapı kasası ve kanat
-const matKasa = new THREE.MeshLambertMaterial({ color: 0xb08a4f });
+const matKasa = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0xb08a4f });
 kutu(0.08, AC_YUK, 0.16, matKasa, -AC_GEN / 2, AC_YUK / 2, KAPI_Z);
 kutu(0.08, AC_YUK, 0.16, matKasa, AC_GEN / 2, AC_YUK / 2, KAPI_Z);
 kutu(AC_GEN + 0.08, 0.08, 0.16, matKasa, 0, AC_YUK, KAPI_Z);
 const kapiMenteşe = new THREE.Group();
 kapiMenteşe.position.set(-AC_GEN / 2, 0, KAPI_Z);
 const kanat = new THREE.Mesh(new THREE.BoxGeometry(AC_GEN - 0.02, AC_YUK - 0.02, 0.06),
-  new THREE.MeshLambertMaterial({ color: 0x7a4a2a }));
+  new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x7a4a2a }));
 kanat.position.set(AC_GEN / 2, AC_YUK / 2, 0);
 kapiMenteşe.add(kanat);
-const kol = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), new THREE.MeshLambertMaterial({ color: 0xd9b56b }));
+const kol = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0xd9b56b }));
 kol.position.set(AC_GEN - 0.15, 1.05, 0.06);
 kapiMenteşe.add(kol);
 sahne.add(kapiMenteşe);
@@ -78,7 +78,7 @@ sahne.add(kapiMenteşe);
 // oda
 const odaUzun = KAPI_Z - ODA_SON;
 const odaOrta = (KAPI_Z + ODA_SON) / 2;
-kutu(ODA_X * 2, 0.1, odaUzun, new THREE.MeshLambertMaterial({ color: 0x1d1820 }), 0, -0.05, odaOrta);
+kutu(ODA_X * 2, 0.1, odaUzun, new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x1d1820 }), 0, -0.05, odaOrta);
 kutu(ODA_X * 2, 0.1, odaUzun, matOda, 0, ODA_Y + 0.05, odaOrta);
 kutu(0.1, ODA_Y, odaUzun, matOda, -ODA_X - 0.05, ODA_Y / 2, odaOrta);
 kutu(0.1, ODA_Y, odaUzun, matOda, ODA_X + 0.05, ODA_Y / 2, odaOrta);
@@ -88,15 +88,38 @@ kutu(ODA_X - KOR_X, ODA_Y, 0.1, matOda, -(KOR_X + (ODA_X - KOR_X) / 2), ODA_Y / 
 kutu(ODA_X - KOR_X, ODA_Y, 0.1, matOda, KOR_X + (ODA_X - KOR_X) / 2, ODA_Y / 2, KAPI_Z - 0.06);
 kutu(KOR_X * 2, ODA_Y - YUKSEK, 0.1, matOda, 0, YUKSEK + (ODA_Y - YUKSEK) / 2, KAPI_Z - 0.06);
 
-// koridor lambaları (sıcak, kısa menzilli ki odaya sızmasın)
-[0, -5, -10].forEach(z => {
-  const l = new THREE.PointLight(0xffc98a, 1.1, 8, 2);
-  l.position.set(0, 2.6, z);
-  sahne.add(l);
-  const abajur = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffd9a8 }));
-  abajur.position.copy(l.position);
-  sahne.add(abajur);
+// mumlar: koridorda ve odada, titreyen ışıklı
+const mumlar = [];
+const matMum = new THREE.MeshPhongMaterial({ color: 0xf1e4c8, specular: 0x000000 });
+const matAlev = new THREE.MeshBasicMaterial({ color: 0xffb35a });
+function mumYap(x, z, isikGuc, menzil) {
+  const g = new THREE.Group();
+  const govde = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.22, 10), matMum);
+  govde.position.y = 0.11; g.add(govde);
+  const alev = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), matAlev);
+  alev.scale.set(1, 1.9, 1); alev.position.y = 0.26; g.add(alev);
+  g.position.set(x, 0, z);
+  sahne.add(g);
+  let isik = null;
+  if (isikGuc > 0) {
+    isik = new THREE.PointLight(0xffa850, isikGuc, menzil, 1.6);
+    isik.position.set(x, 0.5, z);
+    sahne.add(isik);
+  }
+  mumlar.push({ alev, isik, guc: isikGuc, faz: Math.random() * 10 });
+}
+// koridor: iki yanda dizili, ışıklı olanlar sağda/solda dönüşümlü
+[[-1.2, 2.2], [1.2, 0.2], [-1.2, -2.0], [1.2, -4.0], [-1.2, -6.0], [1.2, -8.0],
+ [-1.2, -10.0], [1.2, -12.0], [-1.2, -14.0], [1.2, -15.0]].forEach((k, i) => {
+  mumYap(k[0], k[1], i % 2 === 0 ? 1.6 : 0, 7);
 });
+// koridorun başında ve ortasında kısa mum kümeleri
+[[-0.9, 3.2], [-0.8, 3.0], [0.9, 3.3], [0.0, -7.0]].forEach(k => mumYap(k[0], k[1], 0, 0));
+// oda: fotoğrafın iki yanı
+mumYap(-2.6, ODA_SON + 0.8, 1.1, 9);
+mumYap(2.6, ODA_SON + 0.8, 1.1, 9);
+mumYap(-1.8, ODA_SON + 0.6, 0, 0);
+mumYap(1.8, ODA_SON + 0.6, 0, 0);
 
 // ---------- Gül yaprakları ve güller ----------
 (function gulleriSer() {
@@ -113,7 +136,7 @@ kutu(KOR_X * 2, ODA_Y - YUKSEK, 0.1, matOda, 0, YUKSEK + (ODA_Y - YUKSEK) / 2, K
   }
   const geo = new THREE.SphereGeometry(0.055, 8, 6);
   geo.scale(1, 0.14, 0.72);
-  const mat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  const mat = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0xffffff });
   const grup = new THREE.InstancedMesh(geo, mat, yapraklar.length);
   const d = new THREE.Object3D(), renk = new THREE.Color();
   const tonlar = [0x8a0f1f, 0xa3142a, 0xb81d35, 0x6e0b18, 0xc42a43];
@@ -132,8 +155,8 @@ kutu(KOR_X * 2, ODA_Y - YUKSEK, 0.1, matOda, 0, YUKSEK + (ODA_Y - YUKSEK) / 2, K
   sahne.add(grup);
 
   // yerde yatan güller: gövde + katmanlı baş
-  const matSap = new THREE.MeshLambertMaterial({ color: 0x2f5a2a });
-  const matGul = [0xa3142a, 0xb81d35, 0x8a0f1f].map(c => new THREE.MeshLambertMaterial({ color: c }));
+  const matSap = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x2f5a2a });
+  const matGul = [0xa3142a, 0xb81d35, 0x8a0f1f].map(c => new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: c }));
   const konumlar = [[-1.1, 2.4], [1.15, 0.6], [-1.2, -2.8], [1.05, -5.0], [-1.0, -7.2],
     [1.2, -9.4], [-1.15, -11.6], [1.0, -13.4], [-0.9, -14.9], [0.7, -15.2]];
   konumlar.forEach((k, i) => {
@@ -173,7 +196,7 @@ new THREE.TextureLoader().load(ODA1.foto, tex => {
   const bulTex = new THREE.CanvasTexture(c);
   bulTex.magFilter = THREE.LinearFilter; bulTex.minFilter = THREE.LinearFilter;
 
-  kutu(gen + 0.24, FOTO_YUK + 0.24, 0.06, new THREE.MeshLambertMaterial({ color: 0x1a1210 }), 0, FOTO_Y, ODA_SON - 0.0 + 0.0);
+  kutu(gen + 0.24, FOTO_YUK + 0.24, 0.06, new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x1a1210 }), 0, FOTO_Y, ODA_SON - 0.0 + 0.0);
   fotoNet = new THREE.Mesh(new THREE.PlaneGeometry(gen, FOTO_YUK),
     new THREE.MeshBasicMaterial({ map: tex, color: 0x1f1f1f, fog: false }));
   fotoNet.position.set(0, FOTO_Y, FOTO_Z);
@@ -304,6 +327,14 @@ function kare(simdi) {
       yaziKutu.classList.toggle('acik', yaziAcik);
     }
   }
+
+  // mum titremesi
+  const zaman = simdi / 1000;
+  mumlar.forEach(m => {
+    const n = 0.88 + 0.08 * Math.sin(zaman * 9 + m.faz) + 0.06 * Math.sin(zaman * 23 + m.faz * 2);
+    m.alev.scale.set(n, 1.9 * n, n);
+    if (m.isik) m.isik.intensity = m.guc * n;
+  });
 
   // müzik yumuşak geçiş
   if (muzik && muzikVar) {
