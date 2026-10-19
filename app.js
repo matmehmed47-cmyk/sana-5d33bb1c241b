@@ -1761,7 +1761,7 @@ function balonGuncelle(dt, t) {
 const HOL3_Z1 = -11.3;
 const R3 = { x0: 4.0, x1: 16.0, z0: -11.3, z1: -0.5, y: 3.4 };
 const R3cx = (R3.x0 + R3.x1) / 2, R3cz = (R3.z0 + R3.z1) / 2;
-const ENGELLER3 = [{ x: 7.0, z: -8.9, r: 0.8 }, { x: 7.2, z: -2.9, r: 1.15 }, { x: 12.8, z: -2.9, r: 1.2 }];
+const ENGELLER3 = [{ x: R3cx, z: -5.5, r: 1.35 }, { x: R3cx - 3.8, z: -5.8, r: 1.15 }, { x: R3cx + 3.8, z: -5.8, r: 1.2 }];
 const motor = { grup: null, aci: 0, platlar: [], ana: null };
 (function motorOdasi() {
   const duvar3 = new THREE.MeshPhongMaterial({ color: 0x34363b, specular: 0x000000, shininess: 4 });
@@ -1871,12 +1871,12 @@ const motor = { grup: null, aci: 0, platlar: [], ana: null };
   }
   const bikeler = [
     { x: R3cx, z: -5.5, stil: 'adv', boya: 0xf2f2f2, boya2: 0x15161a, vurgu: 0xd1162b, r: 1.35, hiz: 0.3, aci: 0.4 },
-    { x: 7.2, z: -2.9, stil: 'sport', boya: 0xd1162b, boya2: 0x15161a, vurgu: 0xffffff, r: 1.15, hiz: -0.4, aci: 1.2 },
-    { x: 12.8, z: -2.9, stil: 'cruiser', boya: 0x1f4fa8, boya2: 0x15161a, vurgu: 0xe8c33a, r: 1.2, hiz: 0.35, aci: 2.1 }
+    { x: R3cx - 3.8, z: -5.8, stil: 'sport', boya: 0xd1162b, boya2: 0x15161a, vurgu: 0xffffff, r: 1.15, hiz: -0.4, aci: 1.2 },
+    { x: R3cx + 3.8, z: -5.8, stil: 'cruiser', boya: 0x1f4fa8, boya2: 0x15161a, vurgu: 0xe8c33a, r: 1.2, hiz: 0.35, aci: 2.1 }
   ];
   motor.platlar = [];
   bikeler.forEach(bk => {
-    if (bk.stil === 'adv') {   // ana motor: platformsuz, koltuğun önünde park hâlinde
+    if (SURUS_AKTIF && bk.stil === 'adv') {   // (kapalı) ana motor: platformsuz, koltuğun önünde park hâlinde
       const ana = motoYap(bk.stil, bk.boya, bk.boya2, bk.vurgu);
       ana.position.set(7.0, 0, -8.9); ana.rotation.y = -Math.PI / 2; sahne.add(ana); motor.ana = ana;
       return;
@@ -1887,6 +1887,7 @@ const motor = { grup: null, aci: 0, platlar: [], ana: null };
     const moto = motoYap(bk.stil, bk.boya, bk.boya2, bk.vurgu); moto.position.y = 0.1; m.add(moto);
     motor.platlar.push({ g: m, hiz: bk.hiz, moto });
   });
+  if (!motor.ana) motor.ana = motor.platlar[0].moto;
   motor.grup = motor.ana;
 })();
 
@@ -1996,13 +1997,15 @@ const motorOklar = [];
 })();
 
 // ---------- Sürüş koltuğu ve uzaktan kumandalı motor ----------
+const SURUS_AKTIF = false;   // koltuk ve uzaktan sürüş şimdilik kapalı (İREM parkuru odasında yeniden kullanılacak)
 const KOLTUK = { x: 7.0, z: -10.45 };
 const PARK = { x: 7.0, z: -8.9, h: -Math.PI / 2 };
 const surus = { oturuyor: false, aktif: false, donus: null, x: 0, z: 0, h: 0, v: 0, gaz: false, fren: false, motorSes: null, yon: 0 };
 const SURUS_SINIR = { x0: 4.8, x1: 15.2, z0: -10.8, z1: -1.2 };
 const SURUS_ENGEL = [{ x: 7.2, z: -2.9, r: 1.65 }, { x: 12.8, z: -2.9, r: 1.7 }, { x: 7.0, z: -11.0, r: 1.1 }];
-ENGELLER3.push({ x: 7.0, z: -11.0, r: 0.55 });   // oyuncu bankın içinden geçmesin
+if (SURUS_AKTIF) ENGELLER3.push({ x: 7.0, z: -11.0, r: 0.55 });   // oyuncu bankın içinden geçmesin
 (function koltukKur() {
+  if (!SURUS_AKTIF) return;
   const ahsap = new THREE.MeshPhongMaterial({ color: 0x4a3220, specular: 0x221a12, shininess: 14 });
   const kirmizi = new THREE.MeshPhongMaterial({ color: 0xa8182c, specular: 0x331010, shininess: 20 });
   const k = (w, h, d, mat, x, y, z) => kutu(w, h, d, mat, x, y, z);
@@ -2065,6 +2068,7 @@ kalkBtn.addEventListener('click', () => {
   surus.donus = { t0: performance.now() };
 });
 function surusGuncelle(dt, simdi) {
+  if (!SURUS_AKTIF || !motor.ana) return;
   const moto = motor.ana, gecis = moto.userData;
   // oturma düğmesi: koltuğa yaklaşınca görünür
   const koltugaYakin = K3.acik && !surus.oturuyor && !surus.aktif && Math.hypot(kon.x - KOLTUK.x, kon.z - KOLTUK.z) < 1.5 && kon.z > R3.z0 && kon.x < R3.x1;
