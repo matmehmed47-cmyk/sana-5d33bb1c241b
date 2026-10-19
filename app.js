@@ -8,7 +8,7 @@ const ODA1 = {
 };
 
 const SURUS_AKTIF = false;   // koltuk ve uzaktan sürüş şimdilik kapalı (İREM parkuru odasında yeniden kullanılacak)
-const KAPILAR_ACIK = true;   // hazırlık sırasında tüm kapılar açık (kontrol hızlı olsun). false yapılırsa kapılar normal çalışır
+const KAPILAR_ACIK = false;   // hazırlık sırasında tüm kapılar açık (kontrol hızlı olsun). false yapılırsa kapılar normal çalışır
 const canvas = document.getElementById('sahne');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
@@ -1550,7 +1550,7 @@ function ogrAdimGoster() {
   ogrAdimZ = performance.now(); ogrS = 0;
   ogrDX0 = kon.dragX; ogrDY0 = kon.dragY;
 }
-const ALISTIRMA = false;   // true yapılırsa koridordaki 6 adımlı alıştırma yeniden açılır
+const ALISTIRMA = true;   // true yapılırsa koridordaki 6 adımlı alıştırma yeniden açılır
 function ogrBasla() {
   if (!ALISTIRMA) { ogr = OGR_BITTI; ogrBaslaZ = 0; return; }   // askıda: alıştırma atlanır, kapı hemen açılır
   ogr = 0; ogrBaslaZ = performance.now();
