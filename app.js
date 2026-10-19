@@ -1761,8 +1761,8 @@ function balonGuncelle(dt, t) {
 const HOL3_Z1 = -11.3;
 const R3 = { x0: 4.0, x1: 16.0, z0: -11.3, z1: -0.5, y: 3.4 };
 const R3cx = (R3.x0 + R3.x1) / 2, R3cz = (R3.z0 + R3.z1) / 2;
-const ENGELLER3 = [{ x: R3cx, z: -5.5, r: 1.35 }, { x: R3cx - 3.8, z: -5.8, r: 1.15 }, { x: R3cx + 3.8, z: -5.8, r: 1.2 }];
-const motor = { grup: null, aci: 0, platlar: [] };
+const ENGELLER3 = [{ x: 7.0, z: -8.9, r: 0.8 }, { x: 7.2, z: -2.9, r: 1.15 }, { x: 12.8, z: -2.9, r: 1.2 }];
+const motor = { grup: null, aci: 0, platlar: [], ana: null };
 (function motorOdasi() {
   const duvar3 = new THREE.MeshPhongMaterial({ color: 0x34363b, specular: 0x000000, shininess: 4 });
   const zemin3 = new THREE.MeshPhongMaterial({ color: 0x4b4d53, specular: 0x000000, shininess: 4 });
@@ -1871,18 +1871,23 @@ const motor = { grup: null, aci: 0, platlar: [] };
   }
   const bikeler = [
     { x: R3cx, z: -5.5, stil: 'adv', boya: 0xf2f2f2, boya2: 0x15161a, vurgu: 0xd1162b, r: 1.35, hiz: 0.3, aci: 0.4 },
-    { x: R3cx - 3.8, z: -5.8, stil: 'sport', boya: 0xd1162b, boya2: 0x15161a, vurgu: 0xffffff, r: 1.15, hiz: -0.4, aci: 1.2 },
-    { x: R3cx + 3.8, z: -5.8, stil: 'cruiser', boya: 0x1f4fa8, boya2: 0x15161a, vurgu: 0xe8c33a, r: 1.2, hiz: 0.35, aci: 2.1 }
+    { x: 7.2, z: -2.9, stil: 'sport', boya: 0xd1162b, boya2: 0x15161a, vurgu: 0xffffff, r: 1.15, hiz: -0.4, aci: 1.2 },
+    { x: 12.8, z: -2.9, stil: 'cruiser', boya: 0x1f4fa8, boya2: 0x15161a, vurgu: 0xe8c33a, r: 1.2, hiz: 0.35, aci: 2.1 }
   ];
   motor.platlar = [];
   bikeler.forEach(bk => {
+    if (bk.stil === 'adv') {   // ana motor: platformsuz, koltuğun önünde park hâlinde
+      const ana = motoYap(bk.stil, bk.boya, bk.boya2, bk.vurgu);
+      ana.position.set(7.0, 0, -8.9); ana.rotation.y = -Math.PI / 2; sahne.add(ana); motor.ana = ana;
+      return;
+    }
     const m = new THREE.Group(); m.position.set(bk.x, 0, bk.z); m.rotation.y = bk.aci; sahne.add(m);
     const plat = new THREE.Mesh(new THREE.CylinderGeometry(bk.r, bk.r + 0.05, 0.1, 40), new THREE.MeshPhongMaterial({ color: 0x1c1d21, specular: 0x333333, shininess: 30 })); plat.position.y = 0.05; m.add(plat);
     const halka = new THREE.Mesh(new THREE.TorusGeometry(bk.r - 0.03, 0.018, 8, 60), new THREE.MeshBasicMaterial({ color: bk.stil === 'cruiser' ? 0x4aa3ff : 0xff2a4a })); halka.rotation.x = Math.PI / 2; halka.position.y = 0.105; m.add(halka);
     const moto = motoYap(bk.stil, bk.boya, bk.boya2, bk.vurgu); moto.position.y = 0.1; m.add(moto);
     motor.platlar.push({ g: m, hiz: bk.hiz, moto });
   });
-  motor.grup = motor.platlar[0].g;
+  motor.grup = motor.ana;
 })();
 
 // duvar çerçeveleri: motor fotoğrafları (foto/motor1.jpg ... motor6.jpg). Yoksa yer tutucu görünür.
@@ -1992,9 +1997,10 @@ const motorOklar = [];
 
 // ---------- Sürüş koltuğu ve uzaktan kumandalı motor ----------
 const KOLTUK = { x: 7.0, z: -10.45 };
+const PARK = { x: 7.0, z: -8.9, h: -Math.PI / 2 };
 const surus = { oturuyor: false, aktif: false, donus: null, x: 0, z: 0, h: 0, v: 0, gaz: false, fren: false, motorSes: null, yon: 0 };
 const SURUS_SINIR = { x0: 4.8, x1: 15.2, z0: -10.8, z1: -1.2 };
-const SURUS_ENGEL = [{ x: R3cx - 3.8, z: -5.8, r: 1.65 }, { x: R3cx + 3.8, z: -5.8, r: 1.7 }, { x: 7.0, z: -11.0, r: 1.1 }];
+const SURUS_ENGEL = [{ x: 7.2, z: -2.9, r: 1.65 }, { x: 12.8, z: -2.9, r: 1.7 }, { x: 7.0, z: -11.0, r: 1.1 }];
 ENGELLER3.push({ x: 7.0, z: -11.0, r: 0.55 });   // oyuncu bankın içinden geçmesin
 (function koltukKur() {
   const ahsap = new THREE.MeshPhongMaterial({ color: 0x4a3220, specular: 0x221a12, shininess: 14 });
@@ -2044,12 +2050,10 @@ function motorSesiDur() {
 }
 oturBtn.addEventListener('click', () => {
   if (surus.oturuyor || surus.aktif) return;
-  surus.oturuyor = true;
+  surus.oturuyor = true; surus.kam = null;
   kon.x = KOLTUK.x; kon.z = KOLTUK.z; kon.vx = 0; kon.vz = 0; kon.yaw = Math.PI; kon.oto = null; ikiliYon = Math.PI;
-  const mo = motor.platlar[0], v = new THREE.Vector3();
-  mo.moto.getWorldPosition(v);
-  surus.x = v.x; surus.z = v.z; surus.h = mo.g.rotation.y; surus.v = 0; surus.donus = null;
-  sahne.add(mo.moto); mo.moto.position.set(surus.x, 0, surus.z); mo.moto.rotation.set(0, surus.h, 0);
+  const moto0 = motor.ana;
+  surus.x = moto0.position.x; surus.z = moto0.position.z; surus.h = moto0.rotation.y; surus.v = 0; surus.donus = null;
   surus.aktif = true;
   oturBtn.classList.remove('acik'); surusKutu.classList.add('acik');
   motorSesiBasla();
@@ -2061,20 +2065,19 @@ kalkBtn.addEventListener('click', () => {
   surus.donus = { t0: performance.now() };
 });
 function surusGuncelle(dt, simdi) {
-  const mo = motor.platlar[0], moto = mo.moto, gecis = moto.userData;
+  const moto = motor.ana, gecis = moto.userData;
   // oturma düğmesi: koltuğa yaklaşınca görünür
   const koltugaYakin = K3.acik && !surus.oturuyor && !surus.aktif && Math.hypot(kon.x - KOLTUK.x, kon.z - KOLTUK.z) < 1.5 && kon.z > R3.z0 && kon.x < R3.x1;
   oturBtn.classList.toggle('acik', koltugaYakin);
   if (!surus.aktif) return;
-  if (surus.donus) {   // platforma geri dönüş
-    const hx = mo.g.position.x, hz = mo.g.position.z;
-    surus.x += (hx - surus.x) * Math.min(1, dt * 2.5); surus.z += (hz - surus.z) * Math.min(1, dt * 2.5);
-    let fark = Math.atan2(Math.sin(mo.g.rotation.y - surus.h), Math.cos(mo.g.rotation.y - surus.h)); surus.h += fark * Math.min(1, dt * 3);
+  if (surus.donus) {   // park yerine geri dönüş
+    surus.x += (PARK.x - surus.x) * Math.min(1, dt * 2.5); surus.z += (PARK.z - surus.z) * Math.min(1, dt * 2.5);
+    const fark = Math.atan2(Math.sin(PARK.h - surus.h), Math.cos(PARK.h - surus.h)); surus.h += fark * Math.min(1, dt * 3);
     surus.v = 0;
-    moto.position.set(surus.x, Math.max(0, (0.1) * (1 - Math.hypot(hx - surus.x, hz - surus.z))), surus.z); moto.rotation.y = surus.h; moto.rotation.x = 0;
+    moto.position.set(surus.x, 0, surus.z); moto.rotation.y = surus.h; moto.rotation.x = 0;
     gecis.on.rotation.y = 0;
-    if (Math.hypot(hx - surus.x, hz - surus.z) < 0.06) {
-      mo.g.add(moto); moto.position.set(0, 0.1, 0); moto.rotation.set(0, 0, 0);
+    if (Math.hypot(PARK.x - surus.x, PARK.z - surus.z) < 0.05 && Math.abs(fark) < 0.05) {
+      moto.position.set(PARK.x, 0, PARK.z); moto.rotation.y = PARK.h;
       surus.aktif = false; surus.donus = null;
     }
     return;
@@ -2356,8 +2359,15 @@ function kare(simdi) {
   else { cx = sinir(cx, -ODA_X + 0.2, ODA_X - 0.2); cz = Math.max(cz, ODA_SON + 0.3); }
   cy2 = sinir(cy2, 0.25, (kapi2.acik && kon.x > ODA_X + 0.3) ? 2.9 : (cz > KAPI_Z ? YUKSEK - 0.2 : ODA_Y - 0.2));
   if (surus.oturuyor) {
-    kamera.position.set(KOLTUK.x + 0.4, 1.45, KOLTUK.z - 0.55);
-    kamera.lookAt(surus.x, 0.55, surus.z);
+    // sürüş kamerası: motorun biraz arkasında ve yukarısında, ön tarafa (gidon, ön teker) ve çevreye bakar
+    const fx = Math.cos(surus.h), fz = -Math.sin(surus.h);
+    let tx = surus.x - fx * 3.0, tz = surus.z - fz * 3.0;
+    tx = sinir(tx, R3.x0 + 0.3, R3.x1 - 0.3); tz = sinir(tz, R3.z0 + 0.2, R3.z1 - 0.3);
+    if (!surus.kam) surus.kam = new THREE.Vector3(tx, 2.4, tz);
+    const k = 1 - Math.exp(-dt * 5);
+    surus.kam.x += (tx - surus.kam.x) * k; surus.kam.y += (2.4 - surus.kam.y) * k; surus.kam.z += (tz - surus.kam.z) * k;
+    kamera.position.copy(surus.kam);
+    kamera.lookAt(surus.x + fx * 1.6, 0.45, surus.z + fz * 1.6);
   } else {
     kamera.position.set(cx, cy2, cz);
     kamera.lookAt(hx, hy + 0.15, hz);
