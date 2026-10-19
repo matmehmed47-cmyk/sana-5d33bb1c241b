@@ -7,6 +7,7 @@ const ODA1 = {
   sarki: 'muzik/kupa-kizi.mp3'
 };
 
+const SURUS_AKTIF = false;   // koltuk ve uzaktan sürüş şimdilik kapalı (İREM parkuru odasında yeniden kullanılacak)
 const KAPILAR_ACIK = true;   // hazırlık sırasında tüm kapılar açık (kontrol hızlı olsun). false yapılırsa kapılar normal çalışır
 const canvas = document.getElementById('sahne');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -1997,7 +1998,6 @@ const motorOklar = [];
 })();
 
 // ---------- Sürüş koltuğu ve uzaktan kumandalı motor ----------
-const SURUS_AKTIF = false;   // koltuk ve uzaktan sürüş şimdilik kapalı (İREM parkuru odasında yeniden kullanılacak)
 const KOLTUK = { x: 7.0, z: -10.45 };
 const PARK = { x: 7.0, z: -8.9, h: -Math.PI / 2 };
 const surus = { oturuyor: false, aktif: false, donus: null, x: 0, z: 0, h: 0, v: 0, gaz: false, fren: false, motorSes: null, yon: 0 };
