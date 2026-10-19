@@ -1938,25 +1938,22 @@ const ruzgarGulu = { bas: null };
     sh.moveTo(0, 0); sh.bezierCurveTo(W * 1.1, L * 0.15, W * 1.15, L * 0.85, 0, L); sh.bezierCurveTo(-W * 1.15, L * 0.85, -W * 1.1, L * 0.15, 0, 0);
     return new THREE.Mesh(new THREE.ShapeGeometry(sh, 10), new THREE.MeshPhongMaterial({ color: renk, specular: 0xffffff, shininess: 40, side: THREE.DoubleSide }));
   }
-  // dış katman: 6 koyu kırmızı yaprak, rüzgâr gülü gibi bükülü
-  const dis = ['#b3122c', '#c8102e', '#a60d26', '#c8102e', '#b3122c', '#d92b45'];
-  for (let i = 0; i < 6; i++) {
-    const p = petal(0.15, 0.055, new THREE.Color(dis[i]));
-    const kol = new THREE.Group(); kol.rotation.z = i * Math.PI / 3;
-    p.rotation.y = 0.55;              // bükülme
-    kol.add(p); bas.add(kol);
-  }
-  // iç katman: 5 daha açık yaprak, ters yöne bükülü
-  for (let i = 0; i < 5; i++) {
-    const p = petal(0.095, 0.04, new THREE.Color(i % 2 ? '#e64a5f' : '#d92b45'));
-    p.position.z = 0.012;
-    const kol = new THREE.Group(); kol.rotation.z = i * 2 * Math.PI / 5 + 0.3;
-    p.rotation.y = -0.5;
-    kol.add(p); bas.add(kol);
-  }
-  // orta düğme
-  const orta = new THREE.Mesh(new THREE.SphereGeometry(0.024, 12, 10), new THREE.MeshPhongMaterial({ color: 0xf2c94c, specular: 0xffffff, shininess: 70, emissive: 0x3a2a05 }));
-  orta.position.z = 0.025; bas.add(orta);
+  // kapalı gül tomurcuğu: yapraklar ileriye doğru kapanır, hafif bükülü (dönünce rüzgâr gülü gibi görünür)
+  const katman = (adet, L, W, egim, ofset, renkler, bukul) => {
+    for (let i = 0; i < adet; i++) {
+      const p = petal(L, W, new THREE.Color(renkler[i % renkler.length]));
+      p.rotation.x = egim;              // yaprağı ileriye (+z) yatır
+      p.rotation.y = bukul;             // hafif bükülme
+      const kol = new THREE.Group(); kol.rotation.z = ofset + i * 2 * Math.PI / adet;
+      kol.add(p); bas.add(kol);
+    }
+  };
+  katman(5, 0.15, 0.06, 0.95, 0.0, ['#a60d26', '#b3122c', '#a60d26', '#c8102e', '#b3122c'], 0.35);   // dış yapraklar
+  katman(5, 0.125, 0.05, 1.2, 0.6, ['#c8102e', '#d92b45', '#cf1b38', '#d92b45', '#c8102e'], -0.3);    // orta
+  katman(4, 0.095, 0.04, 1.38, 0.2, ['#d92b45', '#e64a5f'], 0.3);                                        // iç
+  katman(3, 0.06, 0.03, 1.5, 0.9, ['#e64a5f', '#d92b45'], -0.25);                                        // en iç, kapalı uç
+  // altta çanak yaprakları (yeşil)
+  katman(5, 0.07, 0.03, -0.45, 0.3, ['#2e8b3d', '#3da34d'], 0.2);
   ruzgarGulu.bas = bas;
 })();
 function ruzgarGuluGuncelle(dt, t) {
