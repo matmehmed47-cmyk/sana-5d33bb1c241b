@@ -57,3 +57,8 @@ html,body{margin:0;height:100%;background:var(--zemin);color:var(--yazi);font-fa
 @keyframes elGeri{0%{transform:translateY(-22px);opacity:.2}20%{opacity:1}100%{transform:translateY(34px);opacity:.2}}
 @keyframes elYukari{0%{transform:translateY(40px);opacity:0}20%{opacity:1}100%{transform:translateY(-110px);opacity:0}}
 @keyframes elAsagi{0%{transform:translateY(-40px);opacity:0}20%{opacity:1}100%{transform:translateY(110px);opacity:0}}
+#patenKart{position:fixed;left:50%;top:14%;transform:translate(-50%,-12px);width:min(92vw,420px);padding:16px 18px;border-radius:16px;background:rgba(14,10,12,.82);border:1px solid rgba(232,168,107,.5);text-align:center;opacity:0;pointer-events:none;transition:opacity .6s,transform .6s;z-index:6;backdrop-filter:blur(4px)}
+#patenKart.acik{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#patenYazi{font-size:20px;margin-bottom:12px}
+#patenCikarBtn{font:inherit;font-size:20px;padding:10px 24px;border-radius:12px;border:1px solid var(--vurgu);background:transparent;color:var(--vurgu);cursor:pointer}
+#patenCikarBtn:active{background:var(--vurgu);color:var(--zemin)}

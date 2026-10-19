@@ -188,12 +188,42 @@ function zeminParilti(doku, x, z, gen, derin, op) {
 }
 kutu(ODA_X * 2, 0.1, odaUzun, matOda, 0, ODA_Y + 0.05, odaOrta);
 kutu(0.1, ODA_Y, odaUzun, matOda, -ODA_X - 0.05, ODA_Y / 2, odaOrta);
-kutu(0.1, ODA_Y, odaUzun, matOda, ODA_X + 0.05, ODA_Y / 2, odaOrta);
+// sağ duvar: sonraki odanın kapısı için boşluklu
+kutu(0.1, ODA_Y, 7.65, matOda, ODA_X + 0.05, ODA_Y / 2, -23.175);
+kutu(0.1, ODA_Y, 2.05, matOda, ODA_X + 0.05, ODA_Y / 2, -17.025);
+kutu(0.1, ODA_Y - 2.45, 1.3, matOda, ODA_X + 0.05, 2.45 + (ODA_Y - 2.45) / 2, -18.7);
 kutu(ODA_X * 2, ODA_Y, 0.1, matOda, 0, ODA_Y / 2, ODA_SON - 0.05);
 // kapı hizasındaki oda duvarı (koridor genişliği dışı)
 kutu(ODA_X - KOR_X, ODA_Y, 0.1, matOda, -(KOR_X + (ODA_X - KOR_X) / 2), ODA_Y / 2, KAPI_Z - 0.06);
 kutu(ODA_X - KOR_X, ODA_Y, 0.1, matOda, KOR_X + (ODA_X - KOR_X) / 2, ODA_Y / 2, KAPI_Z - 0.06);
 kutu(KOR_X * 2, ODA_Y - YUKSEK, 0.1, matOda, 0, YUKSEK + (ODA_Y - YUKSEK) / 2, KAPI_Z - 0.06);
+// ---------- İkinci oda: kısa hol + sade, sıcak oda ----------
+const HOL_Z = -18.7, HOL_SON = 8.0, ODA2_X1 = 17.5, ODA2_Z0 = -23.6, ODA2_Z1 = -13.8, ODA2_Y = 3.2;
+const matZemin2 = new THREE.MeshPhongMaterial({ color: 0x6f5238, specular: 0x000000, shininess: 4 });
+const matDuvar2 = new THREE.MeshPhongMaterial({ color: 0xcdb99a, specular: 0x000000, shininess: 4 });
+const matTavan2 = new THREE.MeshPhongMaterial({ color: 0xe3d6bd, specular: 0x000000, shininess: 4 });
+// hol
+kutu(HOL_SON - ODA_X, 0.1, 1.6, matZemin2, (ODA_X + HOL_SON) / 2, -0.05, HOL_Z);
+kutu(HOL_SON - ODA_X, 0.1, 1.6, matTavan2, (ODA_X + HOL_SON) / 2, 3.05, HOL_Z);
+[-1, 1].forEach(y => kutu(HOL_SON - ODA_X, 3.1, 0.1, matDuvar2, (ODA_X + HOL_SON) / 2, 1.5, HOL_Z + y * 0.85));
+// oda
+const o2w = ODA2_X1 - HOL_SON, o2d = ODA2_Z1 - ODA2_Z0, o2cx = (HOL_SON + ODA2_X1) / 2, o2cz = (ODA2_Z0 + ODA2_Z1) / 2;
+kutu(o2w, 0.1, o2d, matZemin2, o2cx, -0.05, o2cz);
+kutu(o2w, 0.1, o2d, matTavan2, o2cx, ODA2_Y + 0.05, o2cz);
+kutu(o2w, ODA2_Y, 0.1, matDuvar2, o2cx, ODA2_Y / 2, ODA2_Z0 - 0.05);
+kutu(o2w, ODA2_Y, 0.1, matDuvar2, o2cx, ODA2_Y / 2, ODA2_Z1 + 0.05);
+kutu(0.1, ODA2_Y, o2d, matDuvar2, ODA2_X1 + 0.05, ODA2_Y / 2, o2cz);
+// batı duvarı (holün açıldığı yer boş)
+kutu(0.1, ODA2_Y, (HOL_Z - 0.8) - ODA2_Z0, matDuvar2, HOL_SON - 0.05, ODA2_Y / 2, (ODA2_Z0 + HOL_Z - 0.8) / 2);
+kutu(0.1, ODA2_Y, ODA2_Z1 - (HOL_Z + 0.8), matDuvar2, HOL_SON - 0.05, ODA2_Y / 2, (ODA2_Z1 + HOL_Z + 0.8) / 2);
+const isik2 = new THREE.PointLight(0xffd9a0, 1.1, 16, 1.5);
+isik2.position.set(o2cx, 2.7, o2cz);
+sahne.add(isik2);
+// paten rafı: girişte, holün kuzeyinde
+const rafMat = new THREE.MeshPhongMaterial({ color: 0x8a6240, specular: 0x000000, shininess: 4 });
+kutu(0.55, 0.06, 1.8, rafMat, HOL_SON + 0.3, 0.38, -16.4);
+[[-0.75], [0.75]].forEach(k => kutu(0.5, 0.38, 0.06, rafMat, HOL_SON + 0.3, 0.19, -16.4 + k[0]));
+
 
 // mumlar: koridorda ve odada, titreyen ışıklı
 const mumlar = [];
@@ -934,7 +964,7 @@ const govde = new THREE.Group();   // havada süzülen, sallanan kısım
 ikili.add(govde);
 const halolar = [];
 const patenler = [], harfPaten = [], yerPaten = [];
-let patenGiyildi = false, patenUcus = null;
+let patenGiyildi = false, patenTakili = false, patenUcus = null;
 let ikiliKalp = null;
 (function karakterYap() {
   // İ: ince bir çubuk ve üstünde nokta
@@ -1203,9 +1233,48 @@ function patenGuncelle(simdi) {
   if (bitenler === yerPaten.length) {
     yerPaten.forEach(p => { p.g.visible = false; p.halka.visible = false; p.isik.visible = false; });
     harfPaten.forEach(h => { h.visible = true; });
-    patenGiyildi = true;
+    patenGiyildi = true; patenTakili = true;
     ogrYaz('Patenlerini giydin! ⛸️', null);
     setTimeout(() => ogrKutu.classList.remove('acik'), 2400);
+  }
+}
+
+// ---------- Patenleri çıkarma (ikinci odanın girişi) ----------
+let cikisUcus = null, patenKartAcik = false;
+const patenKart = document.getElementById('patenKart'), patenBtn = document.getElementById('patenCikarBtn');
+const RAF_YER = [[HOL_SON + 0.3, 0.45, -17.05], [HOL_SON + 0.3, 0.45, -16.4], [HOL_SON + 0.3, 0.45, -15.75]];
+patenBtn.addEventListener('click', () => {
+  if (!patenTakili || cikisUcus) return;
+  cikisUcus = { t0: performance.now(), bas: [], r0: ikiliYon + Math.PI / 2 };
+  harfPaten.forEach((h, i) => {
+    h.getWorldPosition(gecici);
+    cikisUcus.bas.push(gecici.clone());
+    h.visible = false;
+    const g = yerPaten[i].g;
+    g.visible = true; g.scale.setScalar(0.8); g.position.copy(gecici); g.rotation.y = cikisUcus.r0;
+  });
+  patenSesi();
+});
+function patenCikarGuncelle(simdi) {
+  const gor = patenTakili && !cikisUcus && kapi2.acik && kon.x > HOL_SON - 0.6;
+  if (gor !== patenKartAcik) { patenKartAcik = gor; patenKart.classList.toggle('acik', gor); }
+  if (!cikisUcus || cikisUcus.bitti) return;
+  let biten = 0;
+  yerPaten.forEach((p, i) => {
+    const t = Math.max(0, Math.min(1, (simdi - cikisUcus.t0 - i * 140) / 800));
+    const e = t * t * (3 - 2 * t);
+    const b = cikisUcus.bas[i], h = RAF_YER[i];
+    p.g.position.set(b.x + (h[0] - b.x) * e, b.y + (h[1] - b.y) * e + Math.sin(Math.PI * e) * 0.5, b.z + (h[2] - b.z) * e);
+    const fark = Math.atan2(Math.sin(0 - cikisUcus.r0), Math.cos(0 - cikisUcus.r0));
+    p.g.rotation.y = cikisUcus.r0 + fark * e;
+    p.g.scale.setScalar(0.8 + 0.3 * e);
+    if (t >= 1) biten++;
+  });
+  if (biten === yerPaten.length) {
+    patenTakili = false;
+    cikisUcus = { ...cikisUcus, bitti: true };
+    ogrYaz('Patenlerini çıkardın. İçeri girebilirsin.', null);
+    setTimeout(() => ogrKutu.classList.remove('acik'), 2600);
   }
 }
 
@@ -1304,21 +1373,27 @@ function kare(simdi) {
     }
 
     // sınırlar
-    if (kon.z > KAPI_Z + 0.4) {
+    if (kapi2.acik && kon.x > ODA_X + 0.3) {
+      // kapının ötesi: hol ve ikinci oda
+      if (kon.x < HOL_SON + 0.2) kon.z = sinir(kon.z, HOL_Z - 0.45, HOL_Z + 0.45);
+      else { kon.z = sinir(kon.z, ODA2_Z0 + 0.7, ODA2_Z1 - 0.7); kon.x = Math.min(kon.x, ODA2_X1 - 0.7); }
+      if (patenTakili) kon.x = Math.min(kon.x, HOL_SON + 0.7);   // patenle odaya giremez
+    } else if (kon.z > KAPI_Z + 0.4) {
       kon.x = sinir(kon.x, -KOR_X + 0.5, KOR_X - 0.5);
       kon.z = Math.min(kon.z, KOR_BAS - 0.3);
     } else if (kon.z > KAPI_Z - 1.8) {
       if (!kapiAcik) kon.z = KAPI_Z + 0.4;
       else kon.x = sinir(kon.x, -AC_GEN / 2 + 0.45, AC_GEN / 2 - 0.45);
     } else {
-      kon.x = sinir(kon.x, -ODA_X + 0.7, ODA_X - 0.7);
+      const kapida = kapi2.acik && Math.abs(kon.z - HOL_Z) < 0.5;
+      if (!kapida) kon.x = sinir(kon.x, -ODA_X + 0.7, ODA_X - 0.7);
       kon.z = Math.max(kon.z, ODA_SON + 1);
     }
 
     // kapı
     if (!kapiAcik) {
       // koridordan yaklaşınca ya da odadan kapıya dönünce açılır
-      if (kon.z < KAPI_Z + 3.2 && kon.z > KAPI_Z - 2.0 && kapiHazir()) { kapiAcik = true; gicirti(1.3); }
+      if (kon.z < KAPI_Z + 3.2 && kon.z > KAPI_Z - 2.0 && kon.x < ODA_X && kapiHazir()) { kapiAcik = true; gicirti(1.3); }
     } else if (kon.z < KAPI_Z - 3.4) {
       // odaya iyice girince arkasından kapanır
       kapiAcik = false;
@@ -1329,7 +1404,7 @@ function kare(simdi) {
     kapiMenteşe.rotation.y = kapiAci;
 
     // oda: müzik ve ışık
-    const icerde = kon.z < KAPI_Z - 0.6;
+    const icerde = kon.z < KAPI_Z - 0.6 && kon.x < ODA_X + 0.3;
     if (icerde && !ilkGiris) { ilkGiris = true; kon.donuk = performance.now() + 1700; kon.vx = 0; kon.vz = 0; }
     if (icerde !== odadaMi) { odadaMi = icerde; muzikHedef = icerde ? 0.85 : 0; }
     const fotoUz = Math.hypot(kon.x, kon.z - FOTO_Z);
@@ -1362,7 +1437,7 @@ function kare(simdi) {
   if (sonrakiKapiIsik) sonrakiKapiIsik.material.opacity = (kapi2.acik ? 0.6 : 0.22) + 0.16 * Math.sin(simdi / 900);
   kapi2.aci += ((kapi2.acik ? -1.9 : 0) - kapi2.aci) * Math.min(1, dt * 1.6);
   if (kapi2.hinge) kapi2.hinge.rotation.y = kapi2.aci;
-  if (kapi2.glow) kapi2.glow.material.opacity = 0.95 * Math.min(1, Math.abs(kapi2.aci) / 1.2);
+  if (kapi2.glow) kapi2.glow.material.opacity = 0.3 * Math.min(1, Math.abs(kapi2.aci) / 1.2);
 
   // okların nabzı
   const nabiz = 0.7 + 0.3 * Math.sin(simdi / 350);
@@ -1406,16 +1481,20 @@ function kare(simdi) {
   if (basladi) zerreGuncelle(dt, kon.x, kon.z, ikiliYon, yurume > 0.15);
 
   patenGuncelle(simdi);
+  patenCikarGuncelle(simdi);
 
   // kamera: karakterin arkasında, bakış yönünün tersinde
   const cp = Math.cos(kon.pitch), sp = Math.sin(kon.pitch);
   const bx = -Math.sin(kon.yaw) * cp, by = sp, bz = -Math.cos(kon.yaw) * cp;
   const D = 2.4, hx = kon.x, hy = 0.85, hz = kon.z;
   let cx = hx - bx * D, cy2 = hy - by * D, cz = hz - bz * D;
-  if (cz > KAPI_Z + 0.1) { cx = sinir(cx, -KOR_X + 0.2, KOR_X - 0.2); cz = Math.min(cz, KOR_BAS - 0.15); }
+  if (kapi2.acik && kon.x > ODA_X + 0.3) {
+    cx = sinir(cx, ODA_X + 0.15, ODA2_X1 - 0.2);
+    cz = cx < HOL_SON ? sinir(cz, HOL_Z - 0.7, HOL_Z + 0.7) : sinir(cz, ODA2_Z0 + 0.2, ODA2_Z1 - 0.2);
+  } else if (cz > KAPI_Z + 0.1) { cx = sinir(cx, -KOR_X + 0.2, KOR_X - 0.2); cz = Math.min(cz, KOR_BAS - 0.15); }
   else if (cz > KAPI_Z - 0.6) { cx = sinir(cx, -AC_GEN / 2 + 0.15, AC_GEN / 2 - 0.15); }
   else { cx = sinir(cx, -ODA_X + 0.2, ODA_X - 0.2); cz = Math.max(cz, ODA_SON + 0.3); }
-  cy2 = sinir(cy2, 0.25, cz > KAPI_Z ? YUKSEK - 0.2 : ODA_Y - 0.2);
+  cy2 = sinir(cy2, 0.25, (kapi2.acik && kon.x > ODA_X + 0.3) ? 2.9 : (cz > KAPI_Z ? YUKSEK - 0.2 : ODA_Y - 0.2));
   kamera.position.set(cx, cy2, cz);
   kamera.lookAt(hx, hy + 0.15, hz);
   renderer.render(sahne, kamera);
