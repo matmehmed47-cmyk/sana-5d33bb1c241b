@@ -30,11 +30,11 @@ boyutla();
 // ---------- Düzen ----------
 const KOR_X = 1.5, KOR_BAS = 4, KAPI_Z = -16, ODA_SON = -27, ODA_X = 5.5, YUKSEK = 3, ODA_Y = 4;
 
-sahne.add(new THREE.AmbientLight(0x3a2c40, 0.6));
+sahne.add(new THREE.AmbientLight(0x3a2c40, 0.45));
 
 const matZemin = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x2b1d17 });
 const matDuvar = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x5a4636 });
-const matOda = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x3a3340 });
+const matOda = new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x241f2a });
 
 function kutu(w, h, d, mat, x, y, z) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -144,7 +144,7 @@ sahne.add(kapiMenteşe);
 // oda
 const odaUzun = KAPI_Z - ODA_SON;
 const odaOrta = (KAPI_Z + ODA_SON) / 2;
-kutu(ODA_X * 2, 0.1, odaUzun, new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x1d1820 }), 0, -0.05, odaOrta);
+kutu(ODA_X * 2, 0.1, odaUzun, new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0x100c14 }), 0, -0.05, odaOrta);
 kutu(ODA_X * 2, 0.1, odaUzun, matOda, 0, ODA_Y + 0.05, odaOrta);
 kutu(0.1, ODA_Y, odaUzun, matOda, -ODA_X - 0.05, ODA_Y / 2, odaOrta);
 kutu(0.1, ODA_Y, odaUzun, matOda, ODA_X + 0.05, ODA_Y / 2, odaOrta);
@@ -186,6 +186,8 @@ mumYap(-2.6, ODA_SON + 0.8, 1.1, 9);
 mumYap(2.6, ODA_SON + 0.8, 1.1, 9);
 mumYap(-1.8, ODA_SON + 0.6, 0, 0);
 mumYap(1.8, ODA_SON + 0.6, 0, 0);
+[[-4.8, -19.0], [4.8, -19.0], [-4.8, -25.3], [4.8, -25.3], [-3.0, -26.2], [3.0, -26.2],
+ [-1.6, -26.3], [1.6, -26.3], [-2.0, -24.6], [2.0, -24.6], [-4.6, -17.6], [4.6, -17.6]].forEach(k => mumYap(k[0], k[1], 0, 0));
 
 // ---------- Duvar kalpleri ve kapıyı gösteren oklar ----------
 const kalpSekil = new THREE.Shape();
@@ -317,7 +319,8 @@ sahne.add(kapiOku);
     gulYap([0x430510, 0x620a17, 0x80101f, 0x9a1426])
   ];
   const konumlar = [[-1.1, 2.4], [1.15, 0.6], [-1.2, -2.8], [1.05, -5.0], [-1.0, -7.2],
-    [1.2, -9.4], [-1.15, -11.6], [1.0, -13.4], [-0.9, -14.9], [0.7, -15.2]];
+    [1.2, -9.4], [-1.15, -11.6], [1.0, -13.4], [-0.9, -14.9], [0.7, -15.2],
+    [-1.9, -25.4], [1.9, -25.6], [-4.7, -24.0], [4.7, -23.6], [-4.6, -19.5], [4.6, -19.8], [-1.0, -24.3], [1.1, -24.0]];
   konumlar.forEach((k, i) => {
     const g = gulTipleri[i % gulTipleri.length].clone();
     const kok = new THREE.Group();
@@ -352,6 +355,57 @@ const yanOklar = [];
     yanOklar.push({ mat, k: 5 + n });
   });
 });
+
+// ---------- Tabloların yanından dökülen gül yaprakları ----------
+const DOK_YER = [
+  { x: -1.75, z: ODA_SON + 0.5, gx: 0.5, gz: 0.3 }, { x: 1.75, z: ODA_SON + 0.5, gx: 0.5, gz: 0.3 },
+  { x: -5.05, z: -23.8, gx: 0.3, gz: 0.4 }, { x: -5.05, z: -19.4, gx: 0.3, gz: 0.4 },
+  { x: 5.05, z: -23.0, gx: 0.3, gz: 0.4 }, { x: 5.05, z: -20.2, gx: 0.3, gz: 0.4 }
+];
+const DOK_N = 210;
+const dokGeo = new THREE.SphereGeometry(0.06, 8, 6);
+dokGeo.scale(1, 0.14, 0.72);
+const dokGrup = new THREE.InstancedMesh(dokGeo, new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x220a0a, shininess: 10 }), DOK_N);
+const dokDurum = [];
+(function dokKur() {
+  const tonlar = [0x8a0f1f, 0xa3142a, 0xb81d35, 0x6e0b18, 0xc42a43], renk = new THREE.Color();
+  for (let i = 0; i < DOK_N; i++) {
+    renk.setHex(tonlar[i % tonlar.length]);
+    dokGrup.setColorAt(i, renk);
+    const d = { e: DOK_YER[i % DOK_YER.length], ph: Math.random() * 6.28, hiz: 0.35 + Math.random() * 0.25,
+      x: 0, y: 0, z: 0, rx: Math.random() * 6, ry: Math.random() * 6, rz: Math.random() * 6, bekle: 0, bek: 6 + Math.random() * 8 };
+    dokDoğur(d, Math.random() < 0.35 ? 0 : Math.random() * 3.7);
+    dokDurum.push(d);
+  }
+  dokGrup.instanceColor.needsUpdate = true;
+})();
+function dokDoğur(d, y) {
+  d.x = d.e.x + (Math.random() - 0.5) * d.e.gx;
+  d.z = d.e.z + (Math.random() - 0.5) * d.e.gz;
+  d.y = y; d.bekle = 0;
+}
+sahne.add(dokGrup);
+const dokNesne = new THREE.Object3D();
+function yaprakDok(dt, t) {
+  for (let i = 0; i < DOK_N; i++) {
+    const d = dokDurum[i];
+    if (d.y > 0.014) {
+      d.y -= d.hiz * dt;
+      d.x += Math.sin(t * 1.3 + d.ph) * 0.16 * dt;
+      d.z += Math.cos(t * 1.1 + d.ph) * 0.1 * dt;
+      d.rx += dt * 1.4; d.ry += dt * 0.8; d.rz += dt * 1.1;
+      if (d.y <= 0.014) { d.y = 0.014; d.rx = Math.random() * 0.3; d.rz = Math.random() * 0.3; }
+    } else {
+      d.bekle += dt;
+      if (d.bekle > d.bek) dokDoğur(d, 3.7);
+    }
+    dokNesne.position.set(d.x, d.y, d.z);
+    dokNesne.rotation.set(d.rx, d.ry, d.rz);
+    dokNesne.updateMatrix();
+    dokGrup.setMatrixAt(i, dokNesne.matrix);
+  }
+  dokGrup.instanceMatrix.needsUpdate = true;
+}
 
 // ---------- Fotoğraf ----------
 const FOTO_Z = ODA_SON + 0.045, FOTO_Y = 1.9, FOTO_YUK = 3;
@@ -690,6 +744,8 @@ function kare(simdi) {
   // okların nabzı
   const nabiz = 0.7 + 0.3 * Math.sin(simdi / 350);
   matOk.color.setRGB(0.91 * nabiz, 0.7 * nabiz, 0.37 * nabiz);
+
+  if (basladi && kon.z < KAPI_Z + 6) yaprakDok(dt, simdi / 1000);
 
   // mum titremesi
   const zaman = simdi / 1000;
