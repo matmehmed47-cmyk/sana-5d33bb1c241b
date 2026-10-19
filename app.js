@@ -73,22 +73,69 @@ kapiMenteşe.add(kanat);
 const kol = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), new THREE.MeshPhongMaterial({ specular: 0x110d08, shininess: 6,  color: 0xd9b56b }));
 kol.position.set(AC_GEN - 0.15, 1.05, 0.06);
 kapiMenteşe.add(kol);
-// kapı yazısı
+// kapı süsü ve yazısı
 (function kapiYazisi() {
+  const W = 1024, H = 1580;
   const c = document.createElement('canvas');
-  c.width = 1024; c.height = 512;
+  c.width = W; c.height = H;
   const x = c.getContext('2d');
-  x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 10;
-  x.fillStyle = '#f1dfb4';
-  x.font = 'italic 110px Georgia, "Times New Roman", serif';
-  x.fillText('Her şey', 512, 170);
-  x.fillText('burada başladı', 512, 330);
-  const t = new THREE.CanvasTexture(c);
-  t.anisotropy = 4;
-  const p = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.65),
-    new THREE.MeshBasicMaterial({ map: t, transparent: true, fog: false }));
-  p.position.set(AC_GEN / 2, 1.65, 0.035);
+  const tex = new THREE.CanvasTexture(c);
+  tex.anisotropy = 4;
+  const kalp = (cx, cy, b) => {
+    x.beginPath();
+    x.moveTo(cx, cy + b * 0.5);
+    x.bezierCurveTo(cx - b * 0.15, cy + b * 0.35, cx - b * 0.6, cy + b * 0.05, cx - b * 0.6, cy - b * 0.22);
+    x.bezierCurveTo(cx - b * 0.6, cy - b * 0.5, cx - b * 0.2, cy - b * 0.62, cx, cy - b * 0.3);
+    x.bezierCurveTo(cx + b * 0.2, cy - b * 0.62, cx + b * 0.6, cy - b * 0.5, cx + b * 0.6, cy - b * 0.22);
+    x.bezierCurveTo(cx + b * 0.6, cy + b * 0.05, cx + b * 0.15, cy + b * 0.35, cx, cy + b * 0.5);
+    x.closePath();
+  };
+  const ayirac = (y, gen) => {
+    x.beginPath(); x.moveTo(W / 2 - gen, y); x.lineTo(W / 2 - 40, y);
+    x.moveTo(W / 2 + 40, y); x.lineTo(W / 2 + gen, y); x.stroke();
+    x.fillStyle = '#e0556f'; kalp(W / 2, y, 44); x.fill();
+  };
+  function ciz() {
+    x.clearRect(0, 0, W, H);
+    const altin = x.createLinearGradient(0, 0, W, H);
+    altin.addColorStop(0, '#fff3cf'); altin.addColorStop(0.45, '#d9a94f'); altin.addColorStop(1, '#f7e2a6');
+    x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 14; x.shadowOffsetY = 3;
+    // çift çerçeve
+    x.strokeStyle = altin; x.lineWidth = 6;
+    x.beginPath(); x.roundRect ? x.roundRect(36, 36, W - 72, H - 72, 46) : x.rect(36, 36, W - 72, H - 72); x.stroke();
+    x.lineWidth = 2.5;
+    x.beginPath(); x.roundRect ? x.roundRect(64, 64, W - 128, H - 128, 30) : x.rect(64, 64, W - 128, H - 128); x.stroke();
+    // köşe kalpleri
+    x.fillStyle = '#e0556f';
+    [[104, 104], [W - 104, 104], [104, H - 104], [W - 104, H - 104]].forEach(p => { kalp(p[0], p[1], 38); x.fill(); });
+    // üst süs
+    x.strokeStyle = altin; x.lineWidth = 3;
+    ayirac(300, 260);
+    // yazı
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillStyle = altin;
+    const yaz = (t, y, bas, enCok) => {
+      let b = bas;
+      x.font = b + 'px "Great Vibes", "Snell Roundhand", "Brush Script MT", cursive';
+      while (x.measureText(t).width > enCok && b > 40) { b -= 4; x.font = b + 'px "Great Vibes", "Snell Roundhand", "Brush Script MT", cursive'; }
+      x.fillText(t, W / 2, y);
+    };
+    yaz('Her şey', 560, 260, 780);
+    yaz('burada', 790, 260, 780);
+    yaz('başladı', 1020, 260, 780);
+    // alt süs ve baş harfler
+    x.strokeStyle = altin; x.lineWidth = 3;
+    ayirac(1190, 260);
+    yaz('İ  &  M', 1340, 130, 600);
+    tex.needsUpdate = true;
+  }
+  ciz();
+  if (document.fonts && document.fonts.load) {
+    document.fonts.load('100px "Great Vibes"', 'Her şey burada başladı İ').then(ciz).catch(() => {});
+  }
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.3 * H / W),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, fog: false }));
+  p.position.set(AC_GEN / 2, 1.2, 0.035);
   kapiMenteşe.add(p);
 })();
 sahne.add(kapiMenteşe);
