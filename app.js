@@ -2129,8 +2129,39 @@ function surusGuncelle(dt, simdi) {
 // ---------- İREM parkuru: gün batımında topraklı, geniş arazi ----------
 const ARX = 1500, ARZ = 0;                       // arena odalardan çok uzakta (görünmez)
 const park = { aktif: false, hazir: false, x: 0, z: 0, y: 0, vy: 0, h: 0, v: 0, yon: 0, ramp: false, gaz: false, fren: false, ust: false,
-  grup: null, kam: null, toz: [], tozSira: 0, sonToz: 0, eskiSis: null, eskiArka: null, kapali: [], maske: null, mw: 0, mh: 0 };
+  vyG: 0, grup: null, kam: null, toz: [], tozSira: 0, sonToz: 0, eskiSis: null, eskiArka: null, kapali: [], maske: null, mw: 0, mh: 0 };
 const PARK_RAMPALAR = [];
+const PARK_OLCEK = 0.7;   // İREM yazısının küçültme oranı
+const PARK_TEPE = { x0: ARX + 175, z: ARZ, gen: 24, Hh: 6.5 };       // tepe: 24 m yokuş, 10 m düzlük, 12 m iniş
+const PARK_TUMSEK = { x0: ARX + 262, z: ARZ, gen: 20, genlik: 0.6 };   // 8 tümsek dizisi
+const PARK_SALLANAK = { x: ARX + 245, z: ARZ, aci: 0.2, hedef: 0.2, tahta: null };
+const duz = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+function parkYukseklik(x, z, sadeceTepeTumsek) {   // arazinin yüksekliği
+  let h = 0;
+  const t = PARK_TEPE;
+  if (Math.abs(z - t.z) < t.gen / 2) {
+    const u = x - t.x0, kenar = Math.abs(z - t.z) < t.gen / 2 ? 1 : 0;
+    let y = 0;
+    if (u > 0 && u < 24) y = t.Hh * duz(u / 24);
+    else if (u >= 24 && u < 34) y = t.Hh;
+    else if (u >= 34 && u < 46) y = t.Hh * (1 - duz((u - 34) / 12));
+    h = Math.max(h, y * kenar);
+  }
+  const b = PARK_TUMSEK;
+  if (Math.abs(z - b.z) < b.gen / 2) {
+    const u = x - b.x0;
+    if (u > 0 && u < 60) h = Math.max(h, b.genlik * (0.5 - 0.5 * Math.cos(u / 7.5 * Math.PI * 2)));
+  }
+  if (sadeceTepeTumsek) return h;
+  PARK_RAMPALAR.forEach(r => {
+    const dx = x - r.x, dz = z - r.z, c = Math.cos(r.rot), sn = Math.sin(r.rot);
+    const u = dx * c - dz * sn + r.L / 2, w = dx * sn + dz * c;
+    if (Math.abs(w) < r.W / 2 && u > 0 && u < r.L) h = Math.max(h, u / r.L * r.H);
+  });
+  const sl = PARK_SALLANAK, su = x - sl.x, sw = z - sl.z;
+  if (Math.abs(su) < 8 && Math.abs(sw) < 3) h = Math.max(h, 1.6 + su * Math.tan(sl.aci));
+  return h;
+}
 function parkKur() {
   if (park.hazir) return;
   park.hazir = true;
@@ -2171,12 +2202,12 @@ function parkKur() {
   park.maske = new Uint8Array(PW * PH); for (let i = 0; i < PW * PH; i++) park.maske[i] = veri[i * 4 + 3] > 128 ? 1 : 0;
   park.mw = PW; park.mh = PH;
   const yolDoku = new THREE.CanvasTexture(tc); yolDoku.anisotropy = 4;
-  const yolMesh = new THREE.Mesh(new THREE.PlaneGeometry(PW / M, PH / M), new THREE.MeshLambertMaterial({ map: yolDoku, transparent: true }));
+  const yolMesh = new THREE.Mesh(new THREE.PlaneGeometry(PW / M * PARK_OLCEK, PH / M * PARK_OLCEK), new THREE.MeshLambertMaterial({ map: yolDoku, transparent: true }));
   yolMesh.rotation.x = -Math.PI / 2; yolMesh.position.set(ARX, 0.04, ARZ - 5); g.add(yolMesh);
 
   // rampalar (İREM yazısından sonra)
   const rampMat = new THREE.MeshLambertMaterial({ color: 0xb4572d });
-  [[ARX + 122, ARZ - 5, 0], [ARX + 152, ARZ + 6, 0.25], [ARX + 186, ARZ - 12, -0.2]].forEach(r => {
+  [[ARX + 86, ARZ - 3, 0], [ARX + 114, ARZ + 5, 0.25], [ARX + 142, ARZ - 9, -0.2]].forEach(r => {
     const L = 10, W = 8, Hy = 2.6;
     const sh = new THREE.Shape(); sh.moveTo(0, 0); sh.lineTo(L, Hy); sh.lineTo(L, 0); sh.closePath();
     const geo = new THREE.ExtrudeGeometry(sh, { depth: W, bevelEnabled: false }); geo.translate(-L / 2, 0, -W / 2);
@@ -2187,6 +2218,23 @@ function parkKur() {
     PARK_RAMPALAR.push({ x: r[0], z: r[1], rot: r[2], L, W, H: Hy });
   });
 
+  // yeni parkur bölümleri: tepe (çıkış-iniş), tahterevalli, tümsekler
+  const toprakM = new THREE.MeshLambertMaterial({ color: 0xb4572d });
+  const dilim = (gen, der, segX, f, x0, zc) => {   // yükseklik fonksiyonundan şerit yüzey
+    const geo = new THREE.PlaneGeometry(gen, der, segX, 1); geo.rotateX(-Math.PI / 2);
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) { const wx = x0 + p.getX(i) + gen / 2; p.setY(i, parkYukseklik(wx, zc, true)); p.setX(i, p.getX(i)); }
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, toprakM); m.position.set(x0 + gen / 2, 0.02, zc); g.add(m);
+  };
+  dilim(46, 24, 92, null, PARK_TEPE.x0, PARK_TEPE.z);
+  dilim(60, 20, 160, null, PARK_TUMSEK.x0, PARK_TUMSEK.z);
+  // tahterevalli
+  const tahta = new THREE.Group(); tahta.position.set(PARK_SALLANAK.x, 1.6, PARK_SALLANAK.z); g.add(tahta);
+  const plank = new THREE.Mesh(new THREE.BoxGeometry(16, 0.3, 6), new THREE.MeshLambertMaterial({ color: 0x7a5232 })); plank.position.y = -0.15; tahta.add(plank);
+  [-1, 1].forEach(sg => { const kenar = new THREE.Mesh(new THREE.BoxGeometry(16, 0.25, 0.3), new THREE.MeshLambertMaterial({ color: 0xe8c33a })); kenar.position.set(0, 0.05, sg * 2.85); tahta.add(kenar); });
+  const destek = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 1.6, 12), new THREE.MeshLambertMaterial({ color: 0x4a4d55 })); destek.rotation.x = Math.PI / 2; destek.position.set(PARK_SALLANAK.x, 0.8, PARK_SALLANAK.z); g.add(destek);
+  PARK_SALLANAK.tahta = tahta; tahta.rotation.z = PARK_SALLANAK.aci;
   // gökyüzü kubbesi (gün batımı), güneş ve dağlar
   const sk = document.createElement('canvas'); sk.width = 8; sk.height = 256;
   const sx = sk.getContext('2d'), sg = sx.createLinearGradient(0, 0, 0, 256);
@@ -2210,14 +2258,15 @@ function parkKur() {
   }
   // çit: arenanın çevresi
   const direk = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.4, 0.3), new THREE.MeshLambertMaterial({ color: 0x5a4030 }));
-  const dir = new THREE.InstancedMesh(direk.geometry, direk.material, 220);
+  const dir = new THREE.InstancedMesh(direk.geometry, direk.material, 300);
   const o = new THREE.Object3D(); let n = 0;
-  for (let x = -150; x <= 150 && n < 220; x += 6) { [-75, 75].forEach(z => { if (n < 220) { o.position.set(ARX + x, 0.7, ARZ + z); o.updateMatrix(); dir.setMatrixAt(n++, o.matrix); } }); }
-  for (let z = -72; z <= 72 && n < 220; z += 6) { [-150, 150].forEach(x => { if (n < 220) { o.position.set(ARX + x, 0.7, ARZ + z); o.updateMatrix(); dir.setMatrixAt(n++, o.matrix); } }); }
+  const put = (x, z) => { if (n < 300) { o.position.set(ARX + x, 0.7, ARZ + z); o.updateMatrix(); dir.setMatrixAt(n++, o.matrix); } };
+  for (let x = -150; x <= 315; x += 6) { put(x, -75); put(x, 75); }
+  for (let z = -72; z <= 72; z += 6) { put(-150, z); put(315, z); }
   g.add(dir);
   const ray = new THREE.MeshLambertMaterial({ color: 0x6b4c36 });
-  [[0, -75, 300, 0.12], [0, 75, 300, 0.12]].forEach(r => { const m = new THREE.Mesh(new THREE.BoxGeometry(r[2], 0.12, 0.12), ray); m.position.set(ARX + r[0], 1.1, ARZ + r[1]); g.add(m); });
-  [-150, 150].forEach(x => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 150), ray); m.position.set(ARX + x, 1.1, ARZ); g.add(m); });
+  [-75, 75].forEach(z => { const m = new THREE.Mesh(new THREE.BoxGeometry(465, 0.12, 0.12), ray); m.position.set(ARX + 82.5, 1.1, ARZ + z); g.add(m); });
+  [-150, 315].forEach(x => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 150), ray); m.position.set(ARX + x, 1.1, ARZ); g.add(m); });
   // arena ışıkları (sadece parkurda açık)
   park.gunIsik = new THREE.DirectionalLight(0xffa860, 1.15); park.gunIsik.position.set(ARX + 300, 80, ARZ - 120); park.gunIsik.visible = false; sahne.add(park.gunIsik);
   park.gokIsik = new THREE.HemisphereLight(0xffc79a, 0x4a3a2a, 0.75); park.gokIsik.visible = false; sahne.add(park.gokIsik);
@@ -2229,7 +2278,7 @@ function parkKur() {
   }
 }
 function parkYuzey(x, z) {   // true = toprak yol
-  const px = Math.floor((x - ARX + 104) * 10), py = Math.floor((z - (ARZ - 5) + 50) * 10);
+  const px = Math.floor(((x - ARX) / PARK_OLCEK + 104) * 10), py = Math.floor(((z - (ARZ - 5)) / PARK_OLCEK + 50) * 10);
   if (px < 0 || py < 0 || px >= park.mw || py >= park.mh) return false;
   return park.maske[py * park.mw + px] === 1;
 }
@@ -2252,7 +2301,7 @@ function parkAc() {
     // motor: standdan çıkar, parkurun başına konur
     const mo = motor.platlar[0]; park.moto = mo.moto;
     sahne.add(park.moto);
-    park.x = ARX - 128; park.z = ARZ - 5; park.h = 0; park.v = 0; park.y = 0; park.vy = 0; park.yon = 0; park.kam = null; park.ust = false;
+    park.x = ARX - 92; park.z = ARZ - 5; park.h = 0; park.v = 0; park.y = 0; park.vy = 0; park.vyG = 0; park.yon = 0; park.kam = null; park.gorunum = 0; yukariBtn.textContent = 'Yukarıdan'; kamera.up.set(0, 1, 0);
     surusKutu.classList.add('acik'); kalkBtn.textContent = 'Çık'; yukariBtn.classList.add('acik');
     motorSesiBasla();
     gecisKutu.classList.remove('acik');
@@ -2274,7 +2323,8 @@ function parkKapat() {
     gecisKutu.classList.remove('acik');
   }, 650);
 }
-yukariBtn.addEventListener('click', () => { park.ust = !park.ust; kamera.up.set(0, park.ust ? 0 : 1, park.ust ? -1 : 0); });
+const GORUNUM_ADI = ['Yukarıdan', 'Harita', 'Normal'];   // düğmede bir sonraki görünüm yazar
+yukariBtn.addEventListener('click', () => { park.gorunum = ((park.gorunum || 0) + 1) % 3; park.kam = null; yukariBtn.textContent = GORUNUM_ADI[park.gorunum]; });
 kalkBtn.addEventListener('click', () => { if (park.aktif) parkKapat(); });
 function tozAt(x, y, z, t) {
   const p = park.toz[park.tozSira = (park.tozSira + 1) % park.toz.length];
@@ -2302,23 +2352,29 @@ function parkGuncelle(dt, simdi) {
   park.x += Math.cos(park.h) * park.v * dt; park.z -= Math.sin(park.h) * park.v * dt;
   // sınırlar
   if (park.x < ARX - 145) { park.x = ARX - 145; park.h = Math.PI - park.h; park.v *= 0.5; }
-  if (park.x > ARX + 145) { park.x = ARX + 145; park.h = Math.PI - park.h; park.v *= 0.5; }
+  if (park.x > ARX + 315) { park.x = ARX + 315; park.h = Math.PI - park.h; park.v *= 0.5; }
   if (park.z < ARZ - 70) { park.z = ARZ - 70; park.h = -park.h; park.v *= 0.5; }
   if (park.z > ARZ + 70) { park.z = ARZ + 70; park.h = -park.h; park.v *= 0.5; }
-  // rampalar
-  let zeminY = 0, egim = 0;
-  PARK_RAMPALAR.forEach(r => {
-    const dx = park.x - r.x, dz = park.z - r.z, c = Math.cos(r.rot), sn = Math.sin(r.rot);
-    const u = dx * c - dz * sn + r.L / 2, w = dx * sn + dz * c;     // rampa yerel koordinatı
-    if (Math.abs(w) < r.W / 2 && u > 0 && u < r.L) { zeminY = Math.max(zeminY, u / r.L * r.H); egim = r.H / r.L; }
-    const uo = (ox - r.x) * c - (oz - r.z) * sn + r.L / 2;
-    if (Math.abs(w) < r.W / 2 && uo < r.L && u >= r.L && park.y <= zeminY + 0.4 && park.v > 3) { park.vy = park.v * (r.H / r.L) * 0.9 + 1.2; park.y = r.H + 0.01; }   // rampadan fırla
-  });
-  if (park.vy !== 0 || park.y > zeminY + 0.02) {
+  // arazi: rampalar, tepe, tahterevalli, tümsekler
+  const f0x = Math.cos(park.h), f0z = -Math.sin(park.h);
+  // tahterevalli: motor ortayı geçince ters tarafa devrilir
+  const SL = PARK_SALLANAK, suz = park.x - SL.x, swz = park.z - SL.z;
+  if (Math.abs(suz) < 8 && Math.abs(swz) < 3 && Math.abs(suz) > 0.6) SL.hedef = suz < 0 ? 0.2 : -0.2;
+  const eskiAci = SL.aci; SL.aci += Math.max(-0.7 * dt, Math.min(0.7 * dt, SL.hedef - SL.aci)); SL.tahta.rotation.z = SL.aci;
+  if (Math.sign(eskiAci - 0.001) !== Math.sign(SL.aci - 0.001) && Math.abs(SL.aci) < 0.01) balonSesi(4);
+  const zeminY = parkYukseklik(park.x, park.z, false);
+  const egimOnu = (parkYukseklik(park.x + f0x * 0.9, park.z + f0z * 0.9, false) - parkYukseklik(park.x - f0x * 0.9, park.z - f0z * 0.9, false)) / 1.8;
+  const egim = egimOnu;
+  if (park.vy !== 0 || park.y > zeminY + 0.03) {   // havada
     park.y += park.vy * dt; park.vy -= 16 * dt;
-    if (park.y <= zeminY) { park.y = zeminY; park.vy = 0; if (!havada) {} else tozAt(park.x, 0.2, park.z); }
-  } else park.y = zeminY;
-  const havaTam = park.y > zeminY + 0.05;
+    if (park.y <= zeminY) { if (park.vy < -3) tozAt(park.x, 0.2, park.z); park.y = zeminY; park.vy = 0; park.vyG = 0; }
+  } else {
+    const vyG = (zeminY - park.y) / Math.max(dt, 0.001);
+    if (zeminY < park.y - 0.03 && (park.vyG || 0) > 1.2 && park.v > 3) { park.vy = park.vyG; park.y += park.vy * dt; }   // yükselen zemin birden bitti: havaya fırla
+    else { park.y = zeminY; park.vyG = park.vyG * 0.6 + vyG * 0.4; }
+    park.v -= egim * 3.5 * dt;                                                        // yokuşta yavaşlar, inişte hızlanır
+  }
+  const havaTam = park.y > zeminY + 0.08;
   // görünüm
   moto.position.set(park.x, park.y, park.z); moto.rotation.y = park.h;
   moto.rotation.x = park.yon * Math.min(1, Math.abs(park.v) / 6) * 0.38;
@@ -2630,10 +2686,23 @@ function kare(simdi) {
   cy2 = sinir(cy2, 0.25, (kapi2.acik && kon.x > ODA_X + 0.3) ? 2.9 : (cz > KAPI_Z ? YUKSEK - 0.2 : ODA_Y - 0.2));
   if (park.aktif) {
     const fx = Math.cos(park.h), fz = -Math.sin(park.h);
-    kamera.fov += ((Math.min(88, 74 + park.v * 0.7)) - kamera.fov) * Math.min(1, dt * 3); kamera.updateProjectionMatrix();
-    if (park.ust) {
-      kamera.position.set(park.x, 75, park.z + 0.01); kamera.lookAt(park.x, 0, park.z);
+    const gor = park.gorunum || 0;
+    if (gor === 0) { kamera.fov += ((Math.min(88, 74 + park.v * 0.7)) - kamera.fov) * Math.min(1, dt * 3); kamera.updateProjectionMatrix(); }
+    if (gor === 2) {
+      // harita: tüm İREM yazısı görünsün, kuzey yukarıda (yazı okunur)
+      kamera.fov += (60 - kamera.fov) * Math.min(1, dt * 4); kamera.updateProjectionMatrix();
+      const asp = window.innerWidth / window.innerHeight, ft = Math.tan(kamera.fov * Math.PI / 360);
+      const yar = 208 * PARK_OLCEK / 2 + 14, yuk = 100 * PARK_OLCEK / 2 + 12;
+      const hh = Math.max(yar / (ft * asp), yuk / ft);
+      kamera.up.set(0, 0, -1);
+      kamera.position.set(ARX, hh, ARZ - 5 + 0.01); kamera.lookAt(ARX, 0, ARZ - 5);
+    } else if (gor === 1) {
+      // yukarıdan: motorun yönü ekranda hep yukarı, böylece direksiyon doğal kalır
+      kamera.fov += (62 - kamera.fov) * Math.min(1, dt * 4); kamera.updateProjectionMatrix();
+      kamera.up.set(fx, 0, fz);
+      kamera.position.set(park.x, 42, park.z); kamera.lookAt(park.x + fx * 0.001, 0, park.z + fz * 0.001);
     } else {
+      kamera.up.set(0, 1, 0);
       let tx = park.x - fx * 6.2, tz = park.z - fz * 6.2;
       if (!park.kam) park.kam = new THREE.Vector3(tx, 3.4, tz);
       const kk = 1 - Math.exp(-dt * 6);
