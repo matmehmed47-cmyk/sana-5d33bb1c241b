@@ -330,6 +330,15 @@ sahne.add(kapiOku);
   });
 })();
 
+// fotoğrafın iki yanında, yan duvardaki videolara yönlendiren yanıp sönen oklar
+const matYanOk = new THREE.MeshBasicMaterial({ color: 0xe8b25f, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+[-1, 1].forEach(yon => {
+  const ok = new THREE.Mesh(okGeo, matYanOk);
+  ok.scale.set(yon * 0.85, 0.85, 1);
+  ok.position.set(yon * 2.05, 1.9, ODA_SON + 0.04);
+  sahne.add(ok);
+});
+
 // ---------- Fotoğraf ----------
 const FOTO_Z = ODA_SON + 0.045, FOTO_Y = 1.9, FOTO_YUK = 3;
 let fotoNet = null, fotoBulanik = null, fotoIsik = null;
@@ -370,9 +379,10 @@ function videoEkrani(kaynak, sol, z, y, gen, yuk) {
   v.muted = true; v.loop = true; v.playsInline = true;
   v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
   v.preload = 'auto';
+  v.addEventListener('loadeddata', () => { if (v.paused) v.currentTime = 0.1; });
   const tex = new THREE.VideoTexture(v);
   tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.generateMipmaps = false;
-  const ekran = new THREE.Mesh(new THREE.PlaneGeometry(gen, yuk), new THREE.MeshBasicMaterial({ map: tex, fog: false }));
+  const ekran = new THREE.Mesh(new THREE.PlaneGeometry(gen, yuk), new THREE.MeshBasicMaterial({ map: tex, fog: false, color: 0x4d4d4d }));
   ekran.position.set(yon * (ODA_X - 0.07), y, z);
   ekran.rotation.y = -yon * Math.PI / 2;
   sahne.add(ekran);
@@ -383,12 +393,12 @@ function videoEkrani(kaynak, sol, z, y, gen, yuk) {
   const isik = new THREE.PointLight(0xdfe8ff, 0, 9, 2);
   isik.position.set(yon * (ODA_X - 1.2), y, z);
   sahne.add(isik);
-  videolar.push({ v, isik, x: ekran.position.x, z, oynuyor: false });
+  videolar.push({ v, isik, ekran, x: ekran.position.x, z, oynuyor: false, parlak: 0.3 });
 }
 videoEkrani('video/pist.mp4', true, -21.6, 1.9, 3.2, 1.8);
 videoEkrani('video/yan.mp4', false, -21.6, 1.85, 2.6 * 478 / 850, 2.6);
 
-function videoGuncelle(icerde) {
+function videoGuncelle(icerde, dt) {
   videolar.forEach(o => {
     const uz = Math.hypot(kon.x - o.x, kon.z - o.z);
     const dx = o.x - kon.x, dz = o.z - kon.z;
@@ -400,7 +410,10 @@ function videoGuncelle(icerde) {
       if (olsun) { const p = o.v.play(); if (p && p.catch) p.catch(() => {}); }
       else o.v.pause();
     }
-    o.isik.intensity = olsun ? 0.55 : 0;
+    const hedefP = olsun ? 1 : (icerde ? 0.3 : 0);
+    o.parlak += (hedefP - o.parlak) * Math.min(1, dt * 3);
+    o.ekran.material.color.setRGB(o.parlak, o.parlak, o.parlak);
+    o.isik.intensity = 0.55 * o.parlak;
   });
 }
 
@@ -648,7 +661,7 @@ function kare(simdi) {
       fotoBulanik.material.color.setRGB(parlak, parlak, parlak);
       fotoBulanik.material.opacity = 1 - yumusak(7, 3.6, fotoUz);
     }
-    videoGuncelle(icerde);
+    videoGuncelle(icerde, dt);
     const yaziGerek = icerde && fotoUz < 4.6;
     if (yaziGerek !== yaziAcik) {
       yaziAcik = yaziGerek;
@@ -656,6 +669,9 @@ function kare(simdi) {
       yaziKutu.classList.toggle('acik', yaziAcik);
     }
   }
+
+  // fotoğraf yanı oklar: odadayken yumuşakça yanıp söner
+  matYanOk.opacity = odadaMi ? (0.12 + 0.5 * (0.5 + 0.5 * Math.sin(simdi / 650))) : 0;
 
   // okların nabzı
   const nabiz = 0.7 + 0.3 * Math.sin(simdi / 350);
