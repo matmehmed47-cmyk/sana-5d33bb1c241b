@@ -1963,6 +1963,25 @@ function ruzgarGuluGuncelle(dt, t) {
 }
 // duvar fotoğrafı gibi: yalnızca ikinci odadayken çalışır
 
+// ---------- Motor odası: arka duvarın ortasından yan duvarlardaki fotoğraflara giden silik oklar ----------
+const motorOklar = [];
+(function motorOklariKur() {
+  const ok = (x, z, rotY, ters, k) => {
+    const mat = new THREE.MeshBasicMaterial({ color: 0xe8b25f, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+    const m = new THREE.Mesh(okGeo, mat);
+    m.scale.set(ters ? -0.7 : 0.7, 0.7, 1);
+    m.position.set(x, 0.62, z); m.rotation.y = rotY;
+    sahne.add(m);
+    motorOklar.push({ mat, k });
+  };
+  const zN = R3.z1 - 0.02;
+  // arka duvarda ortadan dışa (neon yazının altından), sonra yan duvarlarda fotoğrafa doğru
+  [8.6, 7.8, 7.0, 6.2, 5.4].forEach((x, n) => ok(x, zN, Math.PI, false, n));                  // batıya (sağdaki duvara)
+  [11.4, 12.2, 13.0, 13.8, 14.6].forEach((x, n) => ok(x, zN, Math.PI, true, n));              // doğuya (soldaki duvara)
+  [-1.4, -2.3, -3.2, -4.1].forEach((z, n) => ok(R3.x0 + 0.02, z, Math.PI / 2, false, 5 + n));   // batı duvarı: güneye, fotoğrafa
+  [-1.4, -2.3, -3.2, -4.1].forEach((z, n) => ok(R3.x1 - 0.02, z, -Math.PI / 2, true, 5 + n));   // doğu duvarı
+})();
+
 // ---------- Kontrol ----------
 const kon = { donuk: 0, vx: 0, vz: 0, oto: null, bakToplam: 0, dragX: 0, dragY: 0, yaw: 0, pitch: -0.22, x: 0, z: 1.2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
 let basladi = false;
@@ -2134,7 +2153,7 @@ function kare(simdi) {
   matOk.color.setRGB(0.91 * nabiz, 0.7 * nabiz, 0.37 * nabiz);
 
   if (basladi && kon.z < KAPI_Z + 6) yaprakDok(dt, simdi / 1000);
-  if (K3.acik && kon.z > ODA2_Z1 && kon.x > 2.5) { cocukFotoGuncelle(); motorGuncelle(dt); }
+  if (K3.acik && kon.z > ODA2_Z1 && kon.x > 2.5) { cocukFotoGuncelle(); motorGuncelle(dt); motorOklar.forEach(o => { o.mat.opacity = 0.04 + 0.2 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 420 - o.k * 0.8), 2); }); }
   if (kon.x > ODA_X) { ruzgarGuluGuncelle(dt, simdi / 1000); k3Guncelle(simdi); vantilatorGuncelle(simdi / 1000); sahisOklar.forEach(o => { o.mat.opacity = 0.04 + 0.2 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 420 - o.k * 0.8), 2); }); ampulGuncelle(simdi / 1000); cocukFotoGuncelle(); if (kon.x > ODA_X + 1.5) balonGuncelle(dt, simdi / 1000); }
 
   // mum titremesi
