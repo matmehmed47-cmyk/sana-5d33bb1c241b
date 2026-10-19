@@ -415,8 +415,59 @@ function muzikKur() {
   if (p && p.catch) p.catch(() => {});
 }
 
+// ---------- Karakter: el ele tutuşan İ ve M ----------
+const matAltin = new THREE.MeshPhongMaterial({ color: 0xe3b44f, specular: 0xfff2c0, shininess: 60, emissive: 0x3a2808 });
+const matGoz = new THREE.MeshBasicMaterial({ color: 0x1a1010 });
+function kapsul(r, uz) {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, uz, 12), matAltin));
+  const u1 = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), matAltin); u1.position.y = uz / 2; g.add(u1);
+  const u2 = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), matAltin); u2.position.y = -uz / 2; g.add(u2);
+  return g;
+}
+function uzuv(r, uz, x, y, z) { // tepesinden sallanan bacak/kol
+  const p = new THREE.Group();
+  const k = kapsul(r, uz); k.position.y = -uz / 2;
+  p.add(k); p.position.set(x, y, z || 0);
+  return p;
+}
+function goz(x, y, z) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), matGoz); m.position.set(x, y, z); return m; }
+
+const ikili = new THREE.Group();
+const kolBacak = []; // [uzuv, yön]
+(function karakterYap() {
+  // İ
+  const i = new THREE.Group(); i.position.x = -0.3;
+  const govI = kapsul(0.07, 0.5); govI.position.y = 0.45; i.add(govI);
+  const nokta = new THREE.Mesh(new THREE.SphereGeometry(0.065, 12, 8), matAltin); nokta.position.y = 0.93; i.add(nokta);
+  i.add(goz(-0.03, 0.6, -0.062), goz(0.03, 0.6, -0.062));
+  [-0.035, 0.035].forEach((x, k) => { const b = uzuv(0.032, 0.14, x, 0.2); i.add(b); kolBacak.push([b, k ? 1 : -1, 0.7]); });
+  const kolI = uzuv(0.028, 0.3, -0.1, 0.72); i.add(kolI); kolBacak.push([kolI, 1, 0.5]);
+  ikili.add(i);
+  // M
+  const m = new THREE.Group(); m.position.x = 0.3;
+  [-0.15, 0.15].forEach(x => { const b = kapsul(0.045, 0.5); b.position.set(x, 0.45, 0); m.add(b); });
+  const d1 = kapsul(0.04, 0.2); d1.position.set(-0.075, 0.62, 0); d1.rotation.z = 0.6; m.add(d1);
+  const d2 = kapsul(0.04, 0.2); d2.position.set(0.075, 0.62, 0); d2.rotation.z = -0.6; m.add(d2);
+  m.add(goz(-0.15, 0.6, -0.042), goz(0.15, 0.6, -0.042));
+  [-0.15, 0.15].forEach((x, k) => { const b = uzuv(0.032, 0.14, x, 0.2); m.add(b); kolBacak.push([b, k ? -1 : 1, 0.7]); });
+  const kolM = uzuv(0.028, 0.3, 0.215, 0.72); m.add(kolM); kolBacak.push([kolM, -1, 0.5]);
+  ikili.add(m);
+  // el ele
+  const el = kapsul(0.03, 0.34); el.rotation.z = Math.PI / 2; el.position.set(-0.07, 0.5, 0); ikili.add(el);
+  // üstlerinde küçük kalp
+  const kalp = new THREE.Mesh(kalpGeo, matKalp);
+  kalp.scale.set(0.16, 0.16, 1); kalp.rotation.y = Math.PI; kalp.position.set(0.02, 1.32, 0.02);
+  kalp.name = 'kalp';
+  ikili.add(kalp);
+  ikili.scale.setScalar(0.8);
+  sahne.add(ikili);
+})();
+const ikiliKalp = ikili.getObjectByName('kalp');
+let ikiliYon = 0, yurume = 0, yurumeFaz = 0;
+
 // ---------- Kontrol ----------
-const kon = { yaw: 0, pitch: 0, x: 0, z: 2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
+const kon = { yaw: 0, pitch: -0.22, x: 0, z: 1.2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
 let basladi = false;
 
 window.addEventListener('keydown', e => { kon.tus[e.key.toLowerCase()] = true; });
@@ -453,7 +504,7 @@ canvas.addEventListener('pointermove', e => {
   if (e.pointerId !== bakId) return;
   kon.yaw -= (e.clientX - sonX) * 0.005;
   kon.pitch -= (e.clientY - sonY) * 0.004;
-  kon.pitch = Math.max(-1.1, Math.min(1.1, kon.pitch));
+  kon.pitch = Math.max(-0.85, Math.min(0.45, kon.pitch));
   sonX = e.clientX; sonY = e.clientY;
 });
 function bakBitir(e) { if (e.pointerId === bakId) bakId = null; }
@@ -484,18 +535,28 @@ function kare(simdi) {
     if (t['arrowright']) kon.yaw -= 1.6 * dt;
     const hiz = 2.2;
     const sy = Math.sin(kon.yaw), cy = Math.cos(kon.yaw);
-    kon.x += (-sy * ileri + cy * yan) * hiz * dt;
-    kon.z += (-cy * ileri - sy * yan) * hiz * dt;
+    let mx = -sy * ileri + cy * yan, mz = -cy * ileri - sy * yan;
+    const ml = Math.hypot(mx, mz);
+    if (ml > 1) { mx /= ml; mz /= ml; }
+    kon.x += mx * hiz * dt;
+    kon.z += mz * hiz * dt;
+    yurume = Math.min(1, ml);
+    if (ml > 0.08) {
+      const hedef = Math.atan2(-mx, -mz);
+      let fark = hedef - ikiliYon;
+      fark = Math.atan2(Math.sin(fark), Math.cos(fark));
+      ikiliYon += fark * Math.min(1, dt * 9);
+    }
 
     // sınırlar
     if (kon.z > KAPI_Z + 0.4) {
-      kon.x = sinir(kon.x, -KOR_X + 0.3, KOR_X - 0.3);
+      kon.x = sinir(kon.x, -KOR_X + 0.5, KOR_X - 0.5);
       kon.z = Math.min(kon.z, KOR_BAS - 0.3);
     } else if (kon.z > KAPI_Z - 1.8) {
       if (!kapiAcik) kon.z = KAPI_Z + 0.4;
-      else kon.x = sinir(kon.x, -AC_GEN / 2 + 0.25, AC_GEN / 2 - 0.25);
+      else kon.x = sinir(kon.x, -AC_GEN / 2 + 0.45, AC_GEN / 2 - 0.45);
     } else {
-      kon.x = sinir(kon.x, -ODA_X + 0.4, ODA_X - 0.4);
+      kon.x = sinir(kon.x, -ODA_X + 0.7, ODA_X - 0.7);
       kon.z = Math.max(kon.z, ODA_SON + 1);
     }
 
@@ -544,8 +605,25 @@ function kare(simdi) {
     muzik.volume = sinir(v + (muzikHedef - v) * Math.min(1, dt * 0.7), 0, 1);
   }
 
-  kamera.position.set(kon.x, 1.6, kon.z);
-  kamera.rotation.set(kon.pitch, kon.yaw, 0);
+  // karakter animasyonu
+  yurumeFaz += dt * 9 * yurume;
+  const salin = Math.sin(yurumeFaz);
+  kolBacak.forEach(o => { o[0].rotation.x = salin * o[1] * o[2] * yurume; });
+  ikili.position.set(kon.x, Math.abs(Math.sin(yurumeFaz)) * 0.03 * yurume, kon.z);
+  ikili.rotation.y = ikiliYon;
+  ikiliKalp.position.y = 1.32 + Math.sin(simdi / 500) * 0.04;
+
+  // kamera: karakterin arkasında, bakış yönünün tersinde
+  const cp = Math.cos(kon.pitch), sp = Math.sin(kon.pitch);
+  const bx = -Math.sin(kon.yaw) * cp, by = sp, bz = -Math.cos(kon.yaw) * cp;
+  const D = 2.4, hx = kon.x, hy = 0.85, hz = kon.z;
+  let cx = hx - bx * D, cy2 = hy - by * D, cz = hz - bz * D;
+  if (cz > KAPI_Z + 0.1) { cx = sinir(cx, -KOR_X + 0.2, KOR_X - 0.2); cz = Math.min(cz, KOR_BAS - 0.15); }
+  else if (cz > KAPI_Z - 0.6) { cx = sinir(cx, -AC_GEN / 2 + 0.15, AC_GEN / 2 - 0.15); }
+  else { cx = sinir(cx, -ODA_X + 0.2, ODA_X - 0.2); cz = Math.max(cz, ODA_SON + 0.3); }
+  cy2 = sinir(cy2, 0.25, cz > KAPI_Z ? YUKSEK - 0.2 : ODA_Y - 0.2);
+  kamera.position.set(cx, cy2, cz);
+  kamera.lookAt(hx, hy + 0.15, hz);
   renderer.render(sahne, kamera);
 }
 requestAnimationFrame(kare);
