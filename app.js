@@ -262,6 +262,32 @@ function cocukFotoGuncelle() {
     z += gen + BOSLUK;
   });
 })();
+// tavandan sarkan, sürekli renk değiştiren ampul
+const ampul = { cam: null, parilti: null };
+(function ampulKur() {
+  const g = new THREE.Group();
+  g.position.set(o2cx, 0, o2cz);
+  const kordon = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.7, 6), new THREE.MeshBasicMaterial({ color: 0x1a1612 }));
+  kordon.position.y = ODA2_Y - 0.35; g.add(kordon);
+  const duy = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.12, 12), new THREE.MeshPhongMaterial({ color: 0x8c8c94, specular: 0xffffff, shininess: 60 }));
+  duy.position.y = ODA2_Y - 0.76; g.add(duy);
+  const cam = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }));
+  cam.scale.set(1, 1.2, 1); cam.position.y = ODA2_Y - 0.95; g.add(cam);
+  const parilti = new THREE.Sprite(new THREE.SpriteMaterial({ map: radyalDoku(255, 255, 255), transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  parilti.scale.set(1.6, 1.6, 1); parilti.position.y = ODA2_Y - 0.95; g.add(parilti);
+  sahne.add(g);
+  ampul.cam = cam; ampul.parilti = parilti;
+})();
+const ampulRenk = new THREE.Color();
+function ampulGuncelle(t) {
+  const ton = (t * 0.09) % 1;                    // renkler sırayla akar
+  ampulRenk.setHSL(ton, 0.95, 0.55);
+  isik2.color.copy(ampulRenk);
+  isik2.intensity = 1.5 + 0.2 * Math.sin(t * 3);
+  ampul.cam.material.color.setHSL(ton, 0.7, 0.75);
+  ampul.parilti.material.color.copy(ampulRenk);
+  ampul.parilti.material.opacity = 0.5 + 0.15 * Math.sin(t * 2.2);
+}
 // paten rafı: girişte, holün kuzeyinde
 const rafMat = new THREE.MeshPhongMaterial({ color: 0x8a6240, specular: 0x000000, shininess: 4 });
 kutu(0.55, 0.06, 1.8, rafMat, HOL_SON + 0.3, 0.38, -16.4);
@@ -1566,7 +1592,7 @@ function kare(simdi) {
   matOk.color.setRGB(0.91 * nabiz, 0.7 * nabiz, 0.37 * nabiz);
 
   if (basladi && kon.z < KAPI_Z + 6) yaprakDok(dt, simdi / 1000);
-  if (kon.x > ODA_X) { cocukFotoGuncelle(); if (kon.x > ODA_X + 1.5) balonGuncelle(dt, simdi / 1000); }
+  if (kon.x > ODA_X) { ampulGuncelle(simdi / 1000); cocukFotoGuncelle(); if (kon.x > ODA_X + 1.5) balonGuncelle(dt, simdi / 1000); }
 
   // mum titremesi
   const zaman = simdi / 1000;
