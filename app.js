@@ -649,6 +649,20 @@ zeminYolu(-0.8, -18.0, -4.0, -21.4, 5);    // sol videoya
 zeminYolu(0.8, -18.0, 4.0, -21.4, 5);      // sağ videoya
 zeminYolu(-1.2, -17.0, -2.7, -17.0, 3);    // soru tahtasına
 
+// ---------- Kapı kapanma sesi (küçük, yumuşak bir "tok") ----------
+let sesBagl = null;
+function kapiSesi() {
+  try {
+    if (!sesBagl) return;
+    const t = sesBagl.currentTime;
+    const osc = sesBagl.createOscillator(), g = sesBagl.createGain();
+    osc.type = 'sine'; osc.frequency.setValueAtTime(110, t); osc.frequency.exponentialRampToValueAtTime(42, t + 0.35);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    osc.connect(g); g.connect(sesBagl.destination);
+    osc.start(t); osc.stop(t + 0.55);
+  } catch (e) {}
+}
+
 // ---------- Müzik ----------
 let muzik = null, muzikHedef = 0, muzikVar = true;
 function muzikKur() {
@@ -876,7 +890,14 @@ function kare(simdi) {
     }
 
     // kapı
-    if (!kapiAcik && kon.z < KAPI_Z + 3.2) kapiAcik = true;
+    if (!kapiAcik) {
+      // koridordan yaklaşınca ya da odadan kapıya dönünce açılır
+      if (kon.z < KAPI_Z + 3.2 && kon.z > KAPI_Z - 2.0) kapiAcik = true;
+    } else if (kon.z < KAPI_Z - 3.4) {
+      // odaya iyice girince arkasından kapanır
+      kapiAcik = false;
+      kapiSesi();
+    }
     const hedefAci = kapiAcik ? Math.PI * 0.5 : 0;
     kapiAci += (hedefAci - kapiAci) * Math.min(1, dt * 2.2);
     kapiMenteşe.rotation.y = kapiAci;
@@ -959,6 +980,7 @@ requestAnimationFrame(kare);
 document.getElementById('basla').addEventListener('click', () => {
   basladi = true;
   muzikKur();
+  try { sesBagl = new (window.AudioContext || window.webkitAudioContext)(); if (sesBagl.resume) sesBagl.resume(); } catch (e) { sesBagl = null; }
   document.getElementById('giris').classList.add('gizli');
   setTimeout(() => document.getElementById('ipucu').classList.add('gizli'), 7000);
 });
