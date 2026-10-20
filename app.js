@@ -3391,14 +3391,14 @@ function eyGuncelle(dt, simdi) {
     const kd = ey.kapiD;
     if (ey.durum === 'yok' || ey.durum === 'sandik') ey.geceHedef = Math.min(0.96, Math.max(0, (ey.sektorSay / 16 - 0.1) / 0.72 * 0.96));
     eySandikGuncelle(dt, simdi, t);
-    kd.aci += ((kd.acik ? -1.9 : 0) - kd.aci) * Math.min(1, dt * 1.8); kd.hinge.rotation.y = kd.aci;
+    kd.aci += ((kd.acik ? -1.9 : 0) - kd.aci) * Math.min(1, dt * 1.8); kd.hinge.rotation.y = kd.aci; eyKapiSoruGuncelle(kd, simdi);
     const bisikIpucu = !ey.bindi && simdi < ey.ipucuBitis;
     if (!bisikIpucu) {
       const ud = Math.hypot(kon.x - kd.x, kon.z - kd.z);
       if (ey.dKutu && simdi > ey.dBitis) { ey.dKutu = false; yonKutu.classList.remove('acik'); }
       else if (ey.dKutu && kd.acik) yonKutu.classList.add('acik');
       if (!kd.acik) {
-        if (ud < 6 && !ey.kilit && ey.durum !== 'ucus') { yonKutu.textContent = ey.durum === 'sandik' ? 'Yoldaki sandığı aç.' : (ey.durum === 'yok' ? 'Önce gölü tam tur at. Tur: %' + Math.round(ey.sektorSay / 16 * 100) : 'Hediyeye bak.'); yonKutu.classList.add('acik'); ey.dKutu = true; ey.dBitis = simdi + 1500; }
+        if (ud < 6 && !ey.kilit && ey.durum !== 'ucus') { yonKutu.textContent = ey.durum === 'sandik' ? 'Yoldaki sandığı aç.' : (ey.durum === 'yok' ? 'Önce gölü tam tur at. Tur: %' + Math.round(ey.sektorSay / 16 * 100) : (ey.durum === 'asili' ? 'Kapıya yaklaş, sana bir sorum var.' : 'Hediyeye bak.')); yonKutu.classList.add('acik'); ey.dKutu = true; ey.dBitis = simdi + 1500; }
       }
     } }
   // gün batımı → gece
@@ -3460,6 +3460,34 @@ function eyDekorGuncelle(dt, t) {
   }
 }
 const eyDm = new THREE.Object3D();
+const SORU5 = { metin: "10 Ekim'de biz nereye gittik?", secenekler: ['Eskişehir', 'Kapadokya', 'Mardin'], dogru: 'Kapadokya',
+  yanlis: { 'Eskişehir': 'Eskişehir güzel ama oraya değil, çok daha uzağa gittik 😄', 'Mardin': 'Mardin taş evleriyle güzel, ama başka bir yere gittik 🙈' },
+  ipucu: 'İpucu: Peri bacaları ve bir ATV var.', dogruMesaj: 'Bildin! Kapadokya... Kapı açılıyor!' };
+const soru5 = document.createElement('div'); soru5.id = 'soru3';
+const soru5B = document.createElement('div'); soru5B.id = 'soru3Baslik'; soru5B.textContent = SORU5.metin;
+const soru5S = document.createElement('div'); soru5S.id = 'soru3Sec'; const soru5M = document.createElement('div'); soru5M.id = 'soru3Mesaj';
+soru5.append(soru5B, soru5S, soru5M); document.body.appendChild(soru5);
+const kapiSoru = { cozuldu: false, yanlis: 0, gorunur: false, bitis: 0 };
+SORU5.secenekler.forEach(sc => {
+  const b = document.createElement('button'); b.textContent = sc;
+  b.addEventListener('click', () => {
+    if (kapiSoru.cozuldu) return;
+    if (sc === SORU5.dogru) {
+      kapiSoru.cozuldu = true; soru5M.textContent = SORU5.dogruMesaj; soru5M.className = 'dogru'; soru5S.style.display = 'none';
+      kalpPatlat(); eyKapiAc(); kapiSoru.bitis = performance.now() + 5000;
+    } else {
+      kapiSoru.yanlis++; soru5M.textContent = (SORU5.yanlis[sc] || 'Bir daha dene.') + (kapiSoru.yanlis >= 2 ? ' ' + SORU5.ipucu : ''); soru5M.className = 'yanlis';
+      b.classList.add('sal'); b.classList.add('solgun'); setTimeout(() => b.classList.remove('sal'), 400);
+    }
+  });
+  soru5S.appendChild(b);
+});
+function eyKapiSoruGuncelle(kd, simdi) {
+  const dx = kd.x - kon.x, dz = kd.z - kon.z, uz = Math.hypot(dx, dz), bak = (-Math.sin(kon.yaw) * dx - Math.cos(kon.yaw) * dz) / (uz || 1);
+  let goster = ey.durum === 'asili' && uz < 3.8 && bak > (kapiSoru.gorunur ? 0.2 : 0.45) && !ey.kilit;
+  if (kapiSoru.cozuldu && simdi > kapiSoru.bitis) goster = false;
+  if (goster !== kapiSoru.gorunur) { kapiSoru.gorunur = goster; soru5.classList.toggle('acik', goster); }
+}
 function eyKapiAc() {
   const kd = ey.kapiD; if (kd.acik) return;
   kd.acik = true; kd.panel.visible = true; kd.kilit.visible = false; gicirti(1.6);
@@ -3512,7 +3540,7 @@ function eySandikGuncelle(dt, simdi, t) {
     hd.tilt.rotation.x += (0 - hd.tilt.rotation.x) * k;
     ey.spin += dt * 0.5; hd.spin.rotation.y = ey.spin; hd.set(1); hd.halo.material.opacity = 0.6 + 0.25 * Math.sin(t * 2);
     if (ey.durum === 'ucus' && Math.hypot(hd.root.position.x - EX, hd.root.position.y - 3.4, hd.root.position.z - EZ) < 0.3) {
-      ey.durum = 'asili'; eyKapiAc(); kalpPatlat(); ey.finalYazi = true; ey.finalBitis = simdi + 9000;
+      ey.durum = 'asili'; kalpPatlat(); ey.finalYazi = true; ey.finalBitis = simdi + 9000;
     }
   }
   if (ey.finalYazi) { if (simdi < ey.finalBitis) { yaziKutu.textContent = 'İyi ki o gün, iyi ki sen.'; yaziKutu.classList.add('acik'); } else { ey.finalYazi = false; yaziKutu.classList.remove('acik'); } }
