@@ -8,7 +8,7 @@ const ODA1 = {
 };
 
 const SURUS_AKTIF = false;   // koltuk ve uzaktan sürüş şimdilik kapalı (İREM parkuru odasında yeniden kullanılacak)
-const KAPILAR_ACIK = true;    // hazırlık sırasında tüm kapılar açık (kontrol hızlı olsun). false yapılırsa kapılar normal çalışır
+const KAPILAR_ACIK = false;   // hazırlık sırasında true yapılırsa tüm kapılar açık başlar (kontrol hızlı olsun). false: kapılar normal çalışır
 const canvas = document.getElementById('sahne');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
@@ -929,7 +929,7 @@ function k3Guncelle(simdi) {
   kal.position.y += Math.sin(simdi / 300) * 0.0008;
   kal.rotation.z = 0.75 + Math.sin(simdi / 120) * 0.05 * (simdi - K3.sonDokunus < 900 ? 1 : 0.2);
   // kapı açılması
-  K3.aci += ((K3.acik ? -1.9 : 0) - K3.aci) * Math.min(1, dt * 1.6);
+  K3.aci += (((K3.acik && !K3.kapandi) ? -1.9 : 0) - K3.aci) * Math.min(1, dt * 1.6);
   K3.hinge.rotation.y = K3.aci;
   K3.glow.material.opacity = 0;
   if (K3.acik) kal.visible = false;
@@ -1880,7 +1880,7 @@ function ogrAdimGoster() {
   ogrAdimZ = performance.now(); ogrS = 0;
   ogrDX0 = kon.dragX; ogrDY0 = kon.dragY;
 }
-const ALISTIRMA = false;   // true yapılırsa koridordaki 6 adımlı alıştırma yeniden açılır
+const ALISTIRMA = true;   // true: koridordaki 6 adımlı alıştırma açık
 function ogrBasla() {
   if (!ALISTIRMA) { ogr = OGR_BITTI; ogrBaslaZ = 0; return; }   // askıda: alıştırma atlanır, kapı hemen açılır
   ogr = 0; ogrBaslaZ = performance.now();
@@ -4050,6 +4050,18 @@ function yoGuncelle(dt, simdi) {
   defterBtn.classList.toggle('acik', Math.hypot(kon.x - HX, kon.z - (HZ - 3.3)) < 2.6 && !fotoBak.classList.contains('acik'));
 }
 
+// geçtikten sonra arkandaki kapı kendiliğinden kapanır; geri dönersen açılır (mantık değişmez, sadece görünüm ve ses)
+function kapilariKapat() {
+  if (kon.x > 40 || kon.z < -30 || kon.z > 6) return;   // sadece ana odalarda
+  if (kapi2.acik) {
+    if (!kapi2.kapandi && kon.x > ODA_X + 1.3 && kon.z < ODA2_Z1 + 0.5) { kapi2.kapandi = true; kapiSesi(); }
+    else if (kapi2.kapandi && kon.x < ODA_X + 0.5) { kapi2.kapandi = false; gicirti(1.0); }
+  }
+  if (K3.acik) {
+    if (!K3.kapandi && kon.z > ODA2_Z1 + 1.4 && kon.x > 8) { K3.kapandi = true; kapiSesi(); }
+    else if (K3.kapandi && kon.z < ODA2_Z1 + 0.5 && kon.z > -24.5 && kon.x > 8) { K3.kapandi = false; gicirti(1.0); }
+  }
+}
 function kare(simdi) {
   requestAnimationFrame(kare);
   const dt = Math.min(0.05, (simdi - onceki) / 1000);
@@ -4158,7 +4170,7 @@ function kare(simdi) {
   zeminOklar.forEach(o => { o.mat.opacity = kapiAcik ? 0.03 + 0.3 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 430 - o.k * 0.9), 2) : 0; });
 
   if (sonrakiKapiIsik) sonrakiKapiIsik.material.opacity = (kapi2.acik ? 0.6 : 0.22) + 0.16 * Math.sin(simdi / 900);
-  kapi2.aci += ((kapi2.acik ? -1.9 : 0) - kapi2.aci) * Math.min(1, dt * 1.6);
+  kapi2.aci += (((kapi2.acik && !kapi2.kapandi) ? -1.9 : 0) - kapi2.aci) * Math.min(1, dt * 1.6);
   if (kapi2.hinge) kapi2.hinge.rotation.y = kapi2.aci;
   if (kapi2.glow) kapi2.glow.material.opacity = 0.3 * Math.min(1, Math.abs(kapi2.aci) / 1.2);
 
@@ -4229,6 +4241,7 @@ function kare(simdi) {
   if (K3.acik && kon.x > 2.5 && kon.z > ODA2_Z1) kapiPGuncelle(dt);
   if (K3.acik && kon.x > 2.5 && kon.z > ODA2_Z1) kapiTGuncelle(dt);
   eyGuncelle(dt, simdi);
+  kapilariKapat();
   kpGuncelle(dt, simdi);
   yoGuncelle(dt, simdi);
   if (park.aktif) parkGuncelle(dt, simdi);
