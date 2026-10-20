@@ -2591,9 +2591,9 @@ const EX = 3000, EZ = -3000;                       // arena odalardan çok uzakt
 const EY_GOL = 14.5, EY_YOL0 = 16.5, EY_YOL1 = 20.5, EY_DUVAR = 27;
 const EY_AGAC = [];
 const EY_FOTO = [   // fotoğraflar sırayla duvara dizilir; benzerler yan yana gelmesin diye dönüşümlü
-  { dosya: 'foto/eymir-1.jpg', yazi: 'Arkamda sen' }, { dosya: 'foto/eymir-2.jpg', yazi: 'Göl ve biz' },
-  { dosya: 'foto/eymir-7.jpg', yazi: 'Yan yana' }, { dosya: 'foto/eymir-3.jpg', yazi: 'Hep gülüşün' },
-  { dosya: 'foto/eymir-8.jpg', yazi: 'Hep yanımda' }, { dosya: 'foto/eymir-5.jpg', yazi: 'Huzur' }
+  { dosya: 'foto/eymir-1.jpg', yazi: '' }, { dosya: 'foto/eymir-2.jpg', yazi: '' },
+  { dosya: 'foto/eymir-7.jpg', yazi: '' }, { dosya: 'foto/eymir-3.jpg', yazi: '' },
+  { dosya: 'foto/eymir-8.jpg', yazi: '' }, { dosya: 'foto/eymir-5.jpg', yazi: '' }
 ];
 const ey = { aktif: false, hazir: false, grup: null, kapali: [], eskiSis: null, eskiArka: null, bisik: false, bisikNo: -1, bisikler: [], foto: [],
   gece: 0, geceHedef: 0, iskeleSure: 0, iskeleKalp: false, bulutlar: [], gun: null, hemi: null, gok: null, yildiz: null, su: null, suPar: null,
@@ -2767,7 +2767,7 @@ function eyKur() {
     const adoku = new THREE.CanvasTexture(ac); altYaz();
     if (document.fonts && document.fonts.load) document.fonts.load('60px "Great Vibes"', f.yazi).then(altYaz).catch(() => {});
     const alt = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 0.36), new THREE.MeshBasicMaterial({ map: adoku, transparent: true, depthWrite: false, fog: false }));
-    alt.position.set(px0 - ic * 0.01, FY - FH / 2 - 0.38, pz0 - ic2 * 0.01); alt.rotation.y = rot; g.add(alt);
+    alt.visible = !!f.yazi; alt.position.set(px0 - ic * 0.01, FY - FH / 2 - 0.38, pz0 - ic2 * 0.01); alt.rotation.y = rot; g.add(alt);
     // fener ışığı
     const lamba = new THREE.Sprite(new THREE.SpriteMaterial({ map: ldoku, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending, opacity: 0.4 }));
     lamba.scale.set(2.2, 2.2, 1); lamba.position.set(px0 - ic * 0.4, FY + FH / 2 + 0.55, pz0 - ic2 * 0.4); g.add(lamba); ey.lamba.push(lamba);
