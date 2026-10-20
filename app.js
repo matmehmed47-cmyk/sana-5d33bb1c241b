@@ -2799,10 +2799,10 @@ function eyKur() {
   const par = new THREE.Sprite(new THREE.SpriteMaterial({ map: ldoku, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending, opacity: 0.85 }));
   par.scale.set(1.8, 1.8, 1); par.position.y = 0.4; hd.add(par); ey.hediyeParla = par;
   // bisikletler
-  [[-2.4, 0xe8749a], [2.4, 0x2a3a78]].forEach((b, i) => {
-    const bs = eyBisiklet(b[1]); bs.position.set(EX + b[0], 0, EZ + 22.6); bs.rotation.y = i ? 0.3 : -0.3; g.add(bs); ey.bisikler.push(bs);
+  [[-2.3, 0xe8749a], [2.3, 0x2a3a78]].forEach((b, i) => {
+    const bs = eyBisiklet(b[1]); bs.position.set(EX + b[0], 0, EZ + 17.8); bs.rotation.y = i ? 0.3 : -0.3; g.add(bs); ey.bisikler.push(bs);
     const pr = new THREE.Sprite(new THREE.SpriteMaterial({ map: ldoku, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending, opacity: 0.6 }));
-    pr.scale.set(3, 3, 1); pr.position.set(EX + b[0], 0.6, EZ + 22.6); g.add(pr); bs.userData.parla = pr;
+    pr.scale.set(3, 3, 1); pr.position.set(EX + b[0], 0.6, EZ + 17.8); g.add(pr); bs.userData.parla = pr;
   });
   // ateş böcekleri
   const KN = 70; ey.kunTemel = new Float32Array(KN * 3); ey.kunKonum = new Float32Array(KN * 3);
@@ -2831,8 +2831,8 @@ function eyAc() {
     sahne.fog = new THREE.FogExp2(0xf0b184, 0.0021); sahne.background = new THREE.Color(0xf0b184);
     kamera.far = 2600; kamera.updateProjectionMatrix();
     ey.grup.visible = true;
-    kon.x = EX; kon.z = EZ + 19.2; kon.vx = 0; kon.vz = 0; kon.yaw = 0; kon.pitch = -0.16; kon.oto = null; ikiliYon = 0;
-    try { if (muzik4) muzik4.currentTime = 0; } catch (e) {}
+    kon.x = EX; kon.z = EZ + 21.2; kon.vx = 0; kon.vz = 0; kon.yaw = 0; kon.pitch = -0.16; kon.oto = null; ikiliYon = 0;
+    if (muzik3) muzik3.volume = 0;
     ey.sonGece = -1; ey.yaziT = 0; ey.bindi = false; ey.ipucuBitis = performance.now() + 30000;
     yonKutu.textContent = 'Bisiklete bin! En yakın bisikletin yanına git.'; yonKutu.classList.add('acik');
     gecisKutu.classList.remove('acik');
@@ -3067,10 +3067,14 @@ function kare(simdi) {
   // ikinci odanın şarkısı
   const oda3te = K3.acik && kon.z > ODA2_Z1 + 0.3 && kon.x > 2.5;
   muzik2Hedef = (kapi2.acik && kon.x > ODA_X + 1.0 && !oda3te && !ey.aktif) ? 0.85 : 0;
-  muzik3Hedef = (ey.aktif || !oda3te) ? 0 : 0.85;
-  muzik4Hedef = ey.aktif ? 0.65 + 0.35 * ey.gece : 0;
-  if (muzik4) { const v4 = muzik4.volume; muzik4.volume = sinir(v4 + (muzik4Hedef - v4) * Math.min(1, dt * 0.7), 0, 1); }
-  if (muzik3) { const v3 = muzik3.volume; muzik3.volume = sinir(v3 + (muzik3Hedef - v3) * Math.min(1, dt * 0.7), 0, 1); }
+  // 4. odanın kapısı açıkken ona yaklaşınca Serseri kesilir, Çoban Yıldızı başlar
+  const dorduncu = ey.aktif || (oda3te && kapiT.acik && Math.hypot(kon.x - kapiT.x, kon.z - kapiT.z) < 4.5);
+  muzik3Hedef = (dorduncu || !oda3te) ? 0 : 0.85;
+  muzik4Hedef = dorduncu ? (ey.aktif ? 0.65 + 0.35 * ey.gece : 0.6) : 0;
+  if (dorduncu && !ey.sarkiBasladi) { ey.sarkiBasladi = true; try { if (muzik4) muzik4.currentTime = 0; } catch (e) {} }
+  if (!dorduncu) ey.sarkiBasladi = false;
+  if (muzik4) { const v4 = muzik4.volume; muzik4.volume = sinir(v4 + (muzik4Hedef - v4) * Math.min(1, dt * (dorduncu ? 1.6 : 1.2)), 0, 1); }
+  if (muzik3) { const v3 = muzik3.volume; muzik3.volume = sinir(v3 + (muzik3Hedef - v3) * Math.min(1, dt * (muzik3Hedef === 0 ? 2.5 : 0.7)), 0, 1); }
   if (muzik2) { const v2 = muzik2.volume; muzik2.volume = sinir(v2 + (muzik2Hedef - v2) * Math.min(1, dt * 0.7), 0, 1); }
 
   // müzik yumuşak geçiş
