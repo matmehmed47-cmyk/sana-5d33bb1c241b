@@ -2459,9 +2459,9 @@ const SORU4 = {
   ipucu: 'İpucu: Bir kalp, bir soru ve bir evet.',
   dogruMesaj: 'Evet! Kapı açılıyor...'
 };
-const kapiT = { x: 13.0, z: R3.z0, hinge: null, panel: null, acik: KAPILAR_ACIK, aci: KAPILAR_ACIK ? -1.9 : 0, cozuldu: KAPILAR_ACIK, gorunur: false, bitis: 0, yanlis: 0 };
+const kapiT = { x: R3.x0, z: -9.3, hinge: null, panel: null, acik: KAPILAR_ACIK, aci: KAPILAR_ACIK ? -1.9 : 0, cozuldu: KAPILAR_ACIK, gorunur: false, bitis: 0, yanlis: 0 };
 (function teklifKapisi() {
-  const g = new THREE.Group(); g.position.set(kapiT.x, 0, kapiT.z + 0.02); sahne.add(g);
+  const g = new THREE.Group(); g.position.set(kapiT.x + 0.02, 0, kapiT.z); g.rotation.y = Math.PI / 2; sahne.add(g);
   const kasa = new THREE.MeshPhongMaterial({ color: 0xb08a4f, specular: 0xfff0c0, shininess: 40, emissive: 0x2a1c06 });
   [-1, 1].forEach(y => { const k = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.45, 0.1), kasa); k.position.set(y * 0.7, 1.2, 0.05); g.add(k); });
   const ust = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 0.1), kasa); ust.position.set(0, 2.4, 0.05); g.add(ust);
@@ -2520,7 +2520,7 @@ SORU4.secenekler.forEach(sc => {
 function kapiTGuncelle(dt) {
   const dx = kapiT.x - kon.x, dz = kapiT.z - kon.z, uz = Math.hypot(dx, dz);
   const bak = (-Math.sin(kon.yaw) * dx - Math.cos(kon.yaw) * dz) / (uz || 1);
-  let goster = !park.aktif && uz < 3.4 && bak > (kapiT.gorunur ? 0.2 : 0.45) && kon.z > HOL3_Z1 && kon.x > 8.5;
+  let goster = !park.aktif && uz < 3.4 && bak > (kapiT.gorunur ? 0.2 : 0.45) && kon.z > HOL3_Z1 && kon.x > 2.5 && kon.x < 9;
   if (kapiT.cozuldu && performance.now() > kapiT.bitis) goster = false;
   if (goster !== kapiT.gorunur) { kapiT.gorunur = goster; soruT.classList.toggle('acik', goster); }
   kapiT.aci += ((kapiT.acik ? -1.9 : 0) - kapiT.aci) * Math.min(1, dt * 2.2);
@@ -2813,7 +2813,7 @@ function eySinir() {
 function eyGuncelle(dt, simdi) {
   if (!ey.aktif) {
     // 3. odadaki açılmış kapıdan içeri girince Eymir'e geç
-    if (kapiT.acik && kapiT.aci < -1.2 && K3.acik && kon.z < HOL3_Z1 + 0.45 && Math.abs(kon.x - kapiT.x) < 0.8) eyAc();
+    if (kapiT.acik && kapiT.aci < -1.2 && K3.acik && kon.x < R3.x0 + 0.95 && kon.x > 2.5 && Math.abs(kon.z - kapiT.z) < 0.8) eyAc();
     return;
   }
   const t = simdi / 1000;
