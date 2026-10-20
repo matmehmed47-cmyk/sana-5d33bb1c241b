@@ -516,8 +516,8 @@ const MASA = { x: 8.3, z: -21.9, wx: 0, wz: 0, fy: 0 };
   const top = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), M(0x4a90c8, 40)); top.scale.set(1, 0.85, 1); top.position.set(-1.0, 0.1, 0.28); g.add(top);
 
   // Kapadokya çerçevesi: masanın güney ucunda, odaya doğru hafif dönük
-  const FW = 0.3, FH = 0.4, ORAN = 1061 / 1700, WH = FH * 0.715, WW = WH * ORAN;
-  const cg = new THREE.Group(); cg.position.set(-0.46, 0.75 + FH / 2 * Math.cos(0.12), -0.1); cg.rotation.set(-0.12, -0.38, 0); g.add(cg);
+  const FW = 0.3, FH = 0.4, ORAN = 1180 / 1900, WH = FH * 0.715, WW = WH * ORAN;
+  const cg = new THREE.Group(); cg.scale.setScalar(1.45); cg.position.set(-0.36, 0.75 + FH * 1.45 / 2 * Math.cos(0.12), -0.1); cg.rotation.set(-0.12, -0.38, 0); g.add(cg);
   const fc = document.createElement('canvas'); fc.width = 600; fc.height = 800; const fx = fc.getContext('2d'), fd = new THREE.CanvasTexture(fc); fd.anisotropy = 4;
   const KR = '#efdca8';
   function ciz(fn, cx, cy, sc, ters, dn) { fx.save(); fx.translate(cx, cy); fx.scale(ters ? -sc : sc, sc); if (dn) fx.rotate(dn); fx.fillStyle = KR; fx.strokeStyle = KR; fx.lineCap = 'round'; fn(); fx.restore(); }
@@ -544,11 +544,11 @@ const MASA = { x: 8.3, z: -21.9, wx: 0, wz: 0, fy: 0 };
   const net = new THREE.Mesh(new THREE.PlaneGeometry(WW, WH), new THREE.MeshBasicMaterial({ color: 0x555555 })); net.position.set(0, FH * (0.5 - (0.16 + 0.715 / 2) ) * 1, 0.0085); cg.add(net);
   // yer tutucu: foto gelene kadar gökyüzü mavisi
   const pk = document.createElement('canvas'); pk.width = 8; pk.height = 12; const pkx = pk.getContext('2d'); pkx.fillStyle = '#2a7bd6'; pkx.fillRect(0, 0, 8, 12); net.material.map = new THREE.CanvasTexture(pk);
-  const kayit = { net, bul: { material: { color: new THREE.Color(), opacity: 1 } }, px: 0, pz: 0, m: [4.2, 1.5] };
+  const kayit = { net, bul: { material: { color: new THREE.Color(), opacity: 1 } }, px: 0, pz: 0, m: [6, 3] };
   cocukFoto.push(kayit);
   g.updateMatrixWorld(true); const wp = new THREE.Vector3(); cg.getWorldPosition(wp); kayit.px = wp.x; kayit.pz = wp.z; MASA.wx = wp.x; MASA.wz = wp.z; MASA.fy = wp.y;
   new THREE.TextureLoader().load('foto/kapadokya.jpg', tex => {
-    tex.anisotropy = 4; net.material.map = tex; net.material.needsUpdate = true;
+    tex.anisotropy = 8; net.material.map = tex; net.material.needsUpdate = true;
     const bc = document.createElement('canvas'); bc.width = 14; bc.height = Math.round(14 / ORAN); bc.getContext('2d').drawImage(tex.image, 0, 0, bc.width, bc.height);
     const bt = new THREE.CanvasTexture(bc); bt.magFilter = THREE.LinearFilter; bt.minFilter = THREE.LinearFilter;
     const bul = new THREE.Mesh(new THREE.PlaneGeometry(WW, WH), new THREE.MeshBasicMaterial({ map: bt, color: 0x333333, transparent: true })); bul.position.copy(net.position); bul.position.z += 0.0012; cg.add(bul); kayit.bul = bul;
@@ -560,7 +560,7 @@ const MASA = { x: 8.3, z: -21.9, wx: 0, wz: 0, fy: 0 };
 const fotoBtn = document.getElementById('fotoBtn'), fotoBak = document.getElementById('fotoBak');
 function masaGuncelle() {
   const uz = Math.hypot(kon.x - MASA.wx, kon.z - MASA.wz);
-  fotoBtn.classList.toggle('acik', uz < 2.1 && kon.x > ODA_X + 1 && kon.x < 12 && kon.z < ODA2_Z1 && !fotoBak.classList.contains('acik'));
+  fotoBtn.classList.toggle("acik", uz < 2.6 && kon.x > ODA_X + 1 && kon.x < 12 && kon.z < ODA2_Z1 && !fotoBak.classList.contains('acik'));
 }
 fotoBtn.addEventListener('click', () => { fotoBak.classList.add('acik'); fotoBtn.classList.remove('acik'); });
 fotoBak.addEventListener('click', () => fotoBak.classList.remove('acik'));
