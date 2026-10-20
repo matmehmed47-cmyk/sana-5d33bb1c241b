@@ -3584,7 +3584,7 @@ const KX = 6000, KZ = -3000, KP_MERKEZ = 13.5, KP_TUR0 = 15, KP_TUR1 = 27, KP_DU
 const KP_KAPI_TH = 9 * Math.PI * 2 / 10;
 const KP_FOTO = [null, null, null, null, null, null, null, null];   // fotoğrafları gelince 'foto/kapadokya-1.jpg' gibi yazılır
 const kp = { aktif: false, hazir: false, grup: null, durum: 'yok', kilit: false, atv: false, atvG: null, teker: [], kask: [], sektor: new Array(16).fill(false), sektorSay: 0, altin: 0, altinHedef: 0,
-  kapiD: null, foto: [], toz: [], tozSira: 0, sonToz: 0, gok2: null, gunes: null, hemi: null, gun: null, t0: 0, ok: null, parla: null, bulut: [], yazi: '', yaziBitis: 0, girildi: false, yakin: -1, son: -1, tur: false };
+  kapiD: null, foto: [], toz: [], havaToz: [], tozSira: 0, sonToz: 0, gok2: null, gunes: null, hemi: null, gun: null, t0: 0, ok: null, parla: null, bulut: [], yazi: '', yaziBitis: 0, girildi: false, yakin: -1, son: -1, tur: false };
 const atvBtn = document.getElementById('atvBtn');
 function kpKaya(rx, ry, rz, tohum, renk1, renk2, kapRenk) {   // peri bacası tarzı oyuklu kaya kütlesi
   const geo = new THREE.IcosahedronGeometry(1, 8), p = geo.attributes.position, renk = new Float32Array(p.count * 3), c1 = new THREE.Color(renk1), c2 = new THREE.Color(renk2), ck = new THREE.Color(kapRenk), c = new THREE.Color();
@@ -3688,16 +3688,18 @@ function kpKur() {
   // ATV
   kp.atvG = kpAtvYap(); kp.atvG.position.set(KX, 0, KZ + 19.2); g.add(kp.atvG);
   // kasklar (yerde)
-  [[0xff6fa5, 0.095], [0x23356b, 0.082], [0x23356b, 0.082]].forEach((k, i) => { const kg = kpKaskYap(k[0], k[1]); kg.position.set(KX + (i - 1) * 0.8, 0.07, KZ + 22.0); kg.rotation.set(0, i * 0.7, 0); kg.scale.setScalar(2.6); g.add(kg); kp.kask.push({ g: kg, hedef: [[-0.36, 0.66, 0], [0.16, 0.545, 0], [0.56, 0.545, 0]][i], bas: null, bit: false }); });
+  [[0xff6fa5, 0.095], [0x23356b, 0.082], [0x23356b, 0.082]].forEach((k, i) => { const kg = kpKaskYap(k[0], k[1]); kg.position.set(KX + [-1.7, 0.1, 1.7][i], 0.07, KZ + [21.9, 20.3, 21.9][i]); kg.rotation.set(0, i * 0.7, 0); kg.scale.setScalar(2.6); g.add(kg); kp.kask.push({ g: kg, hedef: [[-0.36, 0.66, 0], [0.16, 0.545, 0], [0.56, 0.545, 0]][i], bas: null, bit: false, git: false, st: 0, parla: null }); });
   // ATV'yi gösteren ok ve parıltı
   const pl = tuval(128, 128), px = pl.getContext('2d'), pg = px.createRadialGradient(64, 64, 0, 64, 64, 64); pg.addColorStop(0, 'rgba(255,214,150,.9)'); pg.addColorStop(1, 'rgba(255,200,120,0)'); px.fillStyle = pg; px.fillRect(0, 0, 128, 128);
   const pdoku = new THREE.CanvasTexture(pl);
   kp.parla = new THREE.Sprite(new THREE.SpriteMaterial({ map: pdoku, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending, opacity: 0 })); kp.parla.scale.set(4.2, 4.2, 1); kp.parla.position.set(KX, 0.9, KZ + 19.2); g.add(kp.parla);
+  kp.kask.forEach(k => { const p = new THREE.Sprite(new THREE.SpriteMaterial({ map: pdoku, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending, opacity: 0.6 })); p.scale.set(2.6, 2.6, 1); p.position.set(k.g.position.x, 0.5, k.g.position.z); g.add(p); k.parla = p; });
   kp.ok = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.6, 4), new THREE.MeshBasicMaterial({ color: 0xffd98a, fog: false })); kp.ok.rotation.x = Math.PI; kp.ok.visible = false; g.add(kp.ok);
   // toz bulutları
   const tc = tuval(64, 64), tx = tc.getContext('2d'), tg = tx.createRadialGradient(32, 32, 0, 32, 32, 32); tg.addColorStop(0, 'rgba(214,190,150,.7)'); tg.addColorStop(1, 'rgba(214,190,150,0)'); tx.fillStyle = tg; tx.fillRect(0, 0, 64, 64);
   const tdoku = new THREE.CanvasTexture(tc);
-  for (let i = 0; i < 40; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tdoku, depthWrite: false, transparent: true, opacity: 0, fog: true })); s.visible = false; g.add(s); kp.toz.push({ s, t: 9, x: 0, y: 0, z: 0 }); }
+  for (let i = 0; i < 150; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tdoku, depthWrite: false, transparent: true, opacity: 0, fog: true })); s.visible = false; g.add(s); kp.toz.push({ s, t: 9, x: 0, y: 0, z: 0, vx: 0, vz: 0, boy: 1 }); }
+  for (let i = 0; i < 26; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tdoku, depthWrite: false, transparent: true, opacity: 0.1, fog: true })); const a = rnd() * 6.28, r = 14 + rnd() * 20, w = 9 + rnd() * 9; s.scale.set(w, w * 0.45, 1); s.position.set(KX + Math.sin(a) * r, 1.2 + rnd() * 2.5, KZ + Math.cos(a) * r); g.add(s); kp.havaToz.push({ s, f: rnd() * 6 }); }
   // fotoğraf çerçeveleri (kaya cephede)
   const FW = 3.8, FH = 2.9, FY = 4.2, lc = tuval(128, 128), lx = lc.getContext('2d'), lg = lx.createRadialGradient(64, 64, 0, 64, 64, 64); lg.addColorStop(0, 'rgba(255,214,150,.9)'); lg.addColorStop(1, 'rgba(255,200,120,0)'); lx.fillStyle = lg; lx.fillRect(0, 0, 128, 128);
   const ldoku = new THREE.CanvasTexture(lc);
@@ -3744,7 +3746,7 @@ function kpAc() {
     ey.aktif = false; ey.bisik = false; ey.kilit = false; ey.grup.visible = false; [ey.hemi, ey.gun].forEach(l => { l.visible = false; }); ey.mumIsik.forEach(l => { l.visible = false; });
     soru5.classList.remove('acik'); eyBtn.classList.remove('acik'); acBtn.classList.remove('acik'); hdUI.classList.remove('acik'); yaziKutu.classList.remove('acik');
     kp.aktif = true; kp.girildi = true; kp.grup.visible = true; kp.hemi.visible = true; kp.gun.visible = true; kp.durum = 'giris'; kp.kilit = true; kp.t0 = performance.now() / 1000;
-    sahne.fog = new THREE.FogExp2(0xcde3f2, 0.0016); sahne.background = new THREE.Color(0xcde3f2); kamera.far = 3200; kamera.updateProjectionMatrix();
+    sahne.fog = new THREE.FogExp2(0xcde3f2, 0.0019); sahne.background = new THREE.Color(0xcde3f2); kamera.far = 3200; kamera.updateProjectionMatrix();
     kon.x = KX; kon.z = KZ + 23.8; kon.vx = 0; kon.vz = 0; kon.yaw = 0; kon.pitch = -0.1; kon.oto = null; ikiliYon = 0; ikili.visible = true;
     kp.sonIsik = -1; gecisKutu.classList.remove('acik');
   }, 650);
@@ -3756,7 +3758,7 @@ function kpSinir() {
   else if (r > dis) { const k = dis / r; kon.x = KX + dx * k; kon.z = KZ + dz * k; }
 }
 function kpYaz(metin) { if (kp.yazi !== metin) { kp.yazi = metin; yonKutu.textContent = metin; } yonKutu.classList.add('acik'); }
-function kpToz(x, z) { const p = kp.toz[kp.tozSira = (kp.tozSira + 1) % kp.toz.length]; p.t = 0; p.x = x; p.y = 0.25; p.z = z; p.s.visible = true; }
+function kpToz(x, z, buyuk) { const p = kp.toz[kp.tozSira = (kp.tozSira + 1) % kp.toz.length]; p.t = 0; p.x = x; p.y = 0.2 + Math.random() * 0.3; p.z = z; p.vx = (Math.random() - 0.5) * 1.2 + 0.8; p.vz = (Math.random() - 0.5) * 1.2; p.boy = (buyuk ? 1.6 : 1) * (0.9 + Math.random() * 0.6); p.s.visible = true; }
 const kpV = new THREE.Vector3();
 function kpGuncelle(dt, simdi) {
   if (!kp.aktif) {   // Eymir'deki açık kapıdan içeri girince Kapadokya'ya geç
@@ -3777,19 +3779,25 @@ function kpGuncelle(dt, simdi) {
     kp.bulut.forEach(b => b.material.color.setRGB(1, 1 - 0.16 * a, 1 - 0.34 * a));
   }
   // giriş sahnesi: yazı → kasklar yerden kalkıp harflerin başına → ATV'ye bin
-  if (kp.durum === 'giris') { kpYaz('Kaskları tak.'); if (gec > 2.6) { kp.durum = 'kask'; kp.kt = t; } }
+  if (kp.durum === 'giris') { kpYaz('Kaskları tak.'); if (gec > 2.6) { kp.durum = 'kask'; kp.kilit = false; } }
   else if (kp.durum === 'kask') {
-    kpYaz('Kaskları tak.'); let bitti = 0;
+    let bitti = 0;
     kp.kask.forEach((k, i) => {
       if (k.bit) { bitti++; return; }
-      const st = kp.kt + i * 0.45, p = sinir((t - st) / 1.6, 0, 1); if (!k.bas && p > 0) k.bas = k.g.position.clone();
-      if (p <= 0) return;
+      if (!k.git) {
+        k.parla.material.opacity = 0.35 + 0.4 * (0.5 + 0.5 * Math.sin(t * 4 + i)); k.g.position.y = 0.07 + 0.05 * Math.sin(t * 3 + i); k.g.rotation.y += dt * 0.8;
+        if (Math.hypot(kon.x - k.g.position.x, kon.z - k.g.position.z) < 1.0) { k.git = true; k.bas = k.g.position.clone(); k.st = t; gicirti(0.5); }
+        return;
+      }
+      k.parla.visible = false;
+      const p = sinir((t - k.st) / 1.5, 0, 1);
       govde.updateWorldMatrix(true, false); kpV.set(k.hedef[0], k.hedef[1], k.hedef[2]); govde.localToWorld(kpV);
       const e = p * p * (3 - 2 * p);
       k.g.position.set(k.bas.x + (kpV.x - k.bas.x) * e, k.bas.y + (kpV.y - k.bas.y) * e + Math.sin(p * Math.PI) * 1.4, k.bas.z + (kpV.z - k.bas.z) * e);
-      k.g.rotation.y = (1 - e) * 9 + k.g.rotation.y * 0 + 0; k.g.scale.setScalar(2.6 - 1.8 * e);
+      k.g.rotation.y = (1 - e) * 9; k.g.scale.setScalar(2.6 - 1.8 * e);
       if (p >= 1) { govde.add(k.g); k.g.position.set(k.hedef[0], k.hedef[1], k.hedef[2]); k.g.rotation.set(0, 0, 0); k.g.scale.setScalar(1); k.bit = true; }
     });
+    kpYaz('Kaskların üzerine yürü, tak. (' + bitti + '/3)');
     if (bitti === kp.kask.length) { kp.durum = 'bin'; kp.kilit = false; kp.bt = t; }
   } else if (kp.durum === 'bin') {
     kpYaz("ATV'ye bin! En yakın ATV'nin yanına git.");
@@ -3808,10 +3816,11 @@ function kpGuncelle(dt, simdi) {
   if (kp.atv) {
     const yuk = 0; kp.atvG.position.set(kon.x, yuk, kon.z); kp.atvG.rotation.y = ikiliYon; ikili.position.y = 0.62;
     kp.teker.forEach(w => { w.rotation.x -= hiz * dt / 0.36; });
-    if (hiz > 1.5 && simdi - kp.sonToz > 70) { kp.sonToz = simdi; kpToz(kon.x + Math.sin(ikiliYon) * 1.3, kon.z + Math.cos(ikiliYon) * 1.3); }
+    if (hiz > 1.2 && simdi - kp.sonToz > 38) { kp.sonToz = simdi; const bx = Math.sin(ikiliYon), bz = Math.cos(ikiliYon), yan = (Math.random() - 0.5) * 1.1; kpToz(kon.x + bx * 1.2 + bz * yan, kon.z + bz * 1.2 - bx * yan, hiz > 5); kpToz(kon.x + bx * 1.6 - bz * yan, kon.z + bz * 1.6 + bx * yan, true); }
     if (surus.motorSes && sesBagl) { const m = surus.motorSes, n = Math.min(1, hiz / 7.2); m.o.frequency.setTargetAtTime(44 + n * 110, sesBagl.currentTime, 0.06); m.o2.frequency.setTargetAtTime(22 + n * 55, sesBagl.currentTime, 0.06); m.f.frequency.setTargetAtTime(280 + n * 900, sesBagl.currentTime, 0.08); m.g.gain.setTargetAtTime(0.04 + 0.07 * n, sesBagl.currentTime, 0.08); }
-  } else ikili.position.y = 0;
-  kp.toz.forEach(p => { if (p.t >= 1.3) { p.s.visible = false; return; } p.t += dt; const k = p.t / 1.3; p.s.position.set(p.x, p.y + k * 1.4, p.z); p.s.scale.set(1.2 + k * 3.2, 1.2 + k * 3.2, 1); p.s.material.opacity = 0.5 * (1 - k); });
+  } else { ikili.position.y = 0; if (hiz > 0.8 && simdi - kp.sonToz > 260) { kp.sonToz = simdi; kpToz(kon.x - kon.vx * 0.2, kon.z - kon.vz * 0.2, false); } }
+  kp.toz.forEach(p => { if (p.t >= 1.9) { p.s.visible = false; return; } p.t += dt; const k = p.t / 1.9; p.x += p.vx * dt; p.z += p.vz * dt; p.s.position.set(p.x, p.y + k * 1.6, p.z); const sz = (1.4 + k * 4.4) * p.boy; p.s.scale.set(sz, sz, 1); p.s.material.opacity = 0.62 * (1 - k) * (1 - k * 0.3); });
+  kp.havaToz.forEach(h => { h.s.position.x += (0.9 + 0.4 * Math.sin(t * 0.3 + h.f)) * dt; if (h.s.position.x > KX + 36) h.s.position.x = KX - 36; h.s.material.opacity = 0.08 + 0.05 * Math.sin(t * 0.5 + h.f); });
   // tur: yürünen yönler işaretlenir
   { const dx = kon.x - KX, dz = kon.z - KZ, r = Math.hypot(dx, dz);
     if (kp.durum === 'tur' && r > KP_TUR0 - 2 && r < KP_TUR1 + 3) { const sk = Math.floor((((Math.atan2(dx, dz) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2)) * 16) % 16; if (!kp.sektor[sk]) { kp.sektor[sk] = true; kp.sektorSay++; } }
