@@ -122,3 +122,5 @@ html,body{margin:0;height:100%;background:var(--zemin);color:var(--yazi);font-fa
 #soru3Sec button.solgun{opacity:.35;border-style:dashed}
 #soru3Mesaj{min-height:22px;margin-top:12px;font-size:17px;opacity:.9}
 #soru3Mesaj.dogru{color:#f7c8d2;font-size:19px}
+#atvBtn{position:fixed;left:50%;bottom:190px;transform:translateX(-50%);font:inherit;font-size:24px;padding:13px 38px;border-radius:999px;border:1px solid var(--vurgu);background:rgba(14,10,12,.82);color:var(--vurgu);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .4s;z-index:7}
+#atvBtn.acik{opacity:1;pointer-events:auto}
