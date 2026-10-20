@@ -693,6 +693,37 @@ const KOMODIN = { x: 15.7, z: -13.8, W: 0.98, H: 0.82, D: 0.5 };
   // çarpışma
   [-0.34, 0, 0.34].forEach(dx => ENGELLER2.push({ x: KOMODIN.x + dx, z: KOMODIN.z - 0.28, r: 0.38 }));
 })();
+// ---------- İkinci oda: yuvarlak ceviz sehpa (güneydoğu köşe): tablet, şarj aleti, gözlük, turuncu altlık ----------
+const SEHPA = { x: 17.0, z: -14.3 };
+(function sehpaKur() {
+  const g = new THREE.Group(); g.position.set(SEHPA.x, 0, SEHPA.z); sahne.add(g);
+  const M = (renk, kar, spec) => new THREE.MeshPhongMaterial({ color: renk, shininess: kar || 8, specular: spec || 0x111111 });
+  const ceviz = M(0x3d1f10, 70, 0x886644), koyu = M(0x2e160a, 30);
+  const tabla = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.03, 36), ceviz); tabla.position.y = 0.61; g.add(tabla);
+  const kenar = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.017, 8, 40), ceviz); kenar.rotation.x = Math.PI / 2; kenar.position.y = 0.6; g.add(kenar);
+  const alt = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.05, 30), koyu); alt.position.y = 0.565; g.add(alt);
+  // üç kavisli ayak: üstten dışa taşıp aşağıda yuvarlak rafa iner
+  for (let k = 0; k < 3; k++) {
+    const a = k * Math.PI * 2 / 3 + 0.3, cx = Math.cos(a), cz = Math.sin(a);
+    const pts = [[0.17, 0.55], [0.25, 0.42], [0.21, 0.26], [0.2, 0.13], [0.25, 0.01]].map(p => new THREE.Vector3(cx * p[0], p[1], cz * p[0]));
+    const ayak = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.024, 8, false), ceviz); g.add(ayak);
+  }
+  const raf = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.025, 30), ceviz); raf.position.y = 0.16; g.add(raf);
+  // üstündekiler
+  const y0 = 0.625;
+  const kt = (w, h, d, mat, x, y, z, ry) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); if (ry) m.rotation.y = ry; g.add(m); return m; };
+  kt(0.27, 0.014, 0.2, M(0x5f7da3, 30), 0.03, y0 + 0.007, -0.1, 0.35);                 // mavi kılıflı tablet
+  kt(0.25, 0.003, 0.18, M(0x2a3647, 20), 0.03, y0 + 0.016, -0.1, 0.35);
+  kt(0.05, 0.05, 0.03, M(0xf5f5f3, 30), 0.05, y0 + 0.04, -0.13, 0.35);                 // beyaz şarj aleti
+  const kablo = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[0.05, 0.02, -0.12], [-0.05, 0.01, 0.0], [-0.15, 0.01, 0.08], [-0.2, 0.01, 0.02], [-0.12, 0.01, -0.04], [0.0, 0.02, 0.06]].map(p => new THREE.Vector3(p[0], y0 + p[1], p[2]))), 30, 0.004, 5, false), M(0xf2f2f0, 20)); g.add(kablo);
+  // siyah yuvarlak gözlük
+  const cr = M(0x151515, 60); [-0.04, 0.04].forEach(d => { const t = new THREE.Mesh(new THREE.TorusGeometry(0.027, 0.0035, 6, 18), cr); t.rotation.x = Math.PI / 2; t.position.set(-0.2 + d, y0 + 0.004, -0.15); g.add(t); });
+  kt(0.02, 0.003, 0.003, cr, -0.2, y0 + 0.005, -0.15); kt(0.003, 0.003, 0.07, cr, -0.15, y0 + 0.004, -0.185); kt(0.003, 0.003, 0.07, cr, -0.25, y0 + 0.004, -0.185);
+  // turuncu altlık kart
+  const oc = document.createElement('canvas'); oc.width = oc.height = 128; const ox = oc.getContext('2d'); ox.fillStyle = '#e9772f'; ox.fillRect(0, 0, 128, 128); ox.fillStyle = '#e9e1cd'; ox.fillRect(46, 20, 36, 28); ox.fillStyle = '#7a3f12'; for (let i = 0; i < 4; i++) ox.fillRect(24, 70 + i * 12, 80 - i * 10, 3);
+  const alt2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.006, 0.1), [M(0xe9772f), M(0xe9772f), new THREE.MeshPhongMaterial({ map: new THREE.CanvasTexture(oc) }), M(0xc65f1c), M(0xe9772f), M(0xe9772f)]); alt2.position.set(-0.13, y0 + 0.003, 0.12); alt2.rotation.y = -0.45; g.add(alt2);
+  ENGELLER2.push({ x: SEHPA.x, z: SEHPA.z, r: 0.34 });
+})();
 const fotoBtn = document.getElementById('fotoBtn'), fotoBak = document.getElementById('fotoBak');
 const FOTO_NOKTA = [{ x: () => MASA.wx, z: () => MASA.wz, src: ['foto/kapadokya.jpg'] }];
 let fotoYakin = -1;
