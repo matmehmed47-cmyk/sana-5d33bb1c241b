@@ -1856,13 +1856,25 @@ const elKutu = document.getElementById('el'), ogrKutu = document.getElementById(
 const DOKUNMATIK = !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
 let elSu = null;
 function elGoster(tur) { elSu = tur; elKutu.className = (tur && DOKUNMATIK) ? 'el ' + tur : 'el'; }
+// ---------- Kendi sesinle yönergeler (giriş alıştırması) ----------
+const SES_YOL = { giris: 'ses/konus-giris.mp3', ileri: 'ses/konus-ileri.mp3', geri: 'ses/konus-geri.mp3', sag: 'ses/konus-sag.mp3', sol: 'ses/konus-sol.mp3', yukari: 'ses/konus-yukari.mp3', asagi: 'ses/konus-asagi.mp3', kapi: 'ses/konus-kapi.mp3', hazir: 'ses/konus-hazir.mp3' };
+const sesEl = new Audio(); sesEl.preload = 'auto';
+let sesKuyruk = [], sesCaliyor = false, hazirSesCalindi = false;
+function sesSiradaki() {
+  if (sesCaliyor || !sesKuyruk.length) return;
+  const k = sesKuyruk.shift(); sesCaliyor = true;
+  const bit = () => { if (!sesCaliyor) return; sesCaliyor = false; sesEl.onended = null; sesEl.onerror = null; if (k.cb) k.cb(); sesSiradaki(); };
+  sesEl.onended = bit; sesEl.onerror = bit; sesEl.src = SES_YOL[k.ad]; sesEl.volume = 1;
+  try { const p = sesEl.play(); if (p && p.catch) p.catch(bit); } catch (e) { bit(); }
+}
+function sesCal(ad, cb) { sesKuyruk.push({ ad, cb }); sesSiradaki(); }   // sırayla çalar, üst üste binmez
 const OGR_ADIM = [
-  { ad: 'İleri', el: 'ileri', yaz: 'Düğmeyi yukarı kaydır, ileri yürü.', yazD: 'W tuşuyla ileri yürü.', ol: () => ogrIleriGirdi() > 0.5 },
-  { ad: 'Geri', el: 'geri', yaz: 'Şimdi düğmeyi aşağı kaydır, geri yürü.', yazD: 'S tuşuyla geri yürü.', ol: () => ogrIleriGirdi() < -0.5 },
-  { ad: 'Sağa', el: 'bak-sag', yaz: 'Düğmeye dokunmadan ekranı sağa sürükle, sağa bak.', yazD: 'Fareyi basılı tutup sağa sürükle.', ol: () => kon.dragX - ogrDX0 >= 150 },
-  { ad: 'Sola', el: 'bak-sol', yaz: 'Şimdi ekranı sola sürükle, sola bak.', yazD: 'Fareyi sola sürükle.', ol: () => kon.dragX - ogrDX0 <= -150 },
-  { ad: 'Yukarı', el: 'bak-yukari', yaz: 'Ekranı yukarı sürükle, tavana bak.', yazD: 'Fareyi yukarı sürükle.', ol: () => kon.dragY - ogrDY0 <= -90 },
-  { ad: 'Aşağı', el: 'bak-asagi', yaz: 'Ekranı aşağı sürükle, yere bak.', yazD: 'Fareyi aşağı sürükle.', ol: () => kon.dragY - ogrDY0 >= 90 }
+  { ad: 'İleri', ses: 'ileri', el: 'ileri', yaz: 'Düğmeyi yukarı kaydır, ileri yürü.', yazD: 'W tuşuyla ileri yürü.', ol: () => ogrIleriGirdi() > 0.5 },
+  { ad: 'Geri', ses: 'geri', el: 'geri', yaz: 'Şimdi düğmeyi aşağı kaydır, geri yürü.', yazD: 'S tuşuyla geri yürü.', ol: () => ogrIleriGirdi() < -0.5 },
+  { ad: 'Sağa', ses: 'sag', el: 'bak-sag', yaz: 'Düğmeye dokunmadan ekranı sağa sürükle, sağa bak.', yazD: 'Fareyi basılı tutup sağa sürükle.', ol: () => kon.dragX - ogrDX0 >= 150 },
+  { ad: 'Sola', ses: 'sol', el: 'bak-sol', yaz: 'Şimdi ekranı sola sürükle, sola bak.', yazD: 'Fareyi sola sürükle.', ol: () => kon.dragX - ogrDX0 <= -150 },
+  { ad: 'Yukarı', ses: 'yukari', el: 'bak-yukari', yaz: 'Ekranı yukarı sürükle, tavana bak.', yazD: 'Fareyi yukarı sürükle.', ol: () => kon.dragY - ogrDY0 <= -90 },
+  { ad: 'Aşağı', ses: 'asagi', el: 'bak-asagi', yaz: 'Ekranı aşağı sürükle, yere bak.', yazD: 'Fareyi aşağı sürükle.', ol: () => kon.dragY - ogrDY0 >= 90 }
 ];
 const OGR_BITTI = OGR_ADIM.length, OGR_BEKLEME = 20000;
 let ogr = -1, ogrBaslaZ = 0, ogrAdimZ = 0, ogrS = 0, ogrBekle = 0, ogrDX0 = 0, ogrDY0 = 0, ogrBittiZ = 0;
@@ -1879,13 +1891,15 @@ function ogrAdimGoster() {
   ogrKutu.classList.remove('buyuk');
   ogrAdimZ = performance.now(); ogrS = 0;
   ogrDX0 = kon.dragX; ogrDY0 = kon.dragY;
+  if (a.ses) sesCal(a.ses);
 }
 const ALISTIRMA = true;   // true: koridordaki 6 adımlı alıştırma açık
 function ogrBasla() {
   if (!ALISTIRMA) { ogr = OGR_BITTI; ogrBaslaZ = 0; return; }   // askıda: alıştırma atlanır, kapı hemen açılır
   ogr = 0; ogrBaslaZ = performance.now();
   ogrListe.classList.add('acik');
-  ogrAdimGoster();
+  ogrBekle = 1e15; ogrYaz('Hoş geldin, Gülüm.', null);   // karşılama konuşması bitince ilk adım başlar
+  sesCal('giris', () => { ogrBekle = performance.now() + 500; });
 }
 function kapiHazir() { return ogr >= OGR_BITTI && performance.now() - ogrBaslaZ >= OGR_BEKLEME; }
 function ogrGuncelle(dt) {
@@ -1903,7 +1917,7 @@ function ogrGuncelle(dt) {
     ogr++;
     if (ogr >= OGR_BITTI) {
       ogrYaz('Hazırsın! Kapıya doğru ilerle.', null);
-      ogrBittiZ = simdi;
+      ogrBittiZ = simdi; sesCal('kapi');
     } else {
       ogrYaz('✓ Güzel!', null);
       ogrBekle = simdi + 900;
@@ -4128,7 +4142,7 @@ function kare(simdi) {
     // kapı
     if (!kapiAcik) {
       // koridordan yaklaşınca ya da odadan kapıya dönünce açılır
-      if (kon.z < KAPI_Z + 3.2 && kon.z > KAPI_Z - 2.0 && kon.x < ODA_X && kapiHazir()) { kapiAcik = true; gicirti(1.3); }
+      if (kon.z < KAPI_Z + 3.2 && kon.z > KAPI_Z - 2.0 && kon.x < ODA_X && kapiHazir()) { kapiAcik = true; gicirti(1.3); if (!hazirSesCalindi) { hazirSesCalindi = true; sesCal('hazir'); } }
     } else if (!KAPILAR_ACIK && kon.z < KAPI_Z - 3.4) {
       // odaya iyice girince arkasından kapanır
       kapiAcik = false;
