@@ -3029,7 +3029,7 @@ function eyGuncelle(dt, simdi) {
   { const dxk = kon.x - EX, dzk = kon.z - EZ, rk = Math.hypot(dxk, dzk);
     if (rk > 15 && rk < 26.5) { const sk = Math.floor((((Math.atan2(dxk, dzk) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2)) * 16) % 16; if (!ey.sektor[sk]) { ey.sektor[sk] = true; ey.sektorSay++; } }
     const kd = ey.kapiD;
-    if (ey.durum === 'yok' || ey.durum === 'sandik') ey.geceHedef = Math.min(0.85, Math.max(0, (ey.sektorSay / 16 - 0.12) / 0.75 * 0.85));
+    if (ey.durum === 'yok' || ey.durum === 'sandik') ey.geceHedef = Math.min(0.96, Math.max(0, (ey.sektorSay / 16 - 0.1) / 0.72 * 0.96));
     eySandikGuncelle(dt, simdi, t);
     kd.aci += ((kd.acik ? -1.9 : 0) - kd.aci) * Math.min(1, dt * 1.8); kd.hinge.rotation.y = kd.aci;
     const bisikIpucu = !ey.bindi && simdi < ey.ipucuBitis;
@@ -3042,19 +3042,19 @@ function eyGuncelle(dt, simdi) {
       }
     } }
   // gün batımı → gece
-  ey.gece += (ey.geceHedef - ey.gece) * Math.min(1, dt * 0.15);
+  ey.gece += (ey.geceHedef - ey.gece) * Math.min(1, dt * 0.3);
   const gc = ey.gece;
   if (Math.abs(gc - ey.sonGece) > 0.002) {
     ey.sonGece = gc;
     const k = 1 - gc, a = 0.1 + 0.9 * k;
-    ey.gok.material.color.setRGB(0.1 + 0.9 * k, 0.13 + 0.87 * k, 0.3 + 0.7 * k);
+    ey.gok.material.color.setRGB(0.035 + 0.965 * k, 0.05 + 0.95 * k, 0.14 + 0.86 * k);
     ey.gunes.position.y = 80 - 140 * gc; ey.gunes.material.opacity = k;
-    ey.hemi.intensity = 0.3 + 0.65 * k; ey.gun.intensity = 0.85 * k;
-    sahne.fog.color.setRGB(0.11 + 0.83 * k, 0.12 + 0.57 * k, 0.25 + 0.27 * k); sahne.background.copy(sahne.fog.color);
-    ey.su.material.color.setRGB(0.3 + 0.7 * k, 0.35 + 0.65 * k, 0.55 + 0.45 * k);
+    ey.hemi.intensity = 0.1 + 0.85 * k; ey.hemi.color.setRGB(0.45 + 0.55 * k, 0.5 + 0.35 * k, 0.9 - 0.1 * k); ey.hemi.groundColor.setRGB(0.04 + 0.25 * k, 0.05 + 0.3 * k, 0.1 + 0.2 * k); ey.gun.intensity = 0.85 * k;
+    sahne.fog.color.setRGB(0.025 + 0.915 * k, 0.03 + 0.66 * k, 0.09 + 0.43 * k); sahne.background.copy(sahne.fog.color);
+    ey.su.material.color.setRGB(0.1 + 0.9 * k, 0.13 + 0.87 * k, 0.27 + 0.73 * k);
     ey.yildiz.material.opacity = gc; ey.kuncul.material.opacity = gc * 0.9;
     ey.cobanY.material.opacity = yumusak(0.12, 0.5, gc); ey.cobanYazi.material.opacity = yumusak(0.5, 0.9, gc);
-    ey.bulutlar.forEach(b => b.material.color.setRGB(0.28 + 0.72 * k, 0.3 + 0.58 * k, 0.42 + 0.5 * k));
+    ey.bulutlar.forEach(b => b.material.color.setRGB(0.1 + 0.9 * k, 0.12 + 0.76 * k, 0.2 + 0.72 * k));
     ey.lamba.forEach(l => { l.material.opacity = 0.35 + 0.55 * gc; });
   }
   if (gc > 0.05) {
@@ -3129,7 +3129,7 @@ function eySandikGuncelle(dt, simdi, t) {
 }
 acBtn.addEventListener('click', () => {
   if (ey.durum !== 'sandik') return;
-  ey.durum = 'acilis'; ey.dT = 0; ey.kilit = true; acBtn.classList.remove('acik'); ey.geceHedef = Math.max(ey.geceHedef, 0.9);
+  ey.durum = 'acilis'; ey.dT = 0; ey.kilit = true; acBtn.classList.remove('acik'); ey.geceHedef = Math.max(ey.geceHedef, 0.97);
   const sk = ey.sandik; kon.oto = { yaw: Math.atan2(-(sk.x - kon.x), -(sk.z - kon.z)), pitch: -0.25 };
   gicirti(1.8); kalpPatlat(); setTimeout(eyZilSesi, 700);
 });
