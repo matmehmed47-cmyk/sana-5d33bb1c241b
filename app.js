@@ -2590,6 +2590,7 @@ let onceki = performance.now();
 const EX = 3000, EZ = -3000;                       // arena odalardan çok uzakta
 const EY_GOL = 14.5, EY_YOL0 = 16.5, EY_YOL1 = 20.5, EY_DUVAR = 27;
 const EY_AGAC = [];
+const EY_KAPI_TH = 6.5 * Math.PI * 2 / 7;   // sonraki odanın kapısı: turun sonunda, son çerçeve ile giriş arasında
 const EY_FOTO = [   // fotoğraflar sırayla duvara dizilir; benzerler yan yana gelmesin diye dönüşümlü
   { dosya: 'foto/eymir-1.jpg', yazi: '' }, { dosya: 'foto/eymir-2.jpg', yazi: '' },
   { dosya: 'foto/eymir-7.jpg', yazi: '' }, { dosya: 'foto/eymir-3.jpg', yazi: '' },
@@ -2597,7 +2598,7 @@ const EY_FOTO = [   // fotoğraflar sırayla duvara dizilir; benzerler yan yana 
 ];
 const ey = { aktif: false, hazir: false, grup: null, kapali: [], eskiSis: null, eskiArka: null, bisik: false, bisikNo: -1, bisikler: [], foto: [],
   gece: 0, geceHedef: 0, iskeleSure: 0, iskeleKalp: false, bulutlar: [], gun: null, hemi: null, gok: null, yildiz: null, su: null, suPar: null,
-  yaziT: 0, hediye: null, kuncul: null, kunKonum: null, kunTemel: null, gunes: null, gunesParla: null, lamba: [], sonGece: -1 };
+  yaziT: 0, kuslar: [], kusSon: 0, sektor: new Array(16).fill(false), sektorSay: 0, kapiD: null, dKutu: false, hediye: null, kuncul: null, kunKonum: null, kunTemel: null, gunes: null, gunesParla: null, lamba: [], sonGece: -1 };
 const eyBtn = document.getElementById('bisikBtn');
 function eyTube(a, b, r, mat) {
   const d = new THREE.Vector3().subVectors(b, a), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 6), mat);
@@ -2727,7 +2728,7 @@ function eyKur() {
   let ik = 0, deneme = 0;
   while (ik < IN && deneme++ < 600) {
     const th = rnd() * Math.PI * 2, r = 22.2 + rnd() * 2.6;
-    if (farkA(th, 0) < 0.45 || farkA(th, Math.PI / 2) < 0.3 || fa.some(a => farkA(th, a) < 0.2)) continue;
+    if (farkA(th, 0) < 0.45 || farkA(th, Math.PI / 2) < 0.3 || farkA(th, EY_KAPI_TH) < 0.3 || fa.some(a => farkA(th, a) < 0.2)) continue;
     const sc = 0.5 + rnd() * 0.35, x = EX + Math.sin(th) * r, z = EZ + Math.cos(th) * r;
     dummy.position.set(x, sc, z); dummy.rotation.set(0, 0, 0); dummy.scale.setScalar(sc); dummy.updateMatrix(); igov.setMatrixAt(ik, dummy.matrix);
     dummy.position.set(x, 4.6 * sc, z); dummy.updateMatrix(); iyap.setMatrixAt(ik, dummy.matrix);
@@ -2781,6 +2782,38 @@ function eyKur() {
       bul.position.set(px0 - ic * 0.004, FY, pz0 - ic2 * 0.004); bul.rotation.y = rot; g.add(bul); kayit.bul = bul;
     }, undefined, () => {});
   });
+  // sonraki odaya kapı: tam tur atınca açılır
+  { const R = EY_DUVAR - 0.05, kd = { th: EY_KAPI_TH, x: EX + Math.sin(EY_KAPI_TH) * R, z: EZ + Math.cos(EY_KAPI_TH) * R, acik: false, aci: 0, hinge: null, panel: null, kilit: null };
+    ey.kapiD = kd;
+    const kg = new THREE.Group(); kg.position.set(kd.x, 0, kd.z); kg.rotation.y = EY_KAPI_TH + Math.PI; g.add(kg);
+    const kasa = new THREE.MeshLambertMaterial({ color: 0xb08a4f, emissive: 0x2a1c06 });
+    [-1, 1].forEach(y => { const k = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.5, 0.12), kasa); k.position.set(y * 0.72, 1.2, 0.05); kg.add(k); });
+    const ust = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.12, 0.12), kasa); ust.position.set(0, 2.45, 0.05); kg.add(ust);
+    const pk = tuval(512, 1024), pkx = pk.getContext('2d'), pkg = pkx.createRadialGradient(256, 520, 10, 256, 520, 560);
+    pkg.addColorStop(0, '#fff6dc'); pkg.addColorStop(0.5, '#ffc98a'); pkg.addColorStop(1, '#c7607a'); pkx.fillStyle = pkg; pkx.fillRect(0, 0, 512, 1024);
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 2.4), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(pk), fog: false })); panel.position.set(0, 1.2, -0.03); panel.visible = false; kg.add(panel); kd.panel = panel;
+    const dk = tuval(512, 1024), dx2 = dk.getContext('2d'), ddk = new THREE.CanvasTexture(dk);
+    function kapiCiz() {
+      dx2.fillStyle = '#4e2a1c'; dx2.fillRect(0, 0, 512, 1024); dx2.strokeStyle = 'rgba(0,0,0,.35)'; dx2.lineWidth = 6; dx2.strokeRect(40, 60, 432, 380); dx2.strokeRect(40, 520, 432, 440);
+      const al = dx2.createLinearGradient(0, 0, 512, 1024); al.addColorStop(0, '#fff3cf'); al.addColorStop(0.5, '#d9a94f'); al.addColorStop(1, '#f7e2a6');
+      dx2.fillStyle = al; dx2.textAlign = 'center'; dx2.textBaseline = 'middle'; dx2.font = '110px "Great Vibes", cursive'; dx2.fillText('Sırada', 256, 190); dx2.fillText('ne var?', 256, 320);
+      dx2.font = '240px serif'; dx2.fillText('♥', 256, 740); ddk.needsUpdate = true;
+    }
+    kapiCiz(); if (document.fonts && document.fonts.load) document.fonts.load('100px "Great Vibes"', 'Sırada ne var').then(kapiCiz).catch(() => {});
+    const hg = new THREE.Group(); hg.position.set(-0.65, 0, 0.06); kg.add(hg); kd.hinge = hg;
+    const kanat = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.35), new THREE.MeshBasicMaterial({ map: ddk, color: 0xcfcfcf, fog: false, side: THREE.DoubleSide })); kanat.position.set(0.65, 1.175, 0); hg.add(kanat);
+    // asma kilit (açılınca kalkar)
+    const lk = tuval(128, 160), lkx = lk.getContext('2d'); lkx.strokeStyle = '#e8c36a'; lkx.lineWidth = 14; lkx.beginPath(); lkx.arc(64, 62, 30, Math.PI, 0); lkx.stroke();
+    lkx.fillStyle = '#e8c36a'; lkx.fillRect(22, 62, 84, 70); lkx.fillStyle = '#4e2a1c'; lkx.beginPath(); lkx.arc(64, 92, 9, 0, 7); lkx.fill(); lkx.fillRect(60, 96, 8, 20);
+    const kilit = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.4), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(lk), transparent: true, fog: false })); kilit.position.set(0.6, 1.1, 0.04); kilit.rotation.y = 0; hg.add(kilit); kd.kilit = kilit; }
+  // kuşlar
+  { const kmat = new THREE.MeshBasicMaterial({ color: 0x2c2a36, side: THREE.DoubleSide, fog: false });
+    const kanatGeo = new THREE.BufferGeometry(); kanatGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, 0, 0.12, 1.1, 0.12, 0.28, 0.95, 0, -0.3]), 3)); kanatGeo.computeVertexNormals();
+    for (let i = 0; i < 9; i++) {
+      const kus = new THREE.Group(), sol = new THREE.Mesh(kanatGeo, kmat), sag = new THREE.Mesh(kanatGeo, kmat); sag.scale.x = -1;
+      kus.add(sol); kus.add(sag); kus.scale.setScalar(0.9 + rnd() * 0.5); g.add(kus);
+      ey.kuslar.push({ g: kus, sol, sag, r: 5 + rnd() * 20, a: rnd() * 6.28, w: (0.18 + rnd() * 0.18) * (i % 2 ? 1 : -1), h: 9 + rnd() * 9, f: rnd() * 6 });
+    } }
   // iskele (doğu kıyısından göle)
   const tc = tuval(64, 256), tx = tc.getContext('2d'); tx.fillStyle = '#8a6a45'; tx.fillRect(0, 0, 64, 256);
   for (let y = 0; y < 256; y += 32) { tx.fillStyle = ['#9a7850', '#85653f', '#a08058'][(y / 32) % 3]; tx.fillRect(2, y + 2, 60, 28); }
@@ -2857,7 +2890,7 @@ function eyGuncelle(dt, simdi) {
     if (kapiT.acik && kapiT.aci < -1.2 && K3.acik && kon.x < R3.x0 + 0.95 && kon.x > 2.5 && Math.abs(kon.z - kapiT.z) < 0.8) eyAc();
     return;
   }
-  const t = simdi / 1000;
+  const t = simdi / 1000, gc0 = ey.gece;
   // yazı ipucu
   if (!ey.bindi && simdi < ey.ipucuBitis) {
     // bisikletler yanıp söner, ok en yakın olanı gösterir
@@ -2908,6 +2941,28 @@ function eyGuncelle(dt, simdi) {
     if (ey.iskeleSure > 1.5 && ey.yaziT === 0) { yaziKutu.textContent = '15 Temmuz ♥'; yaziKutu.classList.add('acik'); }
     if (ey.iskeleSure > 7) { ey.geceHedef = 1; yaziKutu.textContent = 'İyi ki o gün, iyi ki sen.'; }
   } else if (ey.yaziT === 0 && ey.iskeleSure > 0) { ey.iskeleSure = 0; yaziKutu.classList.remove('acik'); }
+  // kuşlar
+  if (gc0 < 0.55) ey.kuslar.forEach(k => {
+    k.a += k.w * dt; const x = EX + Math.cos(k.a) * k.r, z = EZ + Math.sin(k.a) * k.r, y = k.h + Math.sin(t * 0.7 + k.f) * 1.2;
+    k.g.visible = true; k.g.position.set(x, y, z); { const sg = k.w > 0 ? 1 : -1; k.g.rotation.y = Math.atan2(Math.sin(k.a) * sg, -Math.cos(k.a) * sg); }
+    const fl = Math.sin(t * 8 + k.f) * 0.55; k.sol.rotation.z = fl; k.sag.rotation.z = -fl;
+  }); else ey.kuslar.forEach(k => { k.g.visible = false; });
+  if (gc0 < 0.5 && t > ey.kusSon) { eyKusSesi(); ey.kusSon = t + 3 + Math.random() * 6; }
+  // tam tur: yürünen yönler işaretlenir, kapı açılır
+  { const dxk = kon.x - EX, dzk = kon.z - EZ, rk = Math.hypot(dxk, dzk);
+    if (rk > 15 && rk < 26.5) { const sk = Math.floor((((Math.atan2(dxk, dzk) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2)) * 16) % 16; if (!ey.sektor[sk]) { ey.sektor[sk] = true; ey.sektorSay++; } }
+    const kd = ey.kapiD;
+    if (!kd.acik && ey.sektorSay >= 15) { kd.acik = true; kd.panel.visible = true; kd.kilit.visible = false; gicirti(1.6); kalpPatlat(); yonKutu.textContent = 'Tur tamam! Kapı açıldı.'; yonKutu.classList.add('acik'); ey.dKutu = true; ey.dBitis = simdi + 5000; }
+    kd.aci += ((kd.acik ? -1.9 : 0) - kd.aci) * Math.min(1, dt * 1.8); kd.hinge.rotation.y = kd.aci;
+    const bisikIpucu = !ey.bindi && simdi < ey.ipucuBitis;
+    if (!bisikIpucu) {
+      const ud = Math.hypot(kon.x - kd.x, kon.z - kd.z);
+      if (ey.dKutu && simdi > ey.dBitis) { ey.dKutu = false; yonKutu.classList.remove('acik'); }
+      else if (ey.dKutu && kd.acik) yonKutu.classList.add('acik');
+      if (!kd.acik) {
+        if (ud < 6) { yonKutu.textContent = 'Önce gölü tam tur at. Tur: %' + Math.round(ey.sektorSay / 16 * 100); yonKutu.classList.add('acik'); ey.dKutu = true; ey.dBitis = simdi + 1500; }
+      }
+    } }
   // gün batımı → gece
   ey.gece += (ey.geceHedef - ey.gece) * Math.min(1, dt * 0.15);
   const gc = ey.gece;
@@ -2929,6 +2984,18 @@ function eyGuncelle(dt, simdi) {
     for (let i = 0; i < b.length; i += 3) { p[i] = b[i] + Math.sin(t * 0.6 + i) * 0.8; p[i + 1] = b[i + 1] + Math.sin(t * 0.9 + i * 1.3) * 0.35; p[i + 2] = b[i + 2] + Math.cos(t * 0.5 + i) * 0.8; }
     ey.kuncul.geometry.attributes.position.needsUpdate = true;
   }
+}
+function eyKusSesi() {
+  try {
+    if (!sesBagl) return;
+    const c = sesBagl, t = c.currentTime, n = 2 + Math.floor(Math.random() * 3), f0 = 2200 + Math.random() * 1600;
+    for (let i = 0; i < n; i++) {
+      const o = c.createOscillator(), g = c.createGain(), t0 = t + i * 0.13;
+      o.type = 'sine'; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f0 * 1.35, t0 + 0.06); o.frequency.exponentialRampToValueAtTime(f0 * 0.9, t0 + 0.1);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.022, t0 + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.11);
+      o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + 0.13);
+    }
+  } catch (e) {}
 }
 eyBtn.addEventListener('click', () => {
   if (!ey.aktif) return;
