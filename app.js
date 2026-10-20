@@ -3581,8 +3581,8 @@ eyBtn.addEventListener('click', () => {
 
 // ---------- Kapadokya: peri bacaları etrafında ATV turu ----------
 const KX = 6000, KZ = -3000, KP_MERKEZ = 13.5, KP_TUR0 = 15, KP_TUR1 = 27, KP_DUVAR = 36;
-const KP_KAPI_TH = 9 * Math.PI * 2 / 10;
-const KP_FOTO = [null, null, null, null, null, null, null, null];   // fotoğrafları gelince 'foto/kapadokya-1.jpg' gibi yazılır
+const KP_FOTO = ['foto/kapadokya-1.jpg', 'foto/kapadokya-2.jpg', 'foto/kapadokya-3.jpg', 'video/kapadokya-1.mp4', 'foto/kapadokya-5.jpg', 'foto/kapadokya-6.jpg', 'foto/kapadokya-7.jpg', 'foto/kapadokya-8.jpg', 'foto/kapadokya-9.jpg', 'video/kapadokya-2.mp4', 'foto/kapadokya-11.jpg'];   // sırayla duvara dizilir; .mp4 olanlar video
+const KP_KAPI_TH = (KP_FOTO.length + 1) * Math.PI * 2 / (KP_FOTO.length + 2);
 const kp = { aktif: false, hazir: false, grup: null, durum: 'yok', kilit: false, atv: false, atvG: null, teker: [], kask: [], sektor: new Array(16).fill(false), sektorSay: 0, altin: 0, altinHedef: 0,
   kapiD: null, foto: [], toz: [], havaToz: [], tozSira: 0, sonToz: 0, gok2: null, gunes: null, hemi: null, gun: null, t0: 0, ok: null, parla: null, bulut: [], yazi: '', yaziBitis: 0, girildi: false, yakin: -1, son: -1, tur: false };
 const atvBtn = document.getElementById('atvBtn');
@@ -3701,17 +3701,23 @@ function kpKur() {
   for (let i = 0; i < 150; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tdoku, depthWrite: false, transparent: true, opacity: 0, fog: true })); s.visible = false; g.add(s); kp.toz.push({ s, t: 9, x: 0, y: 0, z: 0, vx: 0, vz: 0, boy: 1 }); }
   for (let i = 0; i < 26; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tdoku, depthWrite: false, transparent: true, opacity: 0.1, fog: true })); const a = rnd() * 6.28, r = 14 + rnd() * 20, w = 9 + rnd() * 9; s.scale.set(w, w * 0.45, 1); s.position.set(KX + Math.sin(a) * r, 1.2 + rnd() * 2.5, KZ + Math.cos(a) * r); g.add(s); kp.havaToz.push({ s, f: rnd() * 6 }); }
   // fotoğraf çerçeveleri (kaya cephede)
-  const FW = 3.8, FH = 2.9, FY = 4.2, lc = tuval(128, 128), lx = lc.getContext('2d'), lg = lx.createRadialGradient(64, 64, 0, 64, 64, 64); lg.addColorStop(0, 'rgba(255,214,150,.9)'); lg.addColorStop(1, 'rgba(255,200,120,0)'); lx.fillStyle = lg; lx.fillRect(0, 0, 128, 128);
+  const FW = 4.4, FH = 3.6, FY = 4.9, lc = tuval(128, 128), lx = lc.getContext('2d'), lg = lx.createRadialGradient(64, 64, 0, 64, 64, 64); lg.addColorStop(0, 'rgba(255,214,150,.9)'); lg.addColorStop(1, 'rgba(255,200,120,0)'); lx.fillStyle = lg; lx.fillRect(0, 0, 128, 128);
   const ldoku = new THREE.CanvasTexture(lc);
   KP_FOTO.forEach((dosya, i) => {
-    const th = (i + 1) * Math.PI * 2 / 10, R = KP_DUVAR + 0.12, px0 = KX + Math.sin(th) * R, pz0 = KZ + Math.cos(th) * R, rot = th + Math.PI, ic = Math.sin(th), ic2 = Math.cos(th);
+    const th = (i + 1) * Math.PI * 2 / (KP_FOTO.length + 2), R = KP_DUVAR + 0.12, px0 = KX + Math.sin(th) * R, pz0 = KZ + Math.cos(th) * R, rot = th + Math.PI, ic = Math.sin(th), ic2 = Math.cos(th);
     const cer = new THREE.Mesh(new THREE.BoxGeometry(FW + 0.34, FH + 0.34, 0.14), new THREE.MeshLambertMaterial({ color: 0x6a4a2c })); cer.position.set(px0 + ic * 0.07, FY, pz0 + ic2 * 0.07); cer.rotation.y = rot; g.add(cer);
     const yc = tuval(512, 512), yx = yc.getContext('2d'), yg = yx.createLinearGradient(0, 0, 0, 512); yg.addColorStop(0, '#79b3ea'); yg.addColorStop(1, '#e8b27c'); yx.fillStyle = yg; yx.fillRect(0, 0, 512, 512); yx.fillStyle = 'rgba(255,240,225,.85)'; yx.font = '170px serif'; yx.textAlign = 'center'; yx.textBaseline = 'middle'; yx.fillText('♥', 256, 256);
     const net = new THREE.Mesh(new THREE.PlaneGeometry(FW, FH), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(yc), color: 0x666666, fog: false })); net.position.set(px0 - ic * 0.005, FY, pz0 - ic2 * 0.005); net.rotation.y = rot; g.add(net);
     const kayit = { net, bul: { material: { color: new THREE.Color(), opacity: 1 } }, px: px0 - ic * 5, pz: pz0 - ic2 * 5 }; kp.foto.push(kayit);
     const lamba = new THREE.Sprite(new THREE.SpriteMaterial({ map: ldoku, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending, opacity: 0.35 })); lamba.scale.set(5, 5, 1); lamba.position.set(px0 - ic * 0.8, FY + FH / 2 + 0.9, pz0 - ic2 * 0.8); g.add(lamba);
-    if (dosya) new THREE.TextureLoader().load(dosya, tex => {
-      tex.anisotropy = 8; const oran = tex.image.width / tex.image.height, gen = Math.min(5.2, FH * oran);
+    if (/\.mp4$/.test(dosya)) {
+      const v = document.createElement('video'); v.src = dosya; v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.preload = 'auto';
+      v.addEventListener('loadeddata', () => { if (v.paused) v.currentTime = 0.1; });
+      v.addEventListener('loadedmetadata', () => { const oran = v.videoWidth / v.videoHeight, gen = Math.min(6.2, FH * oran); net.scale.x = gen / FW; cer.scale.x = (gen + 0.34) / (FW + 0.34); });
+      const vt = new THREE.VideoTexture(v); vt.minFilter = THREE.LinearFilter; vt.magFilter = THREE.LinearFilter; vt.generateMipmaps = false;
+      net.material.map = vt; net.material.needsUpdate = true; kayit.video = v; kayit.oynuyor = false;
+    } else if (dosya) new THREE.TextureLoader().load(dosya, tex => {
+      tex.anisotropy = 8; const oran = tex.image.width / tex.image.height, gen = Math.min(6.2, FH * oran);
       net.material.map = tex; net.material.needsUpdate = true; net.scale.x = gen / FW; cer.scale.x = (gen + 0.34) / (FW + 0.34);
       const bcv = tuval(18, Math.max(8, Math.round(18 / oran))); bcv.getContext('2d').drawImage(tex.image, 0, 0, bcv.width, bcv.height);
       const bt = new THREE.CanvasTexture(bcv); bt.magFilter = THREE.LinearFilter; bt.minFilter = THREE.LinearFilter;
@@ -3832,7 +3838,10 @@ function kpGuncelle(dt, simdi) {
     else if (kp.durum === 'tur' && !kd.acik && Math.hypot(kon.x - kd.x, kon.z - kd.z) < 9) kpYaz('Önce vadiyi tam tur at. Tur: %' + Math.round(kp.sektorSay / 16 * 100));
   }
   // fotoğraflar yaklaşınca netleşir
-  kp.foto.forEach(f => { const uz = Math.hypot(kon.x - f.px, kon.z - f.pz), p = 0.3 + 0.7 * yumusak(34, 14, uz); f.net.material.color.setRGB(p, p, p); f.bul.material.color.setRGB(p, p, p); f.bul.material.opacity = 1 - yumusak(26, 12, uz); });
+  kp.foto.forEach(f => {
+    const uz = Math.hypot(kon.x - f.px, kon.z - f.pz), p = 0.3 + 0.7 * yumusak(34, 14, uz); f.net.material.color.setRGB(p, p, p); f.bul.material.color.setRGB(p, p, p); f.bul.material.opacity = 1 - yumusak(26, 12, uz);
+    if (f.video) { const olsun = uz < 17; if (olsun !== f.oynuyor) { f.oynuyor = olsun; if (olsun) { const pr = f.video.play(); if (pr && pr.catch) pr.catch(() => {}); } else f.video.pause(); } }
+  });
 }
 atvBtn.addEventListener('click', () => {
   if (!kp.aktif || kp.kilit) return;
