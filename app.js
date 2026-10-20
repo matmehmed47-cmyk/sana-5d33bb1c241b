@@ -706,9 +706,10 @@ fotoBtn.addEventListener('click', () => {
   if (fotoYakin < 0) return;
   const kutu = fotoBak.querySelector('.fg'); kutu.innerHTML = '';
   FOTO_NOKTA[fotoYakin].src.forEach(u => { const im = new Image(); im.src = u; im.alt = ''; kutu.appendChild(im); });
-  fotoBak.classList.add('acik'); fotoBtn.classList.remove('acik');
+  fotoBak.classList.add('acik'); fotoAcildi = performance.now(); fotoBtn.classList.remove('acik');
 });
-fotoBak.addEventListener('click', () => fotoBak.classList.remove('acik'));
+let fotoAcildi = 0;
+fotoBak.addEventListener('click', () => { if (performance.now() - fotoAcildi < 600) return; fotoBak.classList.remove('acik'); });   // dokunuşun ardından gelen sahte tık hemen kapatmasın
 // dolabın kapısındaki fotoğraflara dokununca büyüt
 let dolapDokun0 = null;
 canvas.addEventListener('pointerdown', e => { dolapDokun0 = { x: e.clientX, y: e.clientY, t: performance.now() }; });
@@ -722,7 +723,7 @@ canvas.addEventListener('pointerup', e => {
   const k = DOLAP.kapilar.find(q => q.net === hits[0].object), px = hits[0].uv.x * k.KW, py = (1 - hits[0].uv.y) * k.KH;
   const h = k.hot.find(q => px >= q[1] && px <= q[3] && py >= q[2] && py <= q[4]); if (!h) return;
   const kutu = fotoBak.querySelector('.fg'); kutu.innerHTML = ''; const im = new Image(); im.src = 'foto/' + h[5]; im.alt = ''; kutu.appendChild(im);
-  fotoBak.classList.add('acik'); fotoBtn.classList.remove('acik');
+  fotoBak.classList.add('acik'); fotoAcildi = performance.now(); fotoBtn.classList.remove('acik');
 });
 function dolapGuncelle(t) {
   if (!DOLAP.kapilar) return;
