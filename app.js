@@ -348,27 +348,50 @@ const ENGELLER2 = [
   { x: 11.55, z: -23.1, r: 0.6 }, { x: 11.55, z: -22.45, r: 0.6 }, { x: 11.55, z: -21.8, r: 0.6 }   // yatak
 ];
 (function oda2Esyalar() {
-  // halı: kilim desenli
-  const c = document.createElement('canvas'); c.width = 512; c.height = 384;
+  // halı: İrem'in odasındaki krem zeminli, bordo-pembe gül demetli halı (2:1)
+  const HW = 2048, HH = 1024, c = document.createElement('canvas'); c.width = HW; c.height = HH;
   const x = c.getContext('2d');
-  x.fillStyle = '#7d2630'; x.fillRect(0, 0, 512, 384);
-  const bant = (m, renk, kal) => { x.strokeStyle = renk; x.lineWidth = kal; x.strokeRect(m, m, 512 - 2 * m, 384 - 2 * m); };
-  bant(10, '#e8d9b5', 10); bant(30, '#1f2f52', 8); bant(48, '#c9a24a', 4);
-  x.fillStyle = '#e8d9b5';
-  for (let i = 0; i < 20; i++) { x.beginPath(); x.moveTo(60 + i * 20.5, 62); x.lineTo(70 + i * 20.5, 72); x.lineTo(60 + i * 20.5, 82); x.lineTo(50 + i * 20.5, 72); x.fill(); }
-  for (let i = 0; i < 20; i++) { x.beginPath(); x.moveTo(60 + i * 20.5, 302); x.lineTo(70 + i * 20.5, 312); x.lineTo(60 + i * 20.5, 322); x.lineTo(50 + i * 20.5, 312); x.fill(); }
-  // ortada büyük baklava ve çiçek
-  const baklava = (cx, cy, rx, ry, renk) => { x.fillStyle = renk; x.beginPath(); x.moveTo(cx, cy - ry); x.lineTo(cx + rx, cy); x.lineTo(cx, cy + ry); x.lineTo(cx - rx, cy); x.closePath(); x.fill(); };
-  baklava(256, 192, 150, 100, '#1f2f52'); baklava(256, 192, 120, 80, '#e8d9b5'); baklava(256, 192, 90, 60, '#b83a4b');
-  baklava(256, 192, 50, 34, '#c9a24a'); baklava(256, 192, 22, 15, '#7d2630');
-  [[110, 192], [402, 192]].forEach(p => baklava(p[0], p[1], 30, 22, '#c9a24a'));
-  const doku = new THREE.CanvasTexture(c); doku.anisotropy = 4;
-  const hali = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 3.3), new THREE.MeshPhongMaterial({ map: doku, specular: 0x000000, shininess: 2 }));
-  hali.rotation.x = -Math.PI / 2; hali.position.set(o2cx, 0.012, o2cz);
+  let sdh = 5; const rh = () => { sdh = (sdh * 16807) % 2147483647; return (sdh - 1) / 2147483646; };
+  x.fillStyle = '#efe6d1'; x.fillRect(0, 0, HW, HH);
+  for (let i = 0; i < 30000; i++) { x.fillStyle = (rh() < 0.5 ? 'rgba(255,250,238,' : 'rgba(150,130,108,') + (0.03 + rh() * 0.05) + ')'; x.fillRect(rh() * HW, rh() * HH, 1 + rh() * 3, 1 + rh() * 2); }
+  // silik kıvrımlı dal motifleri (güllerin arkasında)
+  function dal(cx, cy, s, rot, ters) {
+    x.save(); x.translate(cx, cy); x.rotate(rot); x.scale(s * (ters ? -1 : 1), s); x.strokeStyle = 'rgba(172,156,138,.6)'; x.lineWidth = 5; x.lineCap = 'round';
+    x.beginPath(); x.moveTo(-70, 20); x.bezierCurveTo(-40, -50, 10, -50, 20, -5); x.bezierCurveTo(28, 25, -5, 35, -8, 10); x.bezierCurveTo(-10, -5, 8, -8, 10, 2); x.stroke();
+    x.beginPath(); x.moveTo(20, -5); x.bezierCurveTo(50, -34, 84, -12, 92, 22); x.stroke();
+    x.beginPath(); x.moveTo(-70, 20); x.bezierCurveTo(-90, 40, -110, 38, -118, 20); x.stroke(); x.restore();
+  }
+  for (let gx = 40; gx < HW; gx += 128) for (let gy = 40; gy < HH + 60; gy += 128) dal(gx + (rh() - 0.5) * 50, gy + (rh() - 0.5) * 50, 0.8 + rh() * 0.5, rh() * 6.28, rh() < 0.5);
+  function yaprak(cx, cy, l, rot) {
+    x.save(); x.translate(cx, cy); x.rotate(rot); x.fillStyle = '#74605a'; x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(l * 0.4, -l * 0.34, l, 0); x.quadraticCurveTo(l * 0.4, l * 0.34, 0, 0); x.fill();
+    x.fillStyle = 'rgba(150,128,116,.45)'; x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(l * 0.4, -l * 0.34, l, 0); x.quadraticCurveTo(l * 0.45, -l * 0.04, 0, 0); x.fill();
+    x.strokeStyle = 'rgba(40,28,24,.45)'; x.lineWidth = 3; x.beginPath(); x.moveTo(0, 0); x.lineTo(l * 0.85, 0); x.stroke(); x.restore();
+  }
+  function gul(cx, cy, r, rot) {
+    x.save(); x.translate(cx, cy); x.rotate(rot);
+    x.fillStyle = '#87304d'; x.beginPath(); x.arc(0, 0, r * 0.98, 0, 7); x.fill();
+    const kat = (n, rad, rx, ry, c1, c2, of) => { for (let k = 0; k < n; k++) { x.save(); x.rotate(k * Math.PI * 2 / n + of); x.fillStyle = k % 2 ? c1 : c2; x.beginPath(); x.ellipse(r * rad, 0, r * rx, r * ry, 0, 0, 7); x.fill(); x.strokeStyle = 'rgba(95,22,52,.55)'; x.lineWidth = Math.max(1.5, r * 0.04); x.stroke(); x.restore(); } };
+    kat(8, 0.56, 0.46, 0.38, '#b55673', '#c8728d', 0); kat(6, 0.34, 0.34, 0.28, '#cf8197', '#bd6480', 0.5); kat(4, 0.16, 0.22, 0.18, '#e0a4b6', '#d58fa4', 0.2);
+    x.strokeStyle = '#8a3350'; x.lineWidth = Math.max(1.5, r * 0.05); x.beginPath(); x.arc(0, 0, r * 0.1, 0.4, 4.6); x.stroke();
+    x.fillStyle = 'rgba(255,225,232,.28)'; x.beginPath(); x.ellipse(-r * 0.2, -r * 0.25, r * 0.3, r * 0.16, -0.6, 0, 7); x.fill(); x.restore();
+  }
+  function demet(cx, cy, rot, s) {
+    x.save(); x.translate(cx, cy); x.rotate(rot); x.scale(s, s);
+    [[-30, -40, 92, -2.5], [40, -45, 88, -0.6], [-55, 40, 86, 2.7], [62, 38, 84, 0.5], [0, -60, 78, -1.6], [-10, 62, 80, 1.6], [-80, -5, 72, 3.1], [86, 0, 72, 0]].forEach(l => yaprak(l[0], l[1], l[2], l[3]));
+    gul(-46, -6, 54, 0.4); gul(42, 10, 56, -0.3);
+    [[-92, -52, 15], [88, -44, 14], [-66, 70, 14], [84, 66, 17], [4, -78, 13]].forEach(b => gul(b[0], b[1], b[2], rh() * 6));
+    x.restore();
+  }
+  for (let i = 0; i < 8; i++) {
+    const bx = 128 + i * 256, ys = i % 2 ? [0, 256, 512, 768, 1024] : [128, 384, 640, 896];
+    ys.forEach(by => demet(bx + (rh() - 0.5) * 16, by + (rh() - 0.5) * 16, (i % 2 ? 0.25 : -0.25) + (rh() - 0.5) * 0.3, 0.86 + rh() * 0.08));
+  }
+  // kenar dikişi
+  x.strokeStyle = '#d6c9b0'; x.lineWidth = 10; x.strokeRect(5, 5, HW - 10, HH - 10); x.strokeStyle = 'rgba(190,174,150,.8)'; x.lineWidth = 3; x.strokeRect(16, 16, HW - 32, HH - 32);
+  const doku = new THREE.CanvasTexture(c); doku.anisotropy = 8;
+  const hali = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 2.8), new THREE.MeshLambertMaterial({ map: doku }));
+  hali.rotation.x = -Math.PI / 2; hali.position.set(o2cx + 0.1, 0.012, o2cz);
   sahne.add(hali);
-  // püsküller
-  const pusMat = new THREE.MeshBasicMaterial({ color: 0xe8d9b5 });
-  [-1, 1].forEach(y => { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 3.3), pusMat); p.rotation.x = -Math.PI / 2; p.position.set(o2cx + y * 2.26, 0.011, o2cz); sahne.add(p); });
 
   // küçük dolap (sol duvarın dibinde)
   const ahsap = new THREE.MeshPhongMaterial({ color: 0x7b5636, specular: 0x221a12, shininess: 14 });
