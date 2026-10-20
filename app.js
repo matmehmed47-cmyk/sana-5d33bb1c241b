@@ -569,13 +569,21 @@ const DOLAP = { x: 9.2, z: -23.6, W: 0.95, H: 1.95, D: 0.5, kx: 0, kz: 0 };
   [0, 1].forEach(k => { const y = KY + 0.125 + k * 0.25; kt(W - 0.02, 0.235, 0.02, govdeM, 0, y, D / 2 + 0.006); const kl = kt(0.17, 0.028, 0.03, beyaz, 0, y + 0.02, D / 2 + 0.03); [-0.095, 0.095].forEach(dx => kt(0.022, 0.022, 0.03, altin, dx, y + 0.02, D / 2 + 0.03)); });
   // kapılar: gerçek fotoğraflı dokular (netleşme bulanık→net)
   const kapiH = DH - 0.02, kapiW = W / 2 - 0.012, kkY = KY + CY + DH / 2;
-  function kapi(dosya, x, kenarX) {
+  const KAPI_HOT = { sol: [['lake',54,64,176,186,'dolap-v-goluk.jpg'],['bus',176,70,296,188,'dolap-v-otobus.jpg'],['gece',300,92,436,190,'dolap-v-gece.jpg'],['kart',250,10,440,165,'dolap-v-sirik.jpg']],
+    sag: [['iyiki',80,125,174,201,'dolap-v-iyiki.jpg'],['cizim',132,818,280,946,'dolap-v-cizim.jpg'],['pres',104,466,350,787,'dolap-v-pres.jpg'],['gul',344,241,443,503,'dolap-v-gul.jpg'],['serit',190,256,313,463,'dolap-v-serit.jpg'],['okul',166,190,332,308,'dolap-v-okul.jpg']] };
+  DOLAP.kapilar = [];
+  const cerceveT = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); x.strokeStyle = '#ffd98a'; x.lineWidth = 7; x.strokeRect(5, 5, 54, 54); x.shadowColor = '#ffcf6a'; x.shadowBlur = 8; x.strokeRect(5, 5, 54, 54); return new THREE.CanvasTexture(c); })();
+  function kapi(dosya, x, kenarX, hotAd) {
     const net = new THREE.Mesh(new THREE.PlaneGeometry(kapiW, kapiH), new THREE.MeshBasicMaterial({ color: 0x777777 })); net.position.set(x, kkY, D / 2 + 0.002); g.add(net);
     const kayit = { net, bul: { material: { color: new THREE.Color(), opacity: 1 } }, px: 0, pz: 0, m: [7, 3.2], min: 0.55 };
     cocukFoto.push(kayit);
+    const hot = KAPI_HOT[hotAd], KW = 480, KH = 1344, isik = [];
+    hot.forEach(h => { const m = new THREE.Mesh(new THREE.PlaneGeometry((h[3] - h[1]) / KW * kapiW + 0.012, (h[4] - h[2]) / KH * kapiH + 0.012), new THREE.MeshBasicMaterial({ map: cerceveT, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+      m.position.set(x + ((h[1] + h[3]) / 2 / KW - 0.5) * kapiW, kkY + (0.5 - (h[2] + h[4]) / 2 / KH) * kapiH, D / 2 + 0.004); g.add(m); isik.push(m); });
+    DOLAP.kapilar.push({ net, hot, KW, KH, isik });
     loader.load(dosya, tex => {
       tex.anisotropy = 8; net.material.map = tex; net.material.needsUpdate = true;
-      const bc = document.createElement('canvas'); bc.width = 24; bc.height = 66; bc.getContext('2d').drawImage(tex.image, 0, 0, 24, 66);
+      const bc = document.createElement('canvas'); bc.width = 30; bc.height = 84; bc.getContext('2d').drawImage(tex.image, 0, 0, 30, 84);
       const bt = new THREE.CanvasTexture(bc); bt.magFilter = THREE.LinearFilter; bt.minFilter = THREE.LinearFilter;
       const bul = new THREE.Mesh(new THREE.PlaneGeometry(kapiW, kapiH), new THREE.MeshBasicMaterial({ map: bt, color: 0x555555, transparent: true })); bul.position.copy(net.position); bul.position.z += 0.001; g.add(bul); kayit.bul = bul;
     }, undefined, () => {});
@@ -583,7 +591,7 @@ const DOLAP = { x: 9.2, z: -23.6, W: 0.95, H: 1.95, D: 0.5, kx: 0, kz: 0 };
     const kl = kt(0.026, 0.19, 0.026, beyaz, kenarX, kkY - 0.05, D / 2 + 0.03); [-0.1, 0.1].forEach(dy => kt(0.034, 0.03, 0.03, altin, kenarX, kkY - 0.05 + dy, D / 2 + 0.03));
     return kayit;
   }
-  const ks = kapi('foto/dolap-sol.jpg', -W / 4, -0.05), kg = kapi('foto/dolap-sag.jpg', W / 4, 0.05);
+  const ks = kapi('foto/dolap-sol.jpg', -W / 4, -0.05, 'sol'), kg = kapi('foto/dolap-sag.jpg', W / 4, 0.05, 'sag');
   g.updateMatrixWorld(true); const wp = new THREE.Vector3(); g.getWorldPosition(wp);
   ks.px = kg.px = DOLAP.x; ks.pz = kg.pz = DOLAP.z + D + 0.4; DOLAP.kx = DOLAP.x; DOLAP.kz = DOLAP.z + D + 0.5;
   // dolabın üstü: Scrabble, çanta, su şişeli poşet, top, oyuncaklar, kutular, origami çiçekler
@@ -607,7 +615,7 @@ const DOLAP = { x: 9.2, z: -23.6, W: 0.95, H: 1.95, D: 0.5, kx: 0, kz: 0 };
   [-0.34, 0, 0.34].forEach(dx => ENGELLER2.push({ x: DOLAP.x + dx, z: DOLAP.z + 0.22, r: 0.4 }));
 })();
 const fotoBtn = document.getElementById('fotoBtn'), fotoBak = document.getElementById('fotoBak');
-const FOTO_NOKTA = [{ x: () => MASA.wx, z: () => MASA.wz, src: ['foto/kapadokya.jpg'] }, { x: () => DOLAP.kx, z: () => DOLAP.kz, src: ['foto/dolap-pres.jpg', 'foto/dolap-gul.jpg'] }];
+const FOTO_NOKTA = [{ x: () => MASA.wx, z: () => MASA.wz, src: ['foto/kapadokya.jpg'] }];
 let fotoYakin = -1;
 function masaGuncelle() {
   let en = -1, ed = 2.6;
@@ -622,6 +630,27 @@ fotoBtn.addEventListener('click', () => {
   fotoBak.classList.add('acik'); fotoBtn.classList.remove('acik');
 });
 fotoBak.addEventListener('click', () => fotoBak.classList.remove('acik'));
+// dolabın kapısındaki fotoğraflara dokununca büyüt
+let dolapDokun0 = null;
+canvas.addEventListener('pointerdown', e => { dolapDokun0 = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+canvas.addEventListener('pointerup', e => {
+  const d0 = dolapDokun0; dolapDokun0 = null;
+  if (!d0 || Math.hypot(e.clientX - d0.x, e.clientY - d0.y) > 12 || performance.now() - d0.t > 500 || ey.aktif || !DOLAP.kapilar) return;
+  if (Math.hypot(kon.x - DOLAP.kx, kon.z - DOLAP.kz) > 4.2 || fotoBak.classList.contains('acik')) return;
+  const rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1), kamera);
+  const hits = rc.intersectObjects(DOLAP.kapilar.map(k => k.net));
+  if (!hits.length || !hits[0].uv) return;
+  const k = DOLAP.kapilar.find(q => q.net === hits[0].object), px = hits[0].uv.x * k.KW, py = (1 - hits[0].uv.y) * k.KH;
+  const h = k.hot.find(q => px >= q[1] && px <= q[3] && py >= q[2] && py <= q[4]); if (!h) return;
+  const kutu = fotoBak.querySelector('.fg'); kutu.innerHTML = ''; const im = new Image(); im.src = 'foto/' + h[5]; im.alt = ''; kutu.appendChild(im);
+  fotoBak.classList.add('acik'); fotoBtn.classList.remove('acik');
+});
+function dolapGuncelle(t) {
+  if (!DOLAP.kapilar) return;
+  const uz = Math.hypot(kon.x - DOLAP.kx, kon.z - DOLAP.kz), yak = uz < 3.6 && !fotoBak.classList.contains('acik');
+  DOLAP.kapilar.forEach(k => k.isik.forEach((m, i) => { m.material.opacity = yak ? 0.25 + 0.3 * Math.sin(t * 3 + i * 1.3) * 0.5 + 0.15 : 0; }));
+  if (yak && kon.x > ODA_X + 1) { const metin = 'Dolaptaki fotoğraflara dokun, büyüsün.'; if (yonKutu.textContent !== metin) yonKutu.textContent = metin; yonKutu.classList.add('acik'); }
+}
 
 function vantilatorGuncelle(t) {
   if (!vantilator.kanatlar) return;
@@ -3528,7 +3557,7 @@ function kare(simdi) {
 
   if (basladi && !ey.aktif && kon.z < KAPI_Z + 6) yaprakDok(dt, simdi / 1000);
   if (!ey.aktif && K3.acik && kon.z > ODA2_Z1 && kon.x > 2.5) { cocukFotoGuncelle(); motorGuncelle(dt); motorOklar.forEach(o => { o.mat.opacity = 0.04 + 0.2 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 420 - o.k * 0.8), 2); }); }
-  if (!ey.aktif && kon.x > ODA_X) { ruzgarGuluGuncelle(dt, simdi / 1000); k3Guncelle(simdi); vantilatorGuncelle(simdi / 1000); masaGuncelle(); sahisOklar.forEach(o => { o.mat.opacity = 0.04 + 0.2 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 420 - o.k * 0.8), 2); }); ampulGuncelle(simdi / 1000); cocukFotoGuncelle(); if (kon.x > ODA_X + 1.5) balonGuncelle(dt, simdi / 1000); }
+  if (!ey.aktif && kon.x > ODA_X) { ruzgarGuluGuncelle(dt, simdi / 1000); k3Guncelle(simdi); vantilatorGuncelle(simdi / 1000); masaGuncelle(); dolapGuncelle(simdi / 1000); sahisOklar.forEach(o => { o.mat.opacity = 0.04 + 0.2 * Math.pow(0.5 + 0.5 * Math.sin(simdi / 420 - o.k * 0.8), 2); }); ampulGuncelle(simdi / 1000); cocukFotoGuncelle(); if (kon.x > ODA_X + 1.5) balonGuncelle(dt, simdi / 1000); }
 
   // mum titremesi
   const zaman = simdi / 1000;
