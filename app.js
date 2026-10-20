@@ -2590,10 +2590,10 @@ let onceki = performance.now();
 const EX = 3000, EZ = -3000;                       // arena odalardan çok uzakta
 const EY_GOL = 14.5, EY_YOL0 = 16.5, EY_YOL1 = 20.5, EY_DUVAR = 27;
 const EY_AGAC = [];
-const EY_FOTO = [   // fotoğraflar sırayla duvara dizilir; benzerler yan yana gelmesin diye selfie ve göl manzaraları dönüşümlü
+const EY_FOTO = [   // fotoğraflar sırayla duvara dizilir; benzerler yan yana gelmesin diye dönüşümlü
   { dosya: 'foto/eymir-1.jpg', yazi: 'Arkamda sen' }, { dosya: 'foto/eymir-2.jpg', yazi: 'Göl ve biz' },
-  { dosya: 'foto/eymir-3.jpg', yazi: 'Hep gülüşün' }, { dosya: 'foto/eymir-4.jpg', yazi: 'Yan yana' },
-  { dosya: 'foto/eymir-5.jpg', yazi: 'Huzur' }, { dosya: 'foto/eymir-6.jpg', yazi: 'Aynı yöne' }
+  { dosya: 'foto/eymir-7.jpg', yazi: 'Yan yana' }, { dosya: 'foto/eymir-3.jpg', yazi: 'Hep gülüşün' },
+  { dosya: 'foto/eymir-8.jpg', yazi: 'Hep yanımda' }, { dosya: 'foto/eymir-5.jpg', yazi: 'Huzur' }
 ];
 const ey = { aktif: false, hazir: false, grup: null, kapali: [], eskiSis: null, eskiArka: null, bisik: false, bisikNo: -1, bisikler: [], foto: [],
   gece: 0, geceHedef: 0, iskeleSure: 0, iskeleKalp: false, bulutlar: [], gun: null, hemi: null, gok: null, yildiz: null, su: null, suPar: null,
