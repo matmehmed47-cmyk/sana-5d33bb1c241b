@@ -100,3 +100,7 @@ html,body{margin:0;height:100%;background:var(--zemin);color:var(--yazi);font-fa
 #hdUI.acik{opacity:1;pointer-events:auto}
 #hdUI button{font:inherit;font-size:22px;padding:12px 30px;border-radius:999px;border:1px solid var(--vurgu);background:rgba(14,10,12,.82);color:var(--vurgu);cursor:pointer}
 #hdUI button:active{background:var(--vurgu);color:var(--zemin)}
+#hdUI{bottom:182px;pointer-events:none!important;flex-wrap:wrap;padding:0 10px}
+#hdUI.acik button{pointer-events:auto}
+#hdUI button{font-size:19px;padding:11px 20px}
+#acBtn,#bisikBtn{bottom:190px}
