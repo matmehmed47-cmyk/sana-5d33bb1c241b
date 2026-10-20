@@ -2590,10 +2590,10 @@ let onceki = performance.now();
 const EX = 3000, EZ = -3000;                       // arena odalardan çok uzakta
 const EY_GOL = 14.5, EY_YOL0 = 16.5, EY_YOL1 = 20.5, EY_DUVAR = 27;
 const EY_AGAC = [];
-const EY_FOTO = [   // fotoğrafları gelince 'dosya' alanına yol yazılır (ör. 'foto/eymir-1.jpg')
-  { dosya: null, yazi: 'Bir başlangıç' }, { dosya: null, yazi: 'Güldüğün an' }, { dosya: null, yazi: 'Birlikte' },
-  { dosya: null, yazi: 'Eymir' }, { dosya: null, yazi: 'Pedallar' }, { dosya: null, yazi: 'Gün batımı' },
-  { dosya: null, yazi: 'O gün' }, { dosya: null, yazi: 'Hep böyle' }
+const EY_FOTO = [   // fotoğraflar sırayla duvara dizilir; benzerler yan yana gelmesin diye selfie ve göl manzaraları dönüşümlü
+  { dosya: 'foto/eymir-1.jpg', yazi: 'Arkamda sen' }, { dosya: 'foto/eymir-2.jpg', yazi: 'Göl ve biz' },
+  { dosya: 'foto/eymir-3.jpg', yazi: 'Hep gülüşün' }, { dosya: 'foto/eymir-4.jpg', yazi: 'Yan yana' },
+  { dosya: 'foto/eymir-5.jpg', yazi: 'Huzur' }, { dosya: 'foto/eymir-6.jpg', yazi: 'Aynı yöne' }
 ];
 const ey = { aktif: false, hazir: false, grup: null, kapali: [], eskiSis: null, eskiArka: null, bisik: false, bisikNo: -1, bisikler: [], foto: [],
   gece: 0, geceHedef: 0, iskeleSure: 0, iskeleKalp: false, bulutlar: [], gun: null, hemi: null, gok: null, yildiz: null, su: null, suPar: null,
