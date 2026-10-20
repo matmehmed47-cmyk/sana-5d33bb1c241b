@@ -1318,7 +1318,7 @@ let sonrakiKapiIsik = null;
 
 // ---------- Müzik ----------
 let muzik = null, muzikHedef = 0, muzikVar = true;
-let muzik2 = null, muzik2Hedef = 0, muzik3 = null, muzik3Hedef = 0;
+let muzik2 = null, muzik2Hedef = 0, muzik3 = null, muzik3Hedef = 0, muzik4 = null, muzik4Hedef = 0;
 function muzikKur() {
   muzik = new Audio(ODA1.sarki);
   muzik.loop = true;
@@ -1334,6 +1334,10 @@ function muzikKur() {
   muzik3.loop = true; muzik3.volume = 0;
   const p3 = muzik3.play();
   if (p3 && p3.catch) p3.catch(() => {});
+  muzik4 = new Audio('muzik/coban-yildizi.mp3');
+  muzik4.loop = true; muzik4.volume = 0;
+  const p4 = muzik4.play();
+  if (p4 && p4.catch) p4.catch(() => {});
 }
 
 // ---------- Karakter: ışıklı İ ve M, aralarında ışık teli ----------
@@ -2649,6 +2653,19 @@ function eyKur() {
     const a = rnd() * Math.PI * 2, r = 450 + rnd() * 700, w = 280 + rnd() * 260;
     s.scale.set(w, w * 0.42, 1); s.position.set(EX + Math.cos(a) * r, 140 + rnd() * 160, EZ + Math.sin(a) * r); g.add(s); ey.bulutlar.push(s);
   }
+  // Çoban Yıldızı: gece olunca batı ufkunda beliren parlak yıldız
+  const yc0 = tuval(256, 256), y0 = yc0.getContext('2d'), yg0 = y0.createRadialGradient(128, 128, 0, 128, 128, 128);
+  yg0.addColorStop(0, 'rgba(255,255,245,1)'); yg0.addColorStop(0.08, 'rgba(255,245,210,.95)'); yg0.addColorStop(0.25, 'rgba(255,225,160,.35)'); yg0.addColorStop(1, 'rgba(255,220,150,0)');
+  y0.fillStyle = yg0; y0.fillRect(0, 0, 256, 256);
+  [[0, 1], [1, 0]].forEach(d => { const ray = y0.createLinearGradient(128 - d[0] * 128, 128 - d[1] * 128, 128 + d[0] * 128, 128 + d[1] * 128); ray.addColorStop(0, 'rgba(255,240,200,0)'); ray.addColorStop(0.5, 'rgba(255,250,230,.95)'); ray.addColorStop(1, 'rgba(255,240,200,0)'); y0.fillStyle = ray; y0.fillRect(d[0] ? 0 : 124, d[1] ? 0 : 124, d[0] ? 256 : 8, d[1] ? 256 : 8); });
+  ey.cobanY = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(yc0), fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending, opacity: 0 }));
+  ey.cobanY.scale.set(190, 190, 1); ey.cobanY.position.set(EX - 120, 270, EZ - 1000); g.add(ey.cobanY);
+  const yz = tuval(512, 96), yzx = yz.getContext('2d'); yzx.textAlign = 'center'; yzx.textBaseline = 'middle';
+  const yzd = new THREE.CanvasTexture(yz);
+  function cobanYaz() { yzx.clearRect(0, 0, 512, 96); yzx.font = '70px "Great Vibes", cursive'; yzx.shadowColor = 'rgba(0,0,0,.6)'; yzx.shadowBlur = 8; yzx.fillStyle = '#fff3cf'; yzx.fillText('Çoban Yıldızı', 256, 50); yzd.needsUpdate = true; }
+  cobanYaz(); if (document.fonts && document.fonts.load) document.fonts.load('60px "Great Vibes"', 'Çoban Yıldızı').then(cobanYaz).catch(() => {});
+  ey.cobanYazi = new THREE.Sprite(new THREE.SpriteMaterial({ map: yzd, fog: false, depthWrite: false, transparent: true, opacity: 0 }));
+  ey.cobanYazi.scale.set(300, 56, 1); ey.cobanYazi.position.set(EX - 120, 195, EZ - 1000); g.add(ey.cobanYazi);
   // yıldızlar
   const ya = new Float32Array(500 * 3);
   for (let i = 0; i < 500; i++) { const a = rnd() * Math.PI * 2, e = 0.12 + rnd() * 1.4; ya[i * 3] = EX + Math.cos(a) * Math.cos(e) * 1400; ya[i * 3 + 1] = Math.sin(e) * 1400; ya[i * 3 + 2] = EZ + Math.sin(a) * Math.cos(e) * 1400; }
@@ -2815,6 +2832,7 @@ function eyAc() {
     kamera.far = 2600; kamera.updateProjectionMatrix();
     ey.grup.visible = true;
     kon.x = EX; kon.z = EZ + 19.2; kon.vx = 0; kon.vz = 0; kon.yaw = 0; kon.pitch = -0.16; kon.oto = null; ikiliYon = 0;
+    try { if (muzik4) muzik4.currentTime = 0; } catch (e) {}
     ey.sonGece = -1; ey.yaziT = 0; ey.bindi = false; ey.ipucuBitis = performance.now() + 30000;
     yonKutu.textContent = 'Bisiklete bin! En yakın bisikletin yanına git.'; yonKutu.classList.add('acik');
     gecisKutu.classList.remove('acik');
@@ -2862,6 +2880,7 @@ function eyGuncelle(dt, simdi) {
   ey.suPar.material.map.offset.set(t * 0.012, t * 0.007);
   ey.hediyeParla.material.opacity = 0.55 + 0.3 * Math.sin(t * 2.4);
   ey.hediye.rotation.y = t * 0.6;
+  { const sc = 190 * (1 + 0.07 * Math.sin(t * 2.2)); ey.cobanY.scale.set(sc, sc, 1); }
   // bisiklet
   if (ey.bisik) {
     const b = ey.bisikler[ey.bisikNo], hiz = Math.hypot(kon.vx, kon.vz);
@@ -2901,6 +2920,7 @@ function eyGuncelle(dt, simdi) {
     sahne.fog.color.setRGB(0.11 + 0.83 * k, 0.12 + 0.57 * k, 0.25 + 0.27 * k); sahne.background.copy(sahne.fog.color);
     ey.su.material.color.setRGB(0.3 + 0.7 * k, 0.35 + 0.65 * k, 0.55 + 0.45 * k);
     ey.yildiz.material.opacity = gc; ey.kuncul.material.opacity = gc * 0.9;
+    ey.cobanY.material.opacity = yumusak(0.12, 0.5, gc); ey.cobanYazi.material.opacity = yumusak(0.5, 0.9, gc);
     ey.bulutlar.forEach(b => b.material.color.setRGB(0.28 + 0.72 * k, 0.3 + 0.58 * k, 0.42 + 0.5 * k));
     ey.lamba.forEach(l => { l.material.opacity = 0.35 + 0.55 * gc; });
   }
@@ -3047,7 +3067,9 @@ function kare(simdi) {
   // ikinci odanın şarkısı
   const oda3te = K3.acik && kon.z > ODA2_Z1 + 0.3 && kon.x > 2.5;
   muzik2Hedef = (kapi2.acik && kon.x > ODA_X + 1.0 && !oda3te && !ey.aktif) ? 0.85 : 0;
-  muzik3Hedef = ey.aktif ? 0.55 : (oda3te ? 0.85 : 0);
+  muzik3Hedef = (ey.aktif || !oda3te) ? 0 : 0.85;
+  muzik4Hedef = ey.aktif ? 0.65 + 0.35 * ey.gece : 0;
+  if (muzik4) { const v4 = muzik4.volume; muzik4.volume = sinir(v4 + (muzik4Hedef - v4) * Math.min(1, dt * 0.7), 0, 1); }
   if (muzik3) { const v3 = muzik3.volume; muzik3.volume = sinir(v3 + (muzik3Hedef - v3) * Math.min(1, dt * 0.7), 0, 1); }
   if (muzik2) { const v2 = muzik2.volume; muzik2.volume = sinir(v2 + (muzik2Hedef - v2) * Math.min(1, dt * 0.7), 0, 1); }
 
@@ -3161,6 +3183,6 @@ document.getElementById('basla').addEventListener('click', () => {
 
 document.addEventListener('visibilitychange', () => {
   if (!muzik) return;
-  if (document.hidden) { muzik.pause(); if (muzik2) muzik2.pause(); if (muzik3) muzik3.pause(); }
-  else if (basladi) { const p = muzik.play(); if (p && p.catch) p.catch(() => {}); if (muzik2) { const q = muzik2.play(); if (q && q.catch) q.catch(() => {}); } if (muzik3) { const r = muzik3.play(); if (r && r.catch) r.catch(() => {}); } }
+  if (document.hidden) { muzik.pause(); if (muzik2) muzik2.pause(); if (muzik3) muzik3.pause(); if (muzik4) muzik4.pause(); }
+  else if (basladi) { const p = muzik.play(); if (p && p.catch) p.catch(() => {}); if (muzik2) { const q = muzik2.play(); if (q && q.catch) q.catch(() => {}); } if (muzik3) { const r = muzik3.play(); if (r && r.catch) r.catch(() => {}); } if (muzik4) { const r4 = muzik4.play(); if (r4 && r4.catch) r4.catch(() => {}); } }
 });
