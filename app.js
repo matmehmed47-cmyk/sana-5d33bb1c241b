@@ -3709,7 +3709,7 @@ function kpKur() {
   // ATV
   kp.atvG = kpAtvYap(); kp.atvG.position.set(KX, 0, KZ + 19.2); g.add(kp.atvG);
   // kasklar (yerde)
-  [[0xff6fa5, 0.095], [0x23356b, 0.082], [0x23356b, 0.082]].forEach((k, i) => { const kg = kpKaskYap(k[0], k[1]); kg.position.set(KX + [-1.7, 0.1, 1.7][i], 0.07, KZ + [21.9, 20.3, 21.9][i]); kg.rotation.set(0, i * 0.7, 0); kg.scale.setScalar(2.6); g.add(kg); kp.kask.push({ g: kg, hedef: [[-0.36, 0.66, 0], [0.16, 0.545, 0], [0.56, 0.545, 0]][i], bas: null, bit: false, git: false, st: 0, parla: null }); });
+  [[0xff6fa5, 0.095], [0x23356b, 0.082], [0x23356b, 0.082]].forEach((k, i) => { const kg = kpKaskYap(k[0], k[1]); kg.position.set(KX + [-0.8, 0, 0.8][i], 0.07, KZ + 21.6); kg.rotation.set(0, i * 0.7, 0); kg.scale.setScalar(2.6); g.add(kg); kp.kask.push({ g: kg, hedef: [[-0.36, 0.66, 0], [0.16, 0.545, 0], [0.56, 0.545, 0]][i], bas: null, bit: false, git: false, st: 0, parla: null }); });
   // ATV'yi gösteren ok ve parıltı
   const pl = tuval(128, 128), px = pl.getContext('2d'), pg = px.createRadialGradient(64, 64, 0, 64, 64, 64); pg.addColorStop(0, 'rgba(255,214,150,.9)'); pg.addColorStop(1, 'rgba(255,200,120,0)'); px.fillStyle = pg; px.fillRect(0, 0, 128, 128);
   const pdoku = new THREE.CanvasTexture(pl);
@@ -3809,11 +3809,13 @@ function kpGuncelle(dt, simdi) {
   if (kp.durum === 'giris') { kpYaz('Kaskları tak.'); if (gec > 2.6) { kp.durum = 'kask'; kp.kilit = false; } }
   else if (kp.durum === 'kask') {
     let bitti = 0;
+    if (!kp.tetik && kp.kask.some(q => Math.hypot(kon.x - q.g.position.x, kon.z - q.g.position.z) < 1.2)) {   // birinin üstüne gidince üçü birden takılır
+      kp.tetik = true; gicirti(0.5); kp.kask.forEach((q, j) => { q.git = true; q.bas = q.g.position.clone(); q.st = t + j * 0.22; });
+    }
     kp.kask.forEach((k, i) => {
       if (k.bit) { bitti++; return; }
       if (!k.git) {
         k.parla.material.opacity = 0.35 + 0.4 * (0.5 + 0.5 * Math.sin(t * 4 + i)); k.g.position.y = 0.07 + 0.05 * Math.sin(t * 3 + i); k.g.rotation.y += dt * 0.8;
-        if (Math.hypot(kon.x - k.g.position.x, kon.z - k.g.position.z) < 1.0) { k.git = true; k.bas = k.g.position.clone(); k.st = t; gicirti(0.5); }
         return;
       }
       k.parla.visible = false;
@@ -3824,7 +3826,7 @@ function kpGuncelle(dt, simdi) {
       k.g.rotation.y = (1 - e) * 9; k.g.scale.setScalar(2.6 - 1.8 * e);
       if (p >= 1) { govde.add(k.g); k.g.position.set(k.hedef[0], k.hedef[1], k.hedef[2]); k.g.rotation.set(0, 0, 0); k.g.scale.setScalar(1); k.bit = true; }
     });
-    kpYaz('Kaskların üzerine yürü, tak. (' + bitti + '/3)');
+    kpYaz(kp.tetik ? 'Kasklar takılıyor...' : 'Kaskların üzerine yürü, üçünü birden tak.');
     if (bitti === kp.kask.length) { kp.durum = 'bin'; kp.kilit = false; kp.bt = t; }
   } else if (kp.durum === 'bin') {
     kpYaz("ATV'ye bin! En yakın ATV'nin yanına git.");
