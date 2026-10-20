@@ -82,3 +82,13 @@ html,body{margin:0;height:100%;background:var(--zemin);color:var(--yazi);font-fa
 #gecis.acik{opacity:1;pointer-events:auto}
 #yukariBtn{position:fixed;right:16px;top:64px;font:inherit;font-size:16px;padding:8px 18px;border-radius:999px;border:1px solid var(--vurgu);background:rgba(14,10,12,.8);color:var(--vurgu);opacity:0;pointer-events:none;z-index:8}
 #yukariBtn.acik{opacity:1;pointer-events:auto}
+#soru2{position:fixed;left:50%;top:14%;transform:translate(-50%,-12px);width:min(92vw,420px);padding:16px 18px;border-radius:16px;background:rgba(14,10,12,.82);border:1px solid rgba(232,168,107,.5);text-align:center;opacity:0;pointer-events:none;transition:opacity .6s,transform .6s;z-index:6;backdrop-filter:blur(4px)}
+#soru2.acik{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#soru2Baslik{font-size:20px;margin-bottom:12px}
+#soru2Sec{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#soru2Sec button{font:inherit;font-size:18px;padding:10px 16px;border-radius:12px;border:1px solid var(--vurgu);background:transparent;color:var(--vurgu);cursor:pointer}
+#soru2Sec button:active{background:var(--vurgu);color:var(--zemin)}
+#soru2Sec button.sal{animation:sal .4s}
+#soru2Sec button.solgun{opacity:.35;border-style:dashed}
+#soru2Mesaj{min-height:22px;margin-top:12px;font-size:17px;opacity:.9}
+#soru2Mesaj.dogru{color:#f7c8d2;font-size:19px}

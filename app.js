@@ -2446,6 +2446,86 @@ parkKart.querySelectorAll('button').forEach(b => b.addEventListener('click', () 
   setTimeout(() => { parkAc(); setTimeout(() => { kapiP.acik = false; }, 1500); }, 1000);
 }));
 
+
+// ---------- 3. oda: teklif kapısı (ikinci odanın yanındaki duvarda) ----------
+const SORU4 = {
+  metin: '15 Temmuz\'da ne oldu?',
+  secenekler: ['Darbe', 'Resmi çıkma teklifi', 'Dinozorlar yok oldu'],
+  dogru: 'Resmi çıkma teklifi',
+  yanlis: {
+    'Darbe': 'O başka bir 15 Temmuz 😄 Bizimkine bak.',
+    'Dinozorlar yok oldu': 'O çok daha eskiydi, bizim değil 🦕'
+  },
+  ipucu: 'İpucu: Bir kalp, bir soru ve bir evet.',
+  dogruMesaj: 'Evet! Kapı açılıyor...'
+};
+const kapiT = { x: 13.0, z: R3.z0, hinge: null, panel: null, acik: false, aci: 0, cozuldu: false, gorunur: false, bitis: 0, yanlis: 0 };
+(function teklifKapisi() {
+  const g = new THREE.Group(); g.position.set(kapiT.x, 0, kapiT.z + 0.02); sahne.add(g);
+  const kasa = new THREE.MeshPhongMaterial({ color: 0xb08a4f, specular: 0xfff0c0, shininess: 40, emissive: 0x2a1c06 });
+  [-1, 1].forEach(y => { const k = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.45, 0.1), kasa); k.position.set(y * 0.7, 1.2, 0.05); g.add(k); });
+  const ust = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 0.1), kasa); ust.position.set(0, 2.4, 0.05); g.add(ust);
+  // kapının arkasında görünen parlak panel
+  const pc = document.createElement('canvas'); pc.width = 512; pc.height = 1024; const px = pc.getContext('2d'), pd = new THREE.CanvasTexture(pc);
+  function panelCiz() {
+    const gr = px.createRadialGradient(256, 480, 20, 256, 480, 620); gr.addColorStop(0, '#fff1d6'); gr.addColorStop(0.45, '#f2a6b4'); gr.addColorStop(1, '#6a1e34');
+    px.fillStyle = gr; px.fillRect(0, 0, 512, 1024);
+    px.fillStyle = '#e0556f'; px.beginPath(); px.moveTo(256, 520); px.bezierCurveTo(60, 380, 150, 190, 256, 300); px.bezierCurveTo(362, 190, 452, 380, 256, 520); px.fill();
+    px.fillStyle = '#fff6e4'; px.textAlign = 'center'; px.textBaseline = 'middle'; px.shadowColor = 'rgba(80,10,30,.7)'; px.shadowBlur = 10;
+    px.font = '96px "Great Vibes", cursive'; px.fillText('Benimle', 256, 640); px.fillText('çıkar mısın?', 256, 760);
+    pd.needsUpdate = true;
+  }
+  panelCiz();
+  if (document.fonts && document.fonts.load) document.fonts.load('90px "Great Vibes"', 'Benimle çıkar mısın').then(panelCiz).catch(() => {});
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.35), new THREE.MeshBasicMaterial({ map: pd, fog: false })); panel.position.set(0, 1.175, -0.02); panel.visible = false; g.add(panel); kapiT.panel = panel;
+  // kapı kanadı
+  const c = document.createElement('canvas'); c.width = 512; c.height = 1024; const x = c.getContext('2d'), d = new THREE.CanvasTexture(c);
+  function ciz() {
+    x.fillStyle = '#5a2a16'; x.fillRect(0, 0, 512, 1024);
+    x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 6; x.strokeRect(40, 60, 432, 380); x.strokeRect(40, 520, 432, 440);
+    const altin = x.createLinearGradient(0, 0, 512, 1024); altin.addColorStop(0, '#fff3cf'); altin.addColorStop(0.5, '#d9a94f'); altin.addColorStop(1, '#f7e2a6');
+    x.fillStyle = altin; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.font = '120px "Great Vibes", cursive'; x.fillText('15', 256, 190); x.fillText('Temmuz', 256, 320);
+    x.font = '260px serif'; x.fillText('♥', 256, 740);
+    d.needsUpdate = true;
+  }
+  ciz();
+  if (document.fonts && document.fonts.load) document.fonts.load('100px "Great Vibes"', '15 Temmuz').then(ciz).catch(() => {});
+  const hinge = new THREE.Group(); hinge.position.set(-0.65, 0, 0.06); g.add(hinge); kapiT.hinge = hinge;
+  const kanat = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.35), new THREE.MeshBasicMaterial({ map: d, color: 0xcfcfcf, fog: false, side: THREE.DoubleSide })); kanat.position.set(0.65, 1.175, 0); hinge.add(kanat);
+})();
+const soruT = document.createElement('div'); soruT.id = 'soru2';
+const soruTBaslik = document.createElement('div'); soruTBaslik.id = 'soru2Baslik'; soruTBaslik.textContent = SORU4.metin;
+const soruTSec = document.createElement('div'); soruTSec.id = 'soru2Sec';
+const soruTMesaj = document.createElement('div'); soruTMesaj.id = 'soru2Mesaj';
+soruT.append(soruTBaslik, soruTSec, soruTMesaj); document.body.appendChild(soruT);
+SORU4.secenekler.forEach(sc => {
+  const b = document.createElement('button'); b.textContent = sc;
+  b.addEventListener('click', () => {
+    if (kapiT.cozuldu) return;
+    if (sc === SORU4.dogru) {
+      kapiT.cozuldu = true; kapiT.acik = true; kapiT.panel.visible = true;
+      soruTMesaj.textContent = SORU4.dogruMesaj; soruTMesaj.className = 'dogru'; soruTSec.style.display = 'none';
+      kalpPatlat(); gicirti(1.6); kapiT.bitis = performance.now() + 5000;
+    } else {
+      kapiT.yanlis++;
+      soruTMesaj.textContent = (SORU4.yanlis[sc] || 'Bir daha dene.') + (kapiT.yanlis >= 2 ? ' ' + SORU4.ipucu : '');
+      soruTMesaj.className = 'yanlis'; b.classList.add('sal'); b.classList.add('solgun');
+      setTimeout(() => b.classList.remove('sal'), 400);
+    }
+  });
+  soruTSec.appendChild(b);
+});
+function kapiTGuncelle(dt) {
+  const dx = kapiT.x - kon.x, dz = kapiT.z - kon.z, uz = Math.hypot(dx, dz);
+  const bak = (-Math.sin(kon.yaw) * dx - Math.cos(kon.yaw) * dz) / (uz || 1);
+  let goster = !park.aktif && uz < 3.4 && bak > (kapiT.gorunur ? 0.2 : 0.45) && kon.z > HOL3_Z1 && kon.x > 8.5;
+  if (kapiT.cozuldu && performance.now() > kapiT.bitis) goster = false;
+  if (goster !== kapiT.gorunur) { kapiT.gorunur = goster; soruT.classList.toggle('acik', goster); }
+  kapiT.aci += ((kapiT.acik ? -1.9 : 0) - kapiT.aci) * Math.min(1, dt * 2.2);
+  kapiT.hinge.rotation.y = kapiT.aci;
+}
+
 // ---------- Kontrol ----------
 const kon = { donuk: 0, vx: 0, vz: 0, oto: null, bakToplam: 0, dragX: 0, dragY: 0, yaw: 0, pitch: -0.22, x: 0, z: 1.2, ileri: 0, yan: 0, joyX: 0, joyY: 0, tus: {} };
 let basladi = false;
@@ -2667,6 +2747,7 @@ function kare(simdi) {
 
   if (K3.acik) surusGuncelle(dt, simdi);
   if (K3.acik && kon.x > 2.5 && kon.z > ODA2_Z1) kapiPGuncelle(dt);
+  if (K3.acik && kon.x > 2.5 && kon.z > ODA2_Z1) kapiTGuncelle(dt);
   if (park.aktif) parkGuncelle(dt, simdi);
 
   // kamera: karakterin arkasında, bakış yönünün tersinde
