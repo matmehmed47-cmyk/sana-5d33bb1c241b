@@ -2125,7 +2125,7 @@ function motorGuncelle(dt) { motor.platlar.forEach(p => { p.g.rotation.y += dt *
 const ruzgarGulu = { bas: null };
 (function ruzgarGuluKur() {
   const g = new THREE.Group();
-  g.position.set(9.65, 0.93, -23.34);   // dolabın üst yüzeyi
+  g.position.set(8.52, 0.75, -22.15); g.rotation.y = Math.PI / 2;   // çalışma masasının ön kenarında, yüzü odaya (+x) bakar
   sahne.add(g);
   const sap = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.4, 8), new THREE.MeshPhongMaterial({ color: 0x2f6a35, specular: 0x000000 }));
   sap.position.y = 0.2; g.add(sap);
