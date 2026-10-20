@@ -1640,7 +1640,7 @@ let sonrakiKapiIsik = null;
 
 // ---------- Müzik ----------
 let muzik = null, muzikHedef = 0, muzikVar = true;
-let muzik2 = null, muzik2Hedef = 0, muzik3 = null, muzik3Hedef = 0, muzik4 = null, muzik4Hedef = 0;
+let muzik2 = null, muzik2Hedef = 0, muzik3 = null, muzik3Hedef = 0, muzik4 = null, muzik4Hedef = 0, muzik5 = null, muzik5Hedef = 0;
 function muzikKur() {
   muzik = new Audio(ODA1.sarki);
   muzik.loop = true;
@@ -1660,6 +1660,10 @@ function muzikKur() {
   muzik4.loop = true; muzik4.volume = 0;
   const p4 = muzik4.play();
   if (p4 && p4.catch) p4.catch(() => {});
+  muzik5 = new Audio('muzik/iki-yabanci.mp3');
+  muzik5.loop = true; muzik5.volume = 0;
+  const p5 = muzik5.play();
+  if (p5 && p5.catch) p5.catch(() => {});
 }
 
 // ---------- Karakter: ışıklı İ ve M, aralarında ışık teli ----------
@@ -3986,6 +3990,10 @@ function kare(simdi) {
   muzik4Hedef = dorduncu ? (ey.aktif ? 0.65 + 0.35 * ey.gece : 0.6) : 0;
   if (dorduncu && !ey.sarkiBasladi) { ey.sarkiBasladi = true; try { if (muzik4) muzik4.currentTime = 0; } catch (e) {} }
   if (!dorduncu) ey.sarkiBasladi = false;
+  // Kapadokya: İki Yabancı (girişte baştan başlar, ATV'de biraz kısılır)
+  muzik5Hedef = kp.aktif ? (kp.atv ? 0.55 : 0.8) : 0;
+  if (kp.aktif && !kp.sarkiBasladi) { kp.sarkiBasladi = true; try { if (muzik5) muzik5.currentTime = 0; } catch (e) {} }
+  if (muzik5) { const v5 = muzik5.volume; muzik5.volume = sinir(v5 + (muzik5Hedef - v5) * Math.min(1, dt * 1.0), 0, 1); }
   if (muzik4) { const v4 = muzik4.volume; muzik4.volume = sinir(v4 + (muzik4Hedef - v4) * Math.min(1, dt * (dorduncu ? 1.6 : 1.2)), 0, 1); }
   if (muzik3) { const v3 = muzik3.volume; muzik3.volume = sinir(v3 + (muzik3Hedef - v3) * Math.min(1, dt * (muzik3Hedef === 0 ? 2.5 : 0.7)), 0, 1); }
   if (muzik2) { const v2 = muzik2.volume; muzik2.volume = sinir(v2 + (muzik2Hedef - v2) * Math.min(1, dt * 0.7), 0, 1); }
@@ -4104,6 +4112,6 @@ document.getElementById('basla').addEventListener('click', () => {
 
 document.addEventListener('visibilitychange', () => {
   if (!muzik) return;
-  if (document.hidden) { muzik.pause(); if (muzik2) muzik2.pause(); if (muzik3) muzik3.pause(); if (muzik4) muzik4.pause(); }
-  else if (basladi) { const p = muzik.play(); if (p && p.catch) p.catch(() => {}); if (muzik2) { const q = muzik2.play(); if (q && q.catch) q.catch(() => {}); } if (muzik3) { const r = muzik3.play(); if (r && r.catch) r.catch(() => {}); } if (muzik4) { const r4 = muzik4.play(); if (r4 && r4.catch) r4.catch(() => {}); } }
+  if (document.hidden) { muzik.pause(); if (muzik2) muzik2.pause(); if (muzik3) muzik3.pause(); if (muzik4) muzik4.pause(); if (muzik5) muzik5.pause(); }
+  else if (basladi) { const p = muzik.play(); if (p && p.catch) p.catch(() => {}); if (muzik2) { const q = muzik2.play(); if (q && q.catch) q.catch(() => {}); } if (muzik3) { const r = muzik3.play(); if (r && r.catch) r.catch(() => {}); } if (muzik4) { const r4 = muzik4.play(); if (r4 && r4.catch) r4.catch(() => {}); } if (muzik5) { const r5 = muzik5.play(); if (r5 && r5.catch) r5.catch(() => {}); } }
 });
