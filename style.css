@@ -104,3 +104,9 @@ html,body{margin:0;height:100%;background:var(--zemin);color:var(--yazi);font-fa
 #hdUI.acik button{pointer-events:auto}
 #hdUI button{font-size:19px;padding:11px 20px}
 #acBtn,#bisikBtn{bottom:190px}
+#fotoBtn{position:fixed;left:50%;bottom:190px;transform:translateX(-50%);font:inherit;font-size:22px;padding:12px 34px;border-radius:999px;border:1px solid var(--vurgu);background:rgba(14,10,12,.82);color:var(--vurgu);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .4s;z-index:7}
+#fotoBtn.acik{opacity:1;pointer-events:auto}
+#fotoBak{position:fixed;inset:0;background:rgba(6,5,8,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;opacity:0;pointer-events:none;transition:opacity .4s;z-index:15}
+#fotoBak.acik{opacity:1;pointer-events:auto}
+#fotoBak img{max-width:92vw;max-height:84vh;border:6px solid #6a4326;border-radius:4px;box-shadow:0 0 40px rgba(232,168,107,.25)}
+#fotoBak span{opacity:.6;font-size:15px}
