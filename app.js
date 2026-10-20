@@ -8,7 +8,7 @@ const ODA1 = {
 };
 
 const SURUS_AKTIF = false;   // koltuk ve uzaktan sürüş şimdilik kapalı (İREM parkuru odasında yeniden kullanılacak)
-const KAPILAR_ACIK = false;   // hazırlık sırasında tüm kapılar açık (kontrol hızlı olsun). false yapılırsa kapılar normal çalışır
+const KAPILAR_ACIK = true;    // hazırlık sırasında tüm kapılar açık (kontrol hızlı olsun). false yapılırsa kapılar normal çalışır
 const canvas = document.getElementById('sahne');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
@@ -458,7 +458,7 @@ function engelleriItele(nesne, yaricap, sek, liste) {   // nesne: {x,z} (+ vx,vz
   });
 }
 // ---------- Boyanacak gül kapısı (sonraki odaya geçiş) ----------
-const K3 = { x: 10.0, z: ODA2_Z1, gen: 1.3, yuk: 2.35, acik: false, aci: 0, hinge: null, glow: null, kanat: null, doku: null, tuval: null, bolgeler: [], sonDokunus: 0, bitti: false };
+const K3 = { x: 10.0, z: ODA2_Z1, gen: 1.3, yuk: 2.35, acik: KAPILAR_ACIK, aci: 0, hinge: null, glow: null, kanat: null, doku: null, tuval: null, bolgeler: [], sonDokunus: 0, bitti: false };
 const K3_PX = 512, K3_PY = 1024;
 function k3Bolge(path, tur, mx, my) { K3.bolgeler.push({ path, tur, dolu: false, anim: 0, ax: mx, ay: my, renk: null }); }
 (function gulKapisiKur() {
@@ -1550,7 +1550,7 @@ function ogrAdimGoster() {
   ogrAdimZ = performance.now(); ogrS = 0;
   ogrDX0 = kon.dragX; ogrDY0 = kon.dragY;
 }
-const ALISTIRMA = true;   // true yapılırsa koridordaki 6 adımlı alıştırma yeniden açılır
+const ALISTIRMA = false;   // true yapılırsa koridordaki 6 adımlı alıştırma yeniden açılır
 function ogrBasla() {
   if (!ALISTIRMA) { ogr = OGR_BITTI; ogrBaslaZ = 0; return; }   // askıda: alıştırma atlanır, kapı hemen açılır
   ogr = 0; ogrBaslaZ = performance.now();
@@ -2459,7 +2459,7 @@ const SORU4 = {
   ipucu: 'İpucu: Bir kalp, bir soru ve bir evet.',
   dogruMesaj: 'Evet! Kapı açılıyor...'
 };
-const kapiT = { x: 13.0, z: R3.z0, hinge: null, panel: null, acik: false, aci: 0, cozuldu: false, gorunur: false, bitis: 0, yanlis: 0 };
+const kapiT = { x: 13.0, z: R3.z0, hinge: null, panel: null, acik: KAPILAR_ACIK, aci: KAPILAR_ACIK ? -1.9 : 0, cozuldu: KAPILAR_ACIK, gorunur: false, bitis: 0, yanlis: 0 };
 (function teklifKapisi() {
   const g = new THREE.Group(); g.position.set(kapiT.x, 0, kapiT.z + 0.02); sahne.add(g);
   const kasa = new THREE.MeshPhongMaterial({ color: 0xb08a4f, specular: 0xfff0c0, shininess: 40, emissive: 0x2a1c06 });
@@ -2499,6 +2499,7 @@ const soruTBaslik = document.createElement('div'); soruTBaslik.id = 'soru2Baslik
 const soruTSec = document.createElement('div'); soruTSec.id = 'soru2Sec';
 const soruTMesaj = document.createElement('div'); soruTMesaj.id = 'soru2Mesaj';
 soruT.append(soruTBaslik, soruTSec, soruTMesaj); document.body.appendChild(soruT);
+if (KAPILAR_ACIK) kapiT.panel.visible = true;
 SORU4.secenekler.forEach(sc => {
   const b = document.createElement('button'); b.textContent = sc;
   b.addEventListener('click', () => {
