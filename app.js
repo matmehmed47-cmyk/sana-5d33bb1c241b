@@ -4154,6 +4154,10 @@ function esSinir() {
   engelleriItele(kon, 0.35, false, ES_ENGEL);
   if (kon.z - SZ < 0) suDisi();   // engellerin itmesiyle suya girmesin
 }
+function esSarkiBaslat() {   // Teoman şarkısı: kayığa binince (ya da ekibe yürüyerek yaklaşınca) baştan, yumuşakça başlar
+  if (es.sarkiBasladi) return; es.sarkiBasladi = true; es.sarkiT0 = performance.now();
+  try { if (muzik6) { muzik6.currentTime = 0; const q = muzik6.play(); if (q && q.catch) q.catch(() => {}); } } catch (e) {}
+}
 function esAlkis() {   // kısa tezahürat/alkış sesi
   try { if (!sesBagl) return; const c = sesBagl, t0 = c.currentTime, n = Math.floor(c.sampleRate * 0.9), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
     for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (0.5 + 0.5 * Math.sin(i / c.sampleRate * 38));
@@ -4178,7 +4182,7 @@ kayikBtn.addEventListener('click', () => {
   kayikGecis = true; kayikBtn.classList.remove('acik'); kayikOk.classList.remove('acik'); gecisKutu.classList.add('acik'); esSlop();
   setTimeout(() => {
     if (!es.aktif) { kayikGecis = false; return; }
-    if (!es.kayikta) { es.kayikta = true; es.kayikBindi = true; kon.x = es.kayik.x; kon.z = es.kayik.z; kon.vx = 0; kon.vz = 0; kon.yaw = 0; kon.pitch = -0.12; kon.oto = null; ikiliYon = 0; kalpPatlat(); esYaz('Kayıktasın! Joystick ile yönlendir, şarkıya doğru ilerle.', 9000); }
+    if (!es.kayikta) { es.kayikta = true; es.kayikBindi = true; esSarkiBaslat(); kon.x = es.kayik.x; kon.z = es.kayik.z; kon.vx = 0; kon.vz = 0; kon.yaw = 0; kon.pitch = -0.12; kon.oto = null; ikiliYon = 0; kalpPatlat(); esYaz('Kayıktasın! Joystick ile yönlendir, şarkıya doğru ilerle.', 9000); }
     else { es.kayikta = false; if (kon.x > SX) { kon.x = SX + 6; kon.z = SZ - 1.6; } else { kon.x = es.dok.x; kon.z = es.dok.z; } kon.vx = 0; kon.vz = 0; kon.yaw = 0; }
     gecisKutu.classList.remove('acik'); kayikGecis = false;
   }, 450);
@@ -4229,8 +4233,8 @@ function esGuncelle(dt, simdi) {
       else { k.kol[0].rotation.x = Math.sin(w * 0.5) > 0.8 ? 1.6 + Math.sin(t * 7) * 0.2 : 0; } }); }
   // Teoman'ın ekibi: şarkı duyuluyorsa söylerler, uzakta sessiz otururlar
   { const bm = { x: SX, z: SZ - 17.5 }, ud = Math.hypot(kon.x - bm.x, kon.z - bm.z);
-    es.muzikHedef = 0.9 * Math.pow(yumusak(24, 5, ud), 2);
-    if (ud < 40 && !es.sarkiBasladi) { es.sarkiBasladi = true; try { if (muzik6) muzik6.currentTime = 0; } catch (e) {} }
+    if (!es.sarkiBasladi && ud < 10) esSarkiBaslat();   // kayığa binmeden ekibe yürürse de başlar
+    if (es.sarkiBasladi) { const fg = Math.min(1, (simdi - es.sarkiT0) / 5000), yak = Math.pow(yumusak(22, 4.5, ud), 2), zemin = 0.12 - 0.05 * yumusak(20, 50, ud); es.muzikHedef = fg * (zemin + (0.9 - zemin) * yak); } else es.muzikHedef = 0;   // girişte sessiz; başlayınca yaklaştıkça artar, uzakta arka planda hafif sürer
     if (ud < 7 && !es.sarkiYazildi) { es.sarkiYazildi = true; esYaz('♪ Şarkıyı uzaktan dinlemiştik, şimdi yakından dinleyebilirsin.', 8000); } else if (ud > 22) es.sarkiYazildi = false;
     const so = (muzik6 && muzik6.volume > 0.05 && !muzik6.paused) ? 1 : 0.15;
     es.band.forEach((b, i) => { const u = b.p.userData, w = t + i * 1.7;
