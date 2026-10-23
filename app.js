@@ -3483,9 +3483,9 @@ function eyDekorGuncelle(dt, t) {
   }
 }
 const eyDm = new THREE.Object3D();
-const SORU_EY = { metin: "Odunpazarı'nda yürüdüğümüz şehir neresiydi?", secenekler: ['Bursa', 'Eskişehir', 'Konya'], dogru: 'Eskişehir',
-  yanlis: { 'Bursa': 'Bursa da güzel ama oraya gitmedik 😄', 'Konya': 'Konya\'ya gitmedik, bir daha dene 🙈' },
-  ipucu: 'İpucu: Porsuk Çayı ve bir masal şatosu var.', dogruMesaj: 'Bildin! Eskişehir... Kapı açılıyor!' };
+const SORU_EY = { metin: "Eskişehir hızlı tren garından meşhur Met helvacısına kaç metre yürümüştük?", secenekler: ['1000 metre', '1400 metre', '1600 metre'], dogru: '1600 metre',
+  yanlis: { '1000 metre': 'Biraz daha fazla yürüdük 😄', '1400 metre': 'Yaklaştın ama biraz daha uzundu 🙈' },
+  ipucu: 'İpucu: Bir buçuk kilometreden biraz fazla.', dogruMesaj: 'Bildin! 1600 metre... Kapı açılıyor!' };
 const SORU_ES = { metin: "10 Ekim'de biz nereye gittik?", secenekler: ['Antalya', 'Kapadokya', 'Mardin'], dogru: 'Kapadokya',
   yanlis: { 'Antalya': 'Antalya\'nın denizi güzel ama oraya değil 😄', 'Mardin': 'Mardin taş evleriyle güzel, ama başka bir yere gittik 🙈' },
   ipucu: 'İpucu: Peri bacaları ve bir ATV var.', dogruMesaj: 'Bildin! Kapadokya... Kapı açılıyor!' };
