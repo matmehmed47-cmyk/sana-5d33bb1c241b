@@ -1861,7 +1861,7 @@ const DOKUNMATIK = !!(window.matchMedia && window.matchMedia('(pointer:coarse)')
 let elSu = null;
 function elGoster(tur) { elSu = tur; elKutu.className = (tur && DOKUNMATIK) ? 'el ' + tur : 'el'; }
 // ---------- Kendi sesinle yönergeler (giriş alıştırması) ----------
-const SES_YOL = { giris: 'ses/konus-giris-kisa.mp3', ileri: 'ses/konus-ileri.mp3', geri: 'ses/konus-geri.mp3', sag: 'ses/konus-sag.mp3', sol: 'ses/konus-sol.mp3', yukari: 'ses/konus-yukari.mp3', asagi: 'ses/konus-asagi.mp3', kapi: 'ses/konus-kapi.mp3', hazir: 'ses/konus-hazir.mp3' };
+const SES_YOL = { giris: 'ses/konus-hos-geldin.mp3', ileri: 'ses/konus-ileri.mp3', geri: 'ses/konus-geri.mp3', sag: 'ses/konus-sag.mp3', sol: 'ses/konus-sol.mp3', yukari: 'ses/konus-yukari.mp3', asagi: 'ses/konus-asagi.mp3', kapi: 'ses/konus-kapi.mp3', hazir: 'ses/konus-iyi-eglenceler.mp3' };
 const sesEl = new Audio(); sesEl.preload = 'auto';
 let sesKuyruk = [], sesCaliyor = false, hazirSesCalindi = false;
 function sesSiradaki() {
@@ -1897,9 +1897,9 @@ function ogrAdimGoster() {
   ogrDX0 = kon.dragX; ogrDY0 = kon.dragY;
   if (a.ses) sesCal(a.ses);
 }
-const ALISTIRMA = true;   // true: girişteki 6 adımlı alıştırma/yönerge açık
+const ALISTIRMA = false;   // true: girişteki 6 adımlı alıştırma/yönerge açık
 function ogrBasla() {
-  if (!ALISTIRMA) { ogr = OGR_BITTI; ogrBaslaZ = 0; return; }   // kapalıysa: alıştırma atlanır, kapı hemen açılır
+  if (!ALISTIRMA) { ogr = OGR_BITTI; ogrBaslaZ = -1e9; ogrYaz('Hoş geldin, Gülüm.', null); ogrBittiZ = performance.now(); sesCal('giris'); return; }   // alıştırma yok: yalnız karşılama; kapı hemen açılır
   ogr = 0; ogrBaslaZ = performance.now();
   ogrListe.classList.add('acik');
   ogrBekle = 1e15; ogrYaz('Hoş geldin, Gülüm.', null);   // karşılama konuşması bitince ilk adım başlar
@@ -5075,7 +5075,7 @@ function kare(simdi) {
     // kapı
     if (!kapiAcik) {
       // koridordan yaklaşınca ya da odadan kapıya dönünce açılır
-      if (kon.z < KAPI_Z + 3.2 && kon.z > KAPI_Z - 2.0 && kon.x < ODA_X && kapiHazir()) { kapiAcik = true; gicirti(1.3); if (!hazirSesCalindi) { hazirSesCalindi = true; sesCal('hazir'); } }
+      if (kon.z < KAPI_Z + 3.2 && kon.z > KAPI_Z - 2.0 && kon.x < ODA_X && kapiHazir()) { kapiAcik = true; gicirti(1.3); if (!hazirSesCalindi) { hazirSesCalindi = true; sesCal('hazir'); ogrYaz('İyi eğlenceler, Gülüm. ♥', null); ogrBittiZ = performance.now(); } }
     } else if (!KAPILAR_ACIK && kon.z < KAPI_Z - 3.4) {
       // odaya iyice girince arkasından kapanır
       kapiAcik = false;
