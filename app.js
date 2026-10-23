@@ -3636,7 +3636,8 @@ const ES_FOTO = [   // x, z: odanın ortasına göre; dosya: foto/ klasöründe 
   { x: -3.7, z: -45.6, yazi: 'Tembel hayvan', dosya: 'foto/eskisehir-6.jpg', don: 0.9, olcek: 0.8 },
   { x: -3.7, z: -36.8, yazi: 'Lemur', dosya: 'foto/eskisehir-7.jpg', don: 0.9, olcek: 0.8 },
   { x: 3.7, z: -36.8, yazi: 'Dev kaplumbağa', dosya: 'foto/eskisehir-8.jpg', don: -0.9, olcek: 0.8 },
-  { x: 3.7, z: -45.6, yazi: 'İguana', dosya: 'foto/eskisehir-9.jpg', don: -0.9, olcek: 0.8 },
+  { x: 3.7, z: -44.7, yazi: 'İguana', dosya: 'foto/eskisehir-9.jpg', don: -0.9, olcek: 0.8 },
+  { x: 3.7, z: -46.7, yazi: 'Kertenkele', dosya: 'foto/eskisehir-12.jpg', don: -0.9, olcek: 0.8 },
   { x: -4.8, z: -52, yazi: 'Sazova', dosya: 'foto/eskisehir-10.jpg' },
   { x: 4.8, z: -52, yazi: 'Sazova', dosya: 'foto/eskisehir-11.jpg' }
 ];
@@ -3662,7 +3663,7 @@ ES_AGIL.forEach(a => esCitEngel(a).forEach(o => ES_ENGEL.push(o)));
 ES_FOTO.forEach(f => ES_ENGEL.push({ x: SX + f.x, z: SZ + f.z, r: 0.9 * (f.olcek || 1) }));
 const es = { aktif: false, hazir: false, bekle: false, girildi: false, grup: null, hemi: null, gun: null, kapiD: null, suDoku: null, kugu: [], fener: [], ampul: [], bayrak: [], hayvan: [], yansima: [], gunes: [], bulut: [], gece: 0, sonGece: -1,
   ipucuBitis: 0, yaziBitis: 0, yaziAcik: false, yaziMetin: '', sarkiBasladi: false, sarkiYazildi: false, muzikHedef: 0, domGun: null, domGece: null, ay: [], cesmeAkis: null, tezgah: null, don: { aktif: false, t0: 0 }, donG: null, zeminDis: null,
-  kayikta: false, kayikG: null, kopuk: [], kopukI: 0, kopukT: 0, band: [], dok: { x: SX - 6, z: SZ - 1.6 } };
+  kayikta: false, kayikG: null, kopuk: [], kopukI: 0, kopukT: 0, band: [], foto: [], dok: { x: SX - 6, z: SZ - 1.6 } };
 const donBtn = document.createElement('button'); donBtn.id = 'dondurmaBtn'; donBtn.textContent = 'Dondurma al'; document.body.appendChild(donBtn);
 const kayikBtn = document.createElement('button'); kayikBtn.id = 'kayikBtn'; kayikBtn.textContent = 'Kayığa bin'; document.body.appendChild(kayikBtn);
 const esRenkG = new THREE.Color(0xe8ae92), esRenkN = new THREE.Color(0x1d2650), esRenkT = new THREE.Color();
@@ -4043,8 +4044,11 @@ function esKur() {
     const ah = Lm(0x6b4a30); [-0.85, 0.85].forEach(dx => kt(0.1, 2.5, 0.1, ah, dx, 1.25, -0.06, gp));
     const cer = kt(2.1, 1.5, 0.08, new THREE.MeshPhongMaterial({ color: 0xd6b160, shininess: 80, specular: 0xffeeb0 }), 0, 1.95, 0, gp);
     const ic = tuval(512, 512), x = ic.getContext('2d'); x.fillStyle = '#efe4d0'; x.fillRect(0, 0, 512, 512); x.strokeStyle = 'rgba(200,160,100,.55)'; x.lineWidth = 6; x.setLineDash([14, 12]); x.strokeRect(34, 34, 444, 444); x.setLineDash([]); x.fillStyle = 'rgba(210,150,150,.4)'; x.font = '220px serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('♥', 256, 270);
-    const net = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.3), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(ic) })); net.position.set(0, 1.95, 0.05); gp.add(net);
-    if (f.dosya) yukleyici.load(f.dosya, tex => { tex.anisotropy = 4; const r = tex.image.width / tex.image.height, w = Math.min(2.2, 1.7 * r), h = w / r; net.material.map = tex; net.material.needsUpdate = true; net.scale.set(w / 1.9, h / 1.3, 1); cer.scale.set((w + 0.2) / 2.1, (h + 0.2) / 1.5, 1); }, undefined, () => {});
+    const net = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.3), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(ic), color: 0x666666, fog: false })); net.position.set(0, 1.95, 0.05); gp.add(net);
+    const kayit = { net, bul: null, gx: X(f.x), gz: Z(f.z) }; es.foto.push(kayit);
+    if (f.dosya) yukleyici.load(f.dosya, tex => { tex.anisotropy = 8; const r = tex.image.width / tex.image.height, w = Math.min(2.2, 1.7 * r), h = w / r; net.material.map = tex; net.material.needsUpdate = true; net.scale.set(w / 1.9, h / 1.3, 1); cer.scale.set((w + 0.2) / 2.1, (h + 0.2) / 1.5, 1);
+      const bc = tuval(18, Math.max(8, Math.round(18 / r))); bc.getContext('2d').drawImage(tex.image, 0, 0, bc.width, bc.height); const bt = new THREE.CanvasTexture(bc); bt.magFilter = THREE.LinearFilter; bt.minFilter = THREE.LinearFilter;
+      const bul = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.3), new THREE.MeshBasicMaterial({ map: bt, color: 0x444444, transparent: true, fog: false })); bul.position.set(0, 1.95, 0.058); bul.scale.set(w / 1.9, h / 1.3, 1); gp.add(bul); kayit.bul = bul; }, undefined, () => {});
     const pl = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.4), new THREE.MeshBasicMaterial({ map: levha(f.yazi, 640, 120, 80, '#f3d58a'), transparent: true, depthWrite: false })); pl.position.set(0, 0.95, 0.02); gp.add(pl);
     parla(0, 2.95, 0.3, 2.2, 0.35, gp);
   });
@@ -4160,6 +4164,8 @@ function esGuncelle(dt, simdi) {
     const dd = Math.hypot(kon.x - es.dok.x, kon.z - es.dok.z), dm = Math.hypot(kon.x - (SX - 6), kon.z - (SZ - 5.5));
     kayikBtn.textContent = es.kayikta ? 'Kıyıya çık' : 'Kayığa bin';
     kayikBtn.classList.toggle('acik', (es.kayikta ? dm < 4.5 : dd < 3.2) && !kp.bekle && !fotoBak.classList.contains('acik')); }
+  // fotoğraflar: uzakta bulanık ve loş, yaklaşınca keskin ve parlak
+  es.foto.forEach(f => { const uz = Math.hypot(kon.x - f.gx, kon.z - f.gz), p = 0.3 + 0.7 * yumusak(34, 14, uz); f.net.material.color.setRGB(p, p, p); if (f.bul) { f.bul.material.color.setRGB(p, p, p); f.bul.material.opacity = 1 - yumusak(26, 12, uz); } });
   // kapı ve soru
   const kd = es.kapiD; kd.aci += ((kd.acik ? -1.9 : 0) - kd.aci) * Math.min(1, dt * 1.8); kd.hinge.rotation.y = kd.aci;
   const dx = kd.x - kon.x, dz = kd.z - kon.z, uz = Math.hypot(dx, dz), bak = (-Math.sin(kon.yaw) * dx - Math.cos(kon.yaw) * dz) / (uz || 1);
