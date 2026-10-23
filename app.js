@@ -3632,7 +3632,7 @@ const ES_FOTO = [   // x, z: odanın ortasına göre; dosya: foto/ klasöründe 
   { x: 4.8, z: 22, yazi: 'Odunpazarı çeşmesi', dosya: 'foto/eskisehir-2.jpg' },
   { x: -4.8, z: 31, yazi: 'Dondurma molası', dosya: 'foto/eskisehir-3.jpg' },
   { x: -4.8, z: 14, yazi: 'Afiyet olsun', dosya: 'foto/eskisehir-4.jpg' },
-  { x: 5.4, z: -29.5, yazi: 'Hayvanat Bahçesi', dosya: 'foto/eskisehir-5.jpg', don: -0.5 },
+  { x: 5.4, z: -29.5, yazi: 'Hayvanat Bahçesi', dosya: 'foto/eskisehir-13.jpg', don: -0.5 },
   { x: -3.7, z: -45.6, yazi: 'Tembel hayvan', dosya: 'foto/eskisehir-6.jpg', don: 0.9, olcek: 0.8 },
   { x: -3.7, z: -36.8, yazi: 'Lemur', dosya: 'foto/eskisehir-7.jpg', don: 0.9, olcek: 0.8 },
   { x: 3.7, z: -36.8, yazi: 'Dev kaplumbağa', dosya: 'foto/eskisehir-8.jpg', don: -0.9, olcek: 0.8 },
@@ -3666,6 +3666,7 @@ const es = { aktif: false, hazir: false, bekle: false, girildi: false, grup: nul
   kayikta: false, kayikG: null, kopuk: [], kopukI: 0, kopukT: 0, band: [], foto: [], dok: { x: SX - 6, z: SZ - 1.6 } };
 const donBtn = document.createElement('button'); donBtn.id = 'dondurmaBtn'; donBtn.textContent = 'Dondurma al'; document.body.appendChild(donBtn);
 let kayikGecis = false;
+const kayikOk = document.createElement('div'); kayikOk.id = 'kayikOk'; kayikOk.innerHTML = '<span class="ok">▲</span><span class="mt"></span>'; document.body.appendChild(kayikOk); const kayikOkO = kayikOk.querySelector('.ok'), kayikOkM = kayikOk.querySelector('.mt');
 const kayikBtn = document.createElement('button'); kayikBtn.id = 'kayikBtn'; kayikBtn.textContent = 'Kayığa bin'; document.body.appendChild(kayikBtn);
 const esRenkG = new THREE.Color(0xe8ae92), esRenkN = new THREE.Color(0x1d2650), esRenkT = new THREE.Color();
 
@@ -4121,10 +4122,10 @@ function esSlop() {
 }
 kayikBtn.addEventListener('click', () => {
   if (!es.aktif || kayikGecis) return;
-  kayikGecis = true; kayikBtn.classList.remove('acik'); gecisKutu.classList.add('acik'); esSlop();
+  kayikGecis = true; kayikBtn.classList.remove('acik'); kayikOk.classList.remove('acik'); gecisKutu.classList.add('acik'); esSlop();
   setTimeout(() => {
     if (!es.aktif) { kayikGecis = false; return; }
-    if (!es.kayikta) { es.kayikta = true; kon.x = es.kayik.x; kon.z = es.kayik.z; kon.vx = 0; kon.vz = 0; kon.yaw = 0; kon.pitch = -0.12; kon.oto = null; ikiliYon = 0; kalpPatlat(); esYaz('Kayıktasın! Joystick ile yönlendir, şarkıya doğru ilerle.', 9000); }
+    if (!es.kayikta) { es.kayikta = true; es.kayikBindi = true; kon.x = es.kayik.x; kon.z = es.kayik.z; kon.vx = 0; kon.vz = 0; kon.yaw = 0; kon.pitch = -0.12; kon.oto = null; ikiliYon = 0; kalpPatlat(); esYaz('Kayıktasın! Joystick ile yönlendir, şarkıya doğru ilerle.', 9000); }
     else { es.kayikta = false; kon.x = es.dok.x; kon.z = es.dok.z; kon.vx = 0; kon.vz = 0; kon.yaw = 0; }
     gecisKutu.classList.remove('acik'); kayikGecis = false;
   }, 450);
@@ -4186,6 +4187,11 @@ function esGuncelle(dt, simdi) {
     if (es.kayikta && sp > 0.4 && es.kopukT <= 0) { es.kopukT = 0.14; const w = es.kopuk[es.kopukI = (es.kopukI + 1) % es.kopuk.length]; w.a = 0.55; w.s.position.set(kon.x + Math.sin(ikiliYon) * 1.3, -0.46, kon.z + Math.cos(ikiliYon) * 1.3); }
     es.kopuk.forEach(w => { if (w.a > 0) { w.a -= dt * 0.5; w.s.material.opacity = Math.max(0, w.a); w.s.scale.setScalar(0.6 + (0.55 - w.a) * 2.5); } });
     const dd = Math.hypot(kon.x - es.dok.x, kon.z - es.dok.z), dm = Math.hypot(kon.x - (SX - 6), kon.z - (SZ - 5.5));
+    es.dokYakin = !es.kayikta && dd < 5 && !kayikGecis;
+    { const gost = !es.kayikta && !es.kayikBindi && dd > 6 && kon.z - SZ > -13 && !kp.bekle && !kayikGecis;   // ekranda ok: kayığa binilene kadar iskeleyi gösterir
+      if (gost) { const ddx = es.dok.x - kon.x, ddz = es.dok.z - kon.z, L = Math.hypot(ddx, ddz) || 1, fx = -Math.sin(kon.yaw), fz = -Math.cos(kon.yaw), rx = Math.cos(kon.yaw), rz = -Math.sin(kon.yaw), aci = Math.atan2((ddx * rx + ddz * rz) / L, (ddx * fx + ddz * fz) / L) * 180 / Math.PI;
+        kayikOkO.style.transform = 'rotate(' + aci.toFixed(0) + 'deg)'; const mt = 'Kayık iskelesi · ' + Math.round(L) + ' m'; if (kayikOkM.textContent !== mt) kayikOkM.textContent = mt; }
+      kayikOk.classList.toggle('acik', gost); }
     if (es.isaret) { const v = !es.kayikta, pp = 0.5 + 0.5 * Math.sin(t * 3); es.isaret.sut.visible = v; es.isaret.halka.visible = v; es.isaret.sut.material.opacity = 0.35 + 0.35 * pp; es.isaret.halka.material.opacity = 0.3 + 0.5 * pp; es.isaret.halka.scale.setScalar(1 + 0.35 * pp); }
     if (!es.kayikta && !es.meydanYazildi && kon.z - SZ < 8) { es.meydanYazildi = true; esYaz('Kayık turu için soldaki iskeleye git.', 6000); }
     kayikBtn.textContent = es.kayikta ? 'Kıyıya çık' : 'Kayığa bin';
@@ -4208,7 +4214,7 @@ function esGuncelle(dt, simdi) {
       else if (p < 5.9) { G.position.set(kon.x, 2.4, kon.z); G.scale.setScalar(Math.max(0.01, 0.8 * (1 - (p - 5.2) / 0.7))); }
       else { G.visible = false; es.don.aktif = false; kalpPatlat(); } } }
   // yazılar: önce mesajlar (dondurma, şarkı, kayık), sonra giriş ipucu
-  let metin = ''; if (simdi < es.yaziBitis) metin = es.yaziMetin; else if (simdi < es.ipucuBitis) metin = 'Porsuk\'ta soldaki iskeleden kayığa bin. Sonra hayvanat bahçesi ve şato.';
+  let metin = ''; if (es.dokYakin) metin = 'Kayık turu yapamadık ama burada yapalım.'; else if (simdi < es.yaziBitis) metin = es.yaziMetin; else if (simdi < es.ipucuBitis) metin = 'Porsuk\'ta soldaki iskeleden kayığa bin. Sonra hayvanat bahçesi ve şato.';
   if (metin) { if (yonKutu.textContent !== metin) yonKutu.textContent = metin; yonKutu.classList.add('acik'); es.yaziAcik = true; }
   else if (es.yaziAcik) { es.yaziAcik = false; yonKutu.classList.remove('acik'); }
 }
@@ -4401,7 +4407,7 @@ function kpAc() {
   gecisKutu.classList.add('acik');
   setTimeout(() => {
     ey.aktif = false; ey.bisik = false; ey.kilit = false; ey.grup.visible = false; [ey.hemi, ey.gun].forEach(l => { l.visible = false; }); ey.mumIsik.forEach(l => { l.visible = false; });
-    if (es.hazir) { es.aktif = false; es.grup.visible = false; es.hemi.visible = false; es.gun.visible = false; yonKutu.classList.remove('acik'); es.yaziAcik = false; donBtn.classList.remove('acik'); kayikBtn.classList.remove('acik'); es.kayikta = false; es.donG.visible = false; es.don.aktif = false; }
+    if (es.hazir) { es.aktif = false; es.grup.visible = false; es.hemi.visible = false; es.gun.visible = false; yonKutu.classList.remove('acik'); es.yaziAcik = false; donBtn.classList.remove('acik'); kayikBtn.classList.remove('acik'); kayikOk.classList.remove('acik'); es.kayikta = false; es.donG.visible = false; es.don.aktif = false; }
     soru5.classList.remove('acik'); eyBtn.classList.remove('acik'); acBtn.classList.remove('acik'); hdUI.classList.remove('acik'); yaziKutu.classList.remove('acik');
     kp.aktif = true; kp.girildi = true; kp.grup.visible = true; kp.hemi.visible = true; kp.gun.visible = true; kp.durum = 'giris'; kp.kilit = true; kp.t0 = performance.now() / 1000;
     sahne.fog = new THREE.FogExp2(0xcde3f2, 0.0019); sahne.background = new THREE.Color(0xcde3f2); kamera.far = 3200; kamera.updateProjectionMatrix();
