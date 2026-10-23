@@ -3662,12 +3662,14 @@ const ES_AGIL = [   // hayvanat bahçesi bölmeleri: [x0, x1, z0, z1]
 const ES_BAND = [   // Teoman'ın ekibi: kanalın içindeki yarımadanın ucunda, alt basamakta
   { tip: 'solist', x: 0, z: -18.1, don: 0 }, { tip: 'gitar', x: -1.7, z: -17.7, don: -0.35 }, { tip: 'bas', x: 1.7, z: -17.7, don: 0.35 }, { tip: 'cajon', x: 0, z: -16.2, don: 0 }
 ];
-const ES_KALABALIK = (() => {   // kanalın iki yakasında: alt basamak (kayığın geçiş sırasına göre) ve teras
+const ES_KALABALIK = (() => {   // kanalın iki yakasında: alt basamak (kayığın geçiş sırasına göre), yarımada kıyıları ve teras
   const l = [];
-  [-5, -8.3, -11.6, -14.9].forEach(z => l.push({ x: -9.7, z, y: 0 }));                                                      // batı kol
-  for (let i = 0; i < 7; i++) { const t = (i + 0.5) / 7 * Math.PI; l.push({ x: -9.7 * Math.cos(t), z: -15 - 9.7 * Math.sin(t), y: 0 }); }   // yay
-  [-14.9, -11.6, -8.3, -5].forEach(z => l.push({ x: 9.7, z, y: 0 }));                                                      // doğu kol
-  [-1.8, -5.5, -8, -12.5, -16, -19.5, -23.5, -28.7].forEach(z => l.push({ x: -11.4, z, y: 0.8, ust: true }));              // teras (batı); doğu terasta tramvay hattı var
+  [-4.2, -6, -7.8, -9.6, -11.4, -13.2, -15].forEach(z => l.push({ x: -9.7, z, y: 0 }));                                      // batı kol
+  for (let i = 0; i < 12; i++) { const t = (i + 0.5) / 12 * Math.PI; l.push({ x: -9.7 * Math.cos(t), z: -15 - 9.7 * Math.sin(t), y: 0 }); }   // yay
+  [-15, -13.2, -11.4, -9.6, -7.8, -6, -4.2].forEach(z => l.push({ x: 9.7, z, y: 0 }));                                        // doğu kol
+  [-4.2, -5.6, -8.8, -10.4, -11.8, -14.6].forEach(z => l.push({ x: 3.0, z, y: 0, yan: true }));                               // yarımada doğu kıyısı
+  [-4.2, -5.6, -8.8, -12, -14.6].forEach(z => l.push({ x: -3.0, z, y: 0, yan: true }));                                       // yarımada batı kıyısı
+  [-1.5, -3.8, -6.1, -8.4, -12.5, -14.8, -17.1, -19.4, -21.7, -24, -26.3, -28.6].forEach(z => l.push({ x: -11.4, z, y: 0.8, ust: true }));   // teras (batı); doğu terasta tramvay hattı var
   return l;
 })();
 function esCitEngel(a) {
@@ -3853,7 +3855,7 @@ function esKur() {
       const bx = -k.x, bz = -17.5 - k.z; p.rotation.y = Math.atan2(-bx, -bz);   // sahneye (ekibe) bakar
       p.position.set(X(k.x), k.y, Z(k.z)); p.scale.setScalar(0.95 + rnd() * 0.12); g.add(p);
       const kayit = { p, kol, tip: 'duz', ph: rnd() * 6, wx: X(k.x), wz: Z(k.z), sev: false, sevT: 0, bn: null, kalp: false, isik: null };
-      const banner = !k.ust || (tk++ % 2 === 0);
+      const banner = !(k.ust || k.yan) || (tk++ % 2 === 0);
       if (banner) {
         const pi = pn++ % 3, kq = esKanalD(k.x, k.z, true), fb = Math.atan2(kq.qx - k.x, kq.qz - k.z);   // pankart kayığın geçtiği kanala dönük
         const bn = new THREE.Group(); bn.position.set(0.23, 0, -0.36); bn.rotation.y = fb - p.rotation.y; p.add(bn);
