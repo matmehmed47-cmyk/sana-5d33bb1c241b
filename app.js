@@ -1861,7 +1861,7 @@ const DOKUNMATIK = !!(window.matchMedia && window.matchMedia('(pointer:coarse)')
 let elSu = null;
 function elGoster(tur) { elSu = tur; elKutu.className = (tur && DOKUNMATIK) ? 'el ' + tur : 'el'; }
 // ---------- Kendi sesinle yönergeler (giriş alıştırması) ----------
-const SES_YOL = { giris: 'ses/konus-giris.mp3', ileri: 'ses/konus-ileri.mp3', geri: 'ses/konus-geri.mp3', sag: 'ses/konus-sag.mp3', sol: 'ses/konus-sol.mp3', yukari: 'ses/konus-yukari.mp3', asagi: 'ses/konus-asagi.mp3', kapi: 'ses/konus-kapi.mp3', hazir: 'ses/konus-hazir.mp3' };
+const SES_YOL = { giris: 'ses/konus-giris-kisa.mp3', ileri: 'ses/konus-ileri.mp3', geri: 'ses/konus-geri.mp3', sag: 'ses/konus-sag.mp3', sol: 'ses/konus-sol.mp3', yukari: 'ses/konus-yukari.mp3', asagi: 'ses/konus-asagi.mp3', kapi: 'ses/konus-kapi.mp3', hazir: 'ses/konus-hazir.mp3' };
 const sesEl = new Audio(); sesEl.preload = 'auto';
 let sesKuyruk = [], sesCaliyor = false, hazirSesCalindi = false;
 function sesSiradaki() {
