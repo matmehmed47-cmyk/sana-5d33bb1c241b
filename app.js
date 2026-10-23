@@ -1660,7 +1660,7 @@ function muzikKur() {
   muzik4.loop = true; muzik4.volume = 0;
   const p4 = muzik4.play();
   if (p4 && p4.catch) p4.catch(() => {});
-  muzik5 = new Audio('muzik/iki-yabanci.mp3');
+  muzik5 = new Audio('muzik/napim-tabiatim-boyle.mp3');   // Kapadokya: Teoman - N'apim Tabiatım Böyle
   muzik5.loop = true; muzik5.volume = 0;
   const p5 = muzik5.play();
   if (p5 && p5.catch) p5.catch(() => {});
