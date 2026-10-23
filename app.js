@@ -4142,7 +4142,7 @@ function esGuncelle(dt, simdi) {
   { const bm = { x: SX, z: SZ - 17.5 }, ud = Math.hypot(kon.x - bm.x, kon.z - bm.z);
     es.muzikHedef = 0.9 * Math.pow(yumusak(24, 5, ud), 2);
     if (ud < 40 && !es.sarkiBasladi) { es.sarkiBasladi = true; try { if (muzik6) muzik6.currentTime = 0; } catch (e) {} }
-    if (ud < 9 && !es.sarkiYazildi) { es.sarkiYazildi = true; esYaz('♪ İki Yabancı · Teoman', 5500); } else if (ud > 22) es.sarkiYazildi = false;
+    if (ud < 7 && !es.sarkiYazildi) { es.sarkiYazildi = true; esYaz('♪ Şarkıyı uzaktan dinlemiştik, şimdi yakından dinleyebilirsin.', 8000); } else if (ud > 22) es.sarkiYazildi = false;
     const so = (muzik6 && muzik6.volume > 0.05 && !muzik6.paused) ? 1 : 0.15;
     es.band.forEach((b, i) => { const u = b.p.userData, w = t + i * 1.7;
       u.bas.rotation.z = Math.sin(w * 2.1) * 0.08 * so; u.ust.rotation.x = Math.sin(w * 1.1) * 0.03;
