@@ -128,3 +128,5 @@ html,body{margin:0;height:100%;background:var(--zemin);color:var(--yazi);font-fa
 #defterBtn.acik{opacity:1;pointer-events:auto}
 #dondurmaBtn{position:fixed;left:50%;bottom:190px;transform:translateX(-50%);font:inherit;font-size:24px;padding:13px 38px;border-radius:999px;border:1px solid var(--vurgu);background:rgba(14,10,12,.82);color:var(--vurgu);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .4s;z-index:7}
 #dondurmaBtn.acik{opacity:1;pointer-events:auto}
+#kayikBtn{position:fixed;left:50%;bottom:190px;transform:translateX(-50%);font:inherit;font-size:24px;padding:13px 38px;border-radius:999px;border:1px solid var(--vurgu);background:rgba(14,10,12,.82);color:var(--vurgu);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .4s;z-index:7}
+#kayikBtn.acik{opacity:1;pointer-events:auto}
