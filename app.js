@@ -8,7 +8,7 @@ const ODA1 = {
 };
 
 const SURUS_AKTIF = false;   // koltuk ve uzaktan sürüş şimdilik kapalı (İREM parkuru odasında yeniden kullanılacak)
-const KAPILAR_ACIK = true;   // hazırlık sırasında true yapılırsa tüm kapılar açık başlar (kontrol hızlı olsun). false: kapılar normal çalışır
+const KAPILAR_ACIK = false;   // false: kapılar normal çalışır (soru cevaplanınca açılır). Hazırlıkta kontrol için true yapılırsa tüm kapılar açık başlar
 const canvas = document.getElementById('sahne');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
@@ -1897,9 +1897,9 @@ function ogrAdimGoster() {
   ogrDX0 = kon.dragX; ogrDY0 = kon.dragY;
   if (a.ses) sesCal(a.ses);
 }
-const ALISTIRMA = false;   // true: koridordaki 6 adımlı alıştırma açık
+const ALISTIRMA = true;   // true: girişteki 6 adımlı alıştırma/yönerge açık
 function ogrBasla() {
-  if (!ALISTIRMA) { ogr = OGR_BITTI; ogrBaslaZ = 0; return; }   // askıda: alıştırma atlanır, kapı hemen açılır
+  if (!ALISTIRMA) { ogr = OGR_BITTI; ogrBaslaZ = 0; return; }   // kapalıysa: alıştırma atlanır, kapı hemen açılır
   ogr = 0; ogrBaslaZ = performance.now();
   ogrListe.classList.add('acik');
   ogrBekle = 1e15; ogrYaz('Hoş geldin, Gülüm.', null);   // karşılama konuşması bitince ilk adım başlar
