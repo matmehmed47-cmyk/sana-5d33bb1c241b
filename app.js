@@ -3632,6 +3632,12 @@ function esKanalD(x, z, yuvarla) {   // x, z odaya göre; kanalın orta çizgisi
 }
 const ES_TRAM = { x: 11.9, zfBas: -8.5, zfSon: -27, boy: 8.4 };   // doğu terasta hat; zf: kabinin (ön ucun) z konumu, kuzeye gidildikçe azalır
 const ES_FOTO = [   // x, z: odanın ortasına göre; dosya: foto/ klasöründe (yoksa boş çerçeve görünür); don: dönüş açısı, olcek: boyut
+  // giriş sokağı (Odunpazarı): girişte karşılayan ve yerlerine ait fotoğraflar
+  { x: -4.8, z: 40, yazi: 'Eskişehir', dosya: 'foto/eskisehir-1.jpg' },
+  { x: 4.8, z: 40, yazi: 'Dondurma molası', dosya: 'foto/eskisehir-3.jpg' },
+  { x: -4.8, z: 31, yazi: 'Masal şatosu', dosya: 'foto/eskisehir-18.jpg' },
+  { x: 4.8, z: 22, yazi: 'Odunpazarı çeşmesi', dosya: 'foto/eskisehir-2.jpg' },
+  { x: -4.8, z: 14, yazi: 'Afiyet olsun', dosya: 'foto/eskisehir-4.jpg' },
   // tramvay hattı boyunca fotoğraf galerisi (doğu duvarı): tramvayla giderken sırayla görülür
   { x: 13.0, z: -4, yazi: 'Odunpazarı çeşmesi', dosya: 'foto/eskisehir-2.jpg', don: -Math.PI / 2, galeri: true },
   { x: 13.0, z: -7.2, yazi: 'Dondurma molası', dosya: 'foto/eskisehir-3.jpg', don: -Math.PI / 2, galeri: true },
